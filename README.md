@@ -159,7 +159,7 @@ This auto-detects and repairs outdated configurations (e.g. migrating from syste
 | [docs/configuration-guide.md](docs/configuration-guide.md) | Configuration guide |
 | [docs/troubleshooting.md](docs/troubleshooting.md) | Troubleshooting guide |
 | [docs/sandbox.md](docs/sandbox.md) | Sandbox security |
-| [docs/skills.md](docs/skills.md) | Skills guide (Chinese) |
+| [docs/skills.md](docs/skills.md) | Skills guide |
 | [docs/voice-tts.md](docs/voice-tts.md) | Voice features |
 
 ## License

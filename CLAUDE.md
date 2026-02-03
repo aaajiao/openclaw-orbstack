@@ -23,11 +23,89 @@ Gateway runs directly on VM. Docker containers are the only isolation protecting
 
 - `openclaw-orbstack-setup.sh` — Main entry point (8-step installer, ~715 lines)
 - `lang/en.sh`, `lang/zh-CN.sh` — i18n message strings (`$MSG_*` variables)
-- `templates/openclaw.json.example` — Full JSON5 config template
+- `templates/openclaw.json.example` — Full JSON5 config template (reference only)
 - `scripts/refresh-mac-commands.sh` — Regenerate `~/bin/openclaw-*` wrappers
 - `docs/` — Architecture, commands, config guide, troubleshooting, sandbox, dev guide
-- `local/` — Runtime config (gitignored)
+- `local/` — **Developer's actual runtime config (gitignored)**, see below
 - `VERSION` — Current version tracking
+
+## local/ Directory (gitignored)
+
+This directory contains the developer's **actual runtime configuration** for their VM instance. Files here are gitignored but serve as the source of truth for the running system.
+
+| File | Purpose | Syncs To (in VM) |
+|------|---------|------------------|
+| `openclaw.json` | Full Gateway config (agents, models, sandbox, channels, etc.) | `~/.openclaw/openclaw.json` |
+| `.env` | Secrets (API keys, bot tokens, Gateway auth token) | `~/.openclaw/.env` |
+
+### Relationship: local/ vs templates/
+
+| Directory | Role | When to Edit |
+|-----------|------|--------------|
+| `templates/openclaw.json.example` | Reference template with comments | When adding new config options to document |
+| `local/openclaw.json` | Actual working config | When tuning your own setup |
+
+### Sync Workflow
+
+```bash
+# Mac → VM: Push config changes
+cat local/openclaw.json | orb -m openclaw-vm tee ~/.openclaw/openclaw.json > /dev/null
+cat local/.env | orb -m openclaw-vm tee ~/.openclaw/.env > /dev/null
+
+# VM → Mac: Pull config changes (after openclaw configure or manual edits)
+orb -m openclaw-vm cat ~/.openclaw/openclaw.json > local/openclaw.json
+orb -m openclaw-vm cat ~/.openclaw/.env > local/.env
+
+# Apply changes
+openclaw gateway restart
+```
+
+### Key Config Sections in local/openclaw.json
+
+| Section | Purpose |
+|---------|---------|
+| `auth.profiles` | Provider auth metadata (actual keys in `auth-profiles.json` on VM) |
+| `agents.defaults.model` | Primary/fallback models for main agent |
+| `agents.defaults.memorySearch` | Vector memory index settings (SQLite, embedding provider, hybrid search) |
+| `agents.defaults.sandbox` | Docker sandbox config (image, limits, env vars) |
+| `channels.telegram` | Telegram bot settings (token, groups, policies) |
+| `gateway` | Port, auth, Tailscale settings |
+| `skills.entries` | Skill-specific API keys |
+
+### memorySearch Config
+
+Memory search creates a SQLite vector index (`~/.openclaw/memory/<agentId>.sqlite`) for semantic search over memory files and session history.
+
+```json
+"memorySearch": {
+  "enabled": true,
+  "fallback": "openai",                    // Fallback if primary fails
+  "sources": ["memory", "sessions"],       // What to index
+  "experimental": { "sessionMemory": true }, // Index session transcripts
+  "sync": {
+    "watch": true,                         // Watch for file changes
+    "sessions": {
+      "deltaBytes": 50000,                 // Sync after 50KB changes
+      "deltaMessages": 30                  // Or after 30 messages
+    }
+  },
+  "cache": { "enabled": true, "maxEntries": 50000 },
+  "query": {
+    "hybrid": {                            // BM25 + vector search
+      "enabled": true,
+      "vectorWeight": 0.7,
+      "textWeight": 0.3
+    }
+  },
+  "remote": {
+    "batch": { "enabled": true, "concurrency": 2 }  // Cheaper batch API
+  }
+}
+```
+
+**Provider selection** (when `provider` is omitted): OpenClaw auto-selects `local` → `openai` → `gemini` based on available API keys. Valid explicit values: `"openai"` | `"gemini"` | `"local"` (NOT `"auto"`).
+
+**Full documentation**: See [docs/local-config.md](docs/local-config.md) for complete configuration guide.
 
 ## Key Facts
 
@@ -118,7 +196,6 @@ Three independent scopes — they do NOT inherit from each other:
 | OpenCode Zen models | https://opencode.ai/docs/zen/ |
 | OpenClaw config | https://docs.openclaw.ai/gateway/configuration |
 | OpenClaw model providers | https://docs.openclaw.ai/concepts/model-providers |
-| OpenClaw Moonshot provider | https://docs.openclaw.ai/providers/moonshot |
 
 ## Git
 
