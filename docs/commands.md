@@ -67,7 +67,7 @@ openclaw-whatsapp                      # 扫码登录
 
 `openclaw-update` 默认只更新应用（不重建沙箱镜像）：
 1. 停止 Gateway 服务
-2. 拉取最新代码 (`git pull`)
+2. 获取最新 release tag 并切换
 3. 安装依赖 (`npm install`)
 4. 编译项目 (`npm run build`)
 5. 构建 Control UI (`pnpm ui:build`)

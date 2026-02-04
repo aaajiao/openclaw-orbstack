@@ -201,7 +201,10 @@ echo "\$MSG_CMD_UPDATE_STOPPING"
 orb -m openclaw-vm bash -c "openclaw gateway stop"
 
 echo "\$MSG_CMD_UPDATE_PULLING"
-orb -m openclaw-vm bash -c "cd ~/openclaw && git pull"
+orb -m openclaw-vm bash -c "cd ~/openclaw && git fetch --tags"
+LATEST_TAG=\$(orb -m openclaw-vm bash -c "cd ~/openclaw && git describe --tags \\\$(git rev-list --tags --max-count=1)")
+echo "Checking out latest release: \$LATEST_TAG ..."
+orb -m openclaw-vm bash -c "cd ~/openclaw && git checkout '\$LATEST_TAG'"
 
 echo "\$MSG_CMD_UPDATE_INSTALLING"
 orb -m openclaw-vm bash -c "cd ~/openclaw && npm install"

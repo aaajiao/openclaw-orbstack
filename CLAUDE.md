@@ -1,7 +1,7 @@
 # CLAUDE.md - Project Guide for Claude Code
 
 **Project:** OpenClaw OrbStack — one-click OpenClaw AI chatbot deployment on macOS via OrbStack VM.
-**Version:** v2026.2.1 | **License:** MIT
+**Version:** v2026.2.2 | **License:** MIT
 
 ## Architecture
 
@@ -27,7 +27,7 @@ Gateway runs directly on VM. Docker containers are the only isolation protecting
 - `scripts/refresh-mac-commands.sh` — Regenerate `~/bin/openclaw-*` wrappers
 - `docs/` — Architecture, commands, config guide, troubleshooting, sandbox, dev guide
 - `local/` — **Developer's actual runtime config (gitignored)**, see below
-- `VERSION` — Current version tracking
+- `VERSION` — openclaw-orbstack project version (not OpenClaw version)
 
 ## local/ Directory (gitignored)
 

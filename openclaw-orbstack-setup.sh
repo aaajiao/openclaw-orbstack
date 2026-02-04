@@ -196,8 +196,6 @@ fi
 # ============================================================================
 step 5 "$MSG_STEP_5"
 
-OPENCLAW_VERSION=$(cat "$SCRIPT_DIR/VERSION")
-
 if vm_exec "test -d ~/openclaw"; then
     info "$MSG_INFO_REPO_EXISTS"
     vm_exec "cd ~/openclaw && git fetch --tags"
@@ -206,7 +204,9 @@ else
     vm_exec "git clone https://github.com/openclaw/openclaw.git ~/openclaw"
 fi
 
-info "Checking out $OPENCLAW_VERSION ..."
+# Get latest release tag from openclaw/openclaw repo
+OPENCLAW_VERSION=$(vm_exec "cd ~/openclaw && git describe --tags \$(git rev-list --tags --max-count=1)")
+info "Checking out latest release: $OPENCLAW_VERSION ..."
 vm_exec "cd ~/openclaw && git checkout '$OPENCLAW_VERSION'"
 
 info "$MSG_INFO_NPM_INSTALL"
