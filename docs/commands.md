@@ -4,7 +4,7 @@
 
 在 Mac 上有两类命令可用：
 
-1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 12 个命令
+1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 13 个命令
 2. **官方 CLI 命令** (`openclaw <command>`) - 透传到 VM 的 150+ 官方命令
 
 ---

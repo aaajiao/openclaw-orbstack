@@ -124,9 +124,9 @@ ok "$MSG_OK_ORBSTACK: $(orb version 2>/dev/null || echo 'unknown')"
 # ============================================================================
 step 2 "$MSG_STEP_2"
 
-if orb list 2>/dev/null | grep -q "$VM_NAME"; then
+if orb list 2>/dev/null | grep -qF "$VM_NAME"; then
     ok "$(printf "$MSG_OK_VM_EXISTS" "$VM_NAME")"
-    if ! orb list 2>/dev/null | grep "$VM_NAME" | grep -q "running"; then
+    if ! orb list 2>/dev/null | grep -F "$VM_NAME" | grep -q "running"; then
         info "$MSG_INFO_STARTING_VM"
         orb start "$VM_NAME"
     fi
@@ -135,7 +135,11 @@ else
     orb create "$VM_DISTRO" "$VM_NAME"
 fi
 
-sleep 3
+# Wait for VM to be ready (up to 30s)
+for i in $(seq 1 30); do
+    if vm_exec "true" 2>/dev/null; then break; fi
+    sleep 1
+done
 ok "$MSG_OK_VM_READY"
 
 # ============================================================================
@@ -151,7 +155,9 @@ else
     vm_exec "sudo usermod -aG docker \$USER"
 fi
 
-vm_exec "sudo systemctl enable docker && sudo systemctl start docker" || true
+if ! vm_exec "sudo systemctl enable docker && sudo systemctl start docker"; then
+    warn "Docker service setup had issues, attempting to continue..."
+fi
 ok "$MSG_OK_DOCKER_STARTED"
 
 # ============================================================================
@@ -180,7 +186,9 @@ else
 fi
 
 # Build tools
-vm_exec "sudo apt-get install -y build-essential git" || true
+if ! vm_exec "sudo apt-get install -y build-essential git"; then
+    warn "build-essential install had issues, attempting to continue..."
+fi
 
 # pnpm (required by OpenClaw build)
 if vm_exec "command -v pnpm &> /dev/null"; then
@@ -189,6 +197,12 @@ else
     info "$MSG_INFO_INSTALLING_PNPM"
     vm_exec "sudo npm install -g pnpm"
     ok "$MSG_OK_PNPM_INSTALLED: $(vm_exec 'pnpm --version')"
+fi
+
+# --- Pre-flight: disk space check (need ~5GB for clone + build + Docker images) ---
+AVAIL_MB=$(vm_exec "df -m /home 2>/dev/null | awk 'NR==2{print \$4}'" 2>/dev/null || echo "0")
+if [ "$AVAIL_MB" -lt 5000 ] 2>/dev/null; then
+    warn "Low disk space in VM: ${AVAIL_MB}MB available, recommend at least 5000MB"
 fi
 
 # ============================================================================
@@ -206,7 +220,7 @@ fi
 
 # Get latest release tag from openclaw/openclaw repo
 OPENCLAW_VERSION=$(vm_exec "cd ~/openclaw && git describe --tags \$(git rev-list --tags --max-count=1)")
-info "Checking out latest release: $OPENCLAW_VERSION ..."
+info "$(printf "$MSG_INFO_CHECKOUT_RELEASE" "$OPENCLAW_VERSION")"
 vm_exec "cd ~/openclaw && git checkout '$OPENCLAW_VERSION'"
 
 info "$MSG_INFO_NPM_INSTALL"
@@ -278,6 +292,16 @@ info "$MSG_INFO_EXTRACTING_ENV"
 vm_exec 'python3 << "PYEOF"
 import json, os, re
 
+def strip_json5(text):
+    """Strip JSON5 features (comments, trailing commas) for json.load()."""
+    # Remove single-line comments (// ...)
+    text = re.sub(r"(?<!:)//.*$", "", text, flags=re.MULTILINE)
+    # Remove multi-line comments (/* ... */)
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
+    # Remove trailing commas before } or ]
+    text = re.sub(r",\s*([}\]])", r"\1", text)
+    return text
+
 config_path = os.path.expanduser("~/.openclaw/openclaw.json")
 env_path = os.path.expanduser("~/.openclaw/.env")
 
@@ -286,7 +310,7 @@ if not os.path.exists(config_path):
     exit(0)
 
 with open(config_path, "r") as f:
-    config = json.load(f)
+    config = json.loads(strip_json5(f.read()))
 
 # --- Path-to-env-var mapping for known sensitive fields ---
 SENSITIVE_PATHS = [
@@ -367,7 +391,7 @@ with open(env_path, "w") as f:
     f.write("# OpenClaw Environment Variables (auto-generated)\n")
     f.write("# Do not commit this file to version control\n\n")
     for k, v in existing.items():
-        f.write(f"{k}={v}\n")
+        f.write(f'{k}="{v}"\n')
 
 os.chmod(env_path, 0o600)
 
@@ -412,7 +436,11 @@ vm_exec "sudo loginctl enable-linger \$(whoami)"
 vm_exec "systemctl --user enable openclaw-gateway.service"
 vm_exec "openclaw gateway start"
 
-sleep 3
+# Wait for Gateway to be ready (up to 15s)
+for i in $(seq 1 15); do
+    if vm_exec "openclaw gateway status 2>/dev/null | grep -q 'RPC probe.*ok'"; then break; fi
+    sleep 1
+done
 
 if vm_exec "openclaw gateway status 2>/dev/null | grep -q 'RPC probe.*ok'"; then
     ok "$MSG_OK_GATEWAY_STARTED"
@@ -423,39 +451,48 @@ fi
 # --- Create Mac convenience commands ---
 mkdir -p ~/bin
 
-# Save language preference for generated commands
+# Save language preference and VM name for generated commands
 cat > ~/bin/.openclaw-lang << LANG_EOF
 OPENCLAW_LANG=$OPENCLAW_LANG_CODE
 LANG_EOF
 
-cat > ~/bin/openclaw-status << 'EOF'
+cat > ~/bin/.openclaw-vm << VM_EOF
+OPENCLAW_VM=$VM_NAME
+VM_EOF
+
+cat > ~/bin/openclaw-status << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway status"
+set -e
+orb -m "$VM_NAME" bash -c "openclaw gateway status"
 EOF
 
-cat > ~/bin/openclaw-logs << 'EOF'
+cat > ~/bin/openclaw-logs << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw logs --follow"
+set -e
+orb -m "$VM_NAME" bash -c "openclaw logs --follow"
 EOF
 
-cat > ~/bin/openclaw-restart << 'EOF'
+cat > ~/bin/openclaw-restart << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway restart"
+set -e
+orb -m "$VM_NAME" bash -c "openclaw gateway restart"
 EOF
 
-cat > ~/bin/openclaw-stop << 'EOF'
+cat > ~/bin/openclaw-stop << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway stop"
+set -e
+orb -m "$VM_NAME" bash -c "openclaw gateway stop"
 EOF
 
-cat > ~/bin/openclaw-start << 'EOF'
+cat > ~/bin/openclaw-start << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway start"
+set -e
+orb -m "$VM_NAME" bash -c "openclaw gateway start"
 EOF
 
-cat > ~/bin/openclaw-shell << 'EOF'
+cat > ~/bin/openclaw-shell << EOF
 #!/bin/bash
-orb -m openclaw-vm
+orb -m "$VM_NAME"
 EOF
 
 # --- Helper: load language for commands ---
@@ -472,12 +509,14 @@ if [ -n "$_LANG_FILE" ]; then source "$_LANG_FILE"; fi
 '
 
 # openclaw (CLI passthrough) - no language needed
-cat > ~/bin/openclaw << 'EOF'
+cat > ~/bin/openclaw << EOF
 #!/bin/bash
-if [ $# -eq 0 ]; then
+set -e
+if [ \$# -eq 0 ]; then
     set -- "--help"
 fi
-orb -m openclaw-vm bash -c "openclaw $*"
+ARGS=\$(printf '%q ' "\$@")
+orb -m "$VM_NAME" bash -c "openclaw \$ARGS"
 EOF
 
 # openclaw-config - needs language
@@ -489,15 +528,15 @@ ACTION="\${1:-edit}"
 case "\$ACTION" in
     edit)
         echo "\$MSG_CMD_CONFIG_OPENING"
-        orb -m openclaw-vm bash -c "nano ~/.openclaw/openclaw.json 2>/dev/null || vi ~/.openclaw/openclaw.json"
+        orb -m $VM_NAME bash -c "nano ~/.openclaw/openclaw.json 2>/dev/null || vi ~/.openclaw/openclaw.json"
         echo "\$MSG_CMD_CONFIG_SAVED"
         ;;
     show)
-        orb -m openclaw-vm bash -c "cat ~/.openclaw/openclaw.json"
+        orb -m $VM_NAME bash -c "cat ~/.openclaw/openclaw.json"
         ;;
     backup)
         BACKUP="openclaw-config-\$(date +%Y%m%d-%H%M%S).json"
-        orb -m openclaw-vm bash -c "cat ~/.openclaw/openclaw.json" > "\$BACKUP"
+        orb -m $VM_NAME bash -c "cat ~/.openclaw/openclaw.json" > "\$BACKUP"
         printf "\$MSG_CMD_CONFIG_BACKED_UP\n" "\$BACKUP"
         ;;
     *)
@@ -534,78 +573,78 @@ done
 if grep -q "systemctl status openclaw" ~/bin/openclaw-status 2>/dev/null; then
     echo "\$MSG_UPDATE_AUTO_UPGRADE"
     # VM: migrate from system-level to user-level service
-    orb -m openclaw-vm bash -c "sudo systemctl stop openclaw 2>/dev/null || true"
-    orb -m openclaw-vm bash -c "sudo systemctl disable openclaw 2>/dev/null || true"
-    orb -m openclaw-vm bash -c "sudo rm -f /etc/systemd/system/openclaw.service && sudo systemctl daemon-reload"
-    orb -m openclaw-vm bash -c "sudo loginctl enable-linger \\\$(whoami)"
-    orb -m openclaw-vm bash -c "systemctl --user enable openclaw-gateway.service 2>/dev/null || true"
+    orb -m $VM_NAME bash -c "sudo systemctl stop openclaw 2>/dev/null || true"
+    orb -m $VM_NAME bash -c "sudo systemctl disable openclaw 2>/dev/null || true"
+    orb -m $VM_NAME bash -c "sudo rm -f /etc/systemd/system/openclaw.service && sudo systemctl daemon-reload"
+    orb -m $VM_NAME bash -c "sudo loginctl enable-linger \\\$(whoami)"
+    orb -m $VM_NAME bash -c "systemctl --user enable openclaw-gateway.service 2>/dev/null || true"
     # Mac: fix stale commands
     cat > ~/bin/openclaw-status << 'FIXEOF'
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway status"
+orb -m $VM_NAME bash -c "openclaw gateway status"
 FIXEOF
     cat > ~/bin/openclaw-logs << 'FIXEOF'
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw logs --follow"
+orb -m $VM_NAME bash -c "openclaw logs --follow"
 FIXEOF
     cat > ~/bin/openclaw-restart << 'FIXEOF'
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway restart"
+orb -m $VM_NAME bash -c "openclaw gateway restart"
 FIXEOF
     cat > ~/bin/openclaw-stop << 'FIXEOF'
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway stop"
+orb -m $VM_NAME bash -c "openclaw gateway stop"
 FIXEOF
     cat > ~/bin/openclaw-start << 'FIXEOF'
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway start"
+orb -m $VM_NAME bash -c "openclaw gateway start"
 FIXEOF
     chmod +x ~/bin/openclaw-status ~/bin/openclaw-logs ~/bin/openclaw-restart ~/bin/openclaw-stop ~/bin/openclaw-start
     echo "\$MSG_UPDATE_AUTO_UPGRADE_DONE"
 fi
 
 # Ensure .env exists with at least Bonjour vars
-if ! orb -m openclaw-vm bash -c 'test -f ~/.openclaw/.env' 2>/dev/null; then
-    orb -m openclaw-vm bash -c 'mkdir -p ~/.openclaw && printf "# OpenClaw Environment Variables\nOPENCLAW_DISABLE_BONJOUR=1\nCLAWDBOT_DISABLE_BONJOUR=1\n" > ~/.openclaw/.env && chmod 600 ~/.openclaw/.env'
+if ! orb -m $VM_NAME bash -c 'test -f ~/.openclaw/.env' 2>/dev/null; then
+    orb -m $VM_NAME bash -c 'mkdir -p ~/.openclaw && printf "# OpenClaw Environment Variables\nOPENCLAW_DISABLE_BONJOUR=1\nCLAWDBOT_DISABLE_BONJOUR=1\n" > ~/.openclaw/.env && chmod 600 ~/.openclaw/.env'
     echo "  \$MSG_UPDATE_ENV_CREATED"
 fi
 
 echo "\$MSG_CMD_UPDATE_UPDATING"
 
 echo "\$MSG_CMD_UPDATE_STOPPING"
-orb -m openclaw-vm bash -c "openclaw gateway stop"
+orb -m $VM_NAME bash -c "openclaw gateway stop"
 
 echo "\$MSG_CMD_UPDATE_PULLING"
-orb -m openclaw-vm bash -c "cd ~/openclaw && git fetch --tags"
-LATEST_TAG=\$(orb -m openclaw-vm bash -c "cd ~/openclaw && git describe --tags \\\$(git rev-list --tags --max-count=1)")
+orb -m $VM_NAME bash -c "cd ~/openclaw && git fetch --tags"
+LATEST_TAG=\$(orb -m $VM_NAME bash -c "cd ~/openclaw && git describe --tags \\\$(git rev-list --tags --max-count=1)")
 echo "  -> \$LATEST_TAG"
-orb -m openclaw-vm bash -c "cd ~/openclaw && git checkout '\$LATEST_TAG'"
+orb -m $VM_NAME bash -c "cd ~/openclaw && git checkout '\$LATEST_TAG'"
 
 echo "\$MSG_CMD_UPDATE_INSTALLING"
-orb -m openclaw-vm bash -c "cd ~/openclaw && npm install"
+orb -m $VM_NAME bash -c "cd ~/openclaw && npm install"
 
 echo "\$MSG_CMD_UPDATE_BUILDING"
-orb -m openclaw-vm bash -c "cd ~/openclaw && npm run build"
+orb -m $VM_NAME bash -c "cd ~/openclaw && npm run build"
 
 echo "\$MSG_CMD_UPDATE_UI"
-orb -m openclaw-vm bash -c "cd ~/openclaw && pnpm ui:build"
+orb -m $VM_NAME bash -c "cd ~/openclaw && pnpm ui:build"
 
 echo "\$MSG_CMD_UPDATE_REINSTALL"
-orb -m openclaw-vm bash -c "cd ~/openclaw && sudo npm install -g ."
+orb -m $VM_NAME bash -c "cd ~/openclaw && sudo npm install -g ."
 
 if [ "\$SANDBOX" = true ]; then
     echo "\$MSG_CMD_UPDATE_SANDBOX_REBUILD"
     echo "\$MSG_CMD_UPDATE_SANDBOX_BASE"
-    orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_COMMON"
-    orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_BROWSER"
-    orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_NOTE"
 fi
 
 echo "\$MSG_CMD_UPDATE_STARTING"
-orb -m openclaw-vm bash -c "openclaw gateway start"
+orb -m $VM_NAME bash -c "openclaw gateway start"
 
 echo "\$MSG_CMD_UPDATE_DONE"
 if [ "\$SANDBOX" = false ]; then
@@ -622,25 +661,25 @@ $_LANG_LOADER
 echo "\$MSG_CMD_REBUILD_START"
 
 echo "\$MSG_CMD_REBUILD_BASE"
-if orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BASE_OK"
-elif orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
+elif orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BASE_OK_DF"
 else
     echo "\$MSG_CMD_REBUILD_BASE_FAIL"
 fi
 
 echo "\$MSG_CMD_REBUILD_COMMON"
-if orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_COMMON_OK"
 else
     echo "\$MSG_CMD_REBUILD_COMMON_FAIL"
 fi
 
 echo "\$MSG_CMD_REBUILD_BROWSER"
-if orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BROWSER_OK"
-elif orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
+elif orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BROWSER_OK_DF"
 else
     echo "\$MSG_CMD_REBUILD_BROWSER_FAIL"
@@ -664,7 +703,7 @@ case "\$ACTION" in
             echo "\$MSG_CMD_TG_ADD_HINT"
             exit 1
         fi
-        orb -m openclaw-vm bash -c "openclaw channels add --channel telegram --token \$2"
+        orb -m $VM_NAME bash -c "openclaw channels add --channel telegram --token \$(printf '%q' "\$2")"
         ;;
     approve)
         if [ -z "\$2" ]; then
@@ -672,7 +711,7 @@ case "\$ACTION" in
             echo "\$MSG_CMD_TG_APPROVE_HINT"
             exit 1
         fi
-        orb -m openclaw-vm bash -c "openclaw pairing approve telegram \$2"
+        orb -m $VM_NAME bash -c "openclaw pairing approve telegram \$(printf '%q' "\$2")"
         ;;
     *)
         echo "\$MSG_CMD_TG_TITLE"
@@ -687,9 +726,17 @@ case "\$ACTION" in
 esac
 CMDEOF
 
-cat > ~/bin/openclaw-whatsapp << 'EOF'
+cat > ~/bin/openclaw-doctor << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw channels login --channel whatsapp"
+set -e
+ARGS=\$(printf '%q ' "\$@")
+orb -m "$VM_NAME" bash -c "openclaw doctor \$ARGS"
+EOF
+
+cat > ~/bin/openclaw-whatsapp << EOF
+#!/bin/bash
+set -e
+orb -m "$VM_NAME" bash -c "openclaw channels login --channel whatsapp"
 EOF
 
 chmod +x ~/bin/openclaw-*
@@ -754,15 +801,22 @@ vm_exec 'cat > /tmp/sandbox-config.json << '\''SANDBOX_EOF'\''
 SANDBOX_EOF'
 
 vm_exec 'cd ~/openclaw && python3 << "PYEOF"
-import json
+import json, re
 import os
+
+def strip_json5(text):
+    """Strip JSON5 features (comments, trailing commas) for json.load()."""
+    text = re.sub(r"(?<!:)//.*$", "", text, flags=re.MULTILINE)
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
+    text = re.sub(r",\s*([}\]])", r"\1", text)
+    return text
 
 config_path = os.path.expanduser("~/.openclaw/openclaw.json")
 sandbox_path = "/tmp/sandbox-config.json"
 
 if os.path.exists(config_path):
     with open(config_path, "r") as f:
-        config = json.load(f)
+        config = json.loads(strip_json5(f.read()))
     with open(sandbox_path, "r") as f:
         sandbox = json.load(f)
 
@@ -792,19 +846,31 @@ PYEOF'
 
 ok "$MSG_OK_SANDBOX_CONFIG"
 
-# Check PATH
+# Check PATH and add to shell rc
 if ! echo "$PATH" | grep -q "$HOME/bin"; then
-    if [ -f "$HOME/.zshrc" ]; then
-        SHELL_RC="$HOME/.zshrc"
-    else
-        SHELL_RC="$HOME/.bashrc"
-    fi
+    # Detect active shell and its rc file
+    _SHELL_NAME=$(basename "${SHELL:-/bin/bash}")
+    case "$_SHELL_NAME" in
+        zsh)  SHELL_RC="$HOME/.zshrc" ;;
+        fish) SHELL_RC="$HOME/.config/fish/config.fish" ;;
+        *)    SHELL_RC="$HOME/.bashrc" ;;
+    esac
 
-    if ! grep -q 'export PATH="\$HOME/bin:\$PATH"' "$SHELL_RC" 2>/dev/null; then
-        echo '' >> "$SHELL_RC"
-        echo '# OpenClaw CLI' >> "$SHELL_RC"
-        echo 'export PATH="$HOME/bin:$PATH"' >> "$SHELL_RC"
-        info "$(printf "$MSG_INFO_PATH_ADDED" "$SHELL_RC")"
+    if [ "$_SHELL_NAME" = "fish" ]; then
+        mkdir -p "$(dirname "$SHELL_RC")"
+        if ! grep -q 'set -gx PATH \$HOME/bin' "$SHELL_RC" 2>/dev/null; then
+            echo '' >> "$SHELL_RC"
+            echo '# OpenClaw CLI' >> "$SHELL_RC"
+            echo 'set -gx PATH $HOME/bin $PATH' >> "$SHELL_RC"
+            info "$(printf "$MSG_INFO_PATH_ADDED" "$SHELL_RC")"
+        fi
+    else
+        if ! grep -q 'export PATH="\$HOME/bin:\$PATH"' "$SHELL_RC" 2>/dev/null; then
+            echo '' >> "$SHELL_RC"
+            echo '# OpenClaw CLI' >> "$SHELL_RC"
+            echo 'export PATH="$HOME/bin:$PATH"' >> "$SHELL_RC"
+            info "$(printf "$MSG_INFO_PATH_ADDED" "$SHELL_RC")"
+        fi
     fi
 fi
 

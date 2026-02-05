@@ -21,7 +21,7 @@ Gateway runs directly on VM. Docker containers are the only isolation protecting
 
 ## Project Structure
 
-- `openclaw-orbstack-setup.sh` — Main entry point (8-step installer, ~715 lines)
+- `openclaw-orbstack-setup.sh` — Main entry point (8-step installer, ~850 lines)
 - `lang/en.sh`, `lang/zh-CN.sh` — i18n message strings (`$MSG_*` variables)
 - `templates/openclaw.json.example` — Full JSON5 config template (reference only)
 - `scripts/refresh-mac-commands.sh` — Regenerate `~/bin/openclaw-*` wrappers
@@ -103,9 +103,9 @@ Memory search creates a SQLite vector index (`~/.openclaw/memory/<agentId>.sqlit
 }
 ```
 
-**Provider selection** (when `provider` is omitted): OpenClaw auto-selects `local` → `openai` → `gemini` based on available API keys. Valid explicit values: `"openai"` | `"gemini"` | `"local"` (NOT `"auto"`).
+**Provider selection** (when `provider` is omitted): OpenClaw auto-selects `local` → `openai` → `gemini` based on available API keys. Valid explicit values: `"auto"` | `"openai"` | `"gemini"` | `"local"`.
 
-**Full documentation**: See [docs/local-config.md](docs/local-config.md) for complete configuration guide.
+**Full documentation**: See [docs/configuration-guide.md](docs/configuration-guide.md) for complete configuration guide.
 
 ## Key Facts
 

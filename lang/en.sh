@@ -5,9 +5,6 @@
 # OpenClaw English Language Pack
 # ============================================================================
 
-# --- Script Header ---
-MSG_SCRIPT_TITLE="OpenClaw OrbStack One-Click Deployment (Local Install)"
-
 # --- Step Titles ---
 MSG_STEP_1="Check OrbStack"
 MSG_STEP_2="Create Ubuntu VM"
@@ -52,6 +49,7 @@ MSG_INFO_NPM_INSTALL="Installing dependencies (npm install)..."
 MSG_INFO_NPM_BUILD="Building project (npm run build)..."
 MSG_INFO_UI_BUILD="Building Control UI..."
 MSG_INFO_GLOBAL_INSTALL="Installing CLI globally..."
+MSG_INFO_CHECKOUT_RELEASE="Checking out latest release: %s ..."
 MSG_OK_BUILD_DONE="OpenClaw build complete (CLI: openclaw)"
 
 # --- Step 6: Sandbox ---
@@ -88,9 +86,6 @@ MSG_OK_SANDBOX_CONFIG="Sandbox configuration written"
 MSG_INFO_PATH_ADDED="Added ~/bin to PATH (%s)"
 
 # --- Mac Command Embedded Text ---
-# openclaw
-MSG_CMD_CLI_COMMENT="OpenClaw CLI - passthrough to VM"
-
 # openclaw-config
 MSG_CMD_CONFIG_OPENING="Opening configuration editor..."
 MSG_CMD_CONFIG_SAVED="Configuration saved. Run openclaw-restart to apply changes."
@@ -136,7 +131,6 @@ MSG_CMD_REBUILD_DONE="✅ Sandbox image rebuild complete!"
 MSG_CMD_REBUILD_NOTE="💡 Running containers still use old images, run openclaw-restart to apply"
 
 # openclaw-telegram
-MSG_CMD_TG_COMMENT="Telegram Bot Management"
 MSG_CMD_TG_ADD_USAGE="Usage: openclaw-telegram add <bot_token>"
 MSG_CMD_TG_ADD_HINT="Get token from @BotFather"
 MSG_CMD_TG_APPROVE_USAGE="Usage: openclaw-telegram approve <pairing_code>"
@@ -147,9 +141,6 @@ MSG_CMD_TG_ADD_DESC="  openclaw-telegram add <bot_token>      Add Bot (get token
 MSG_CMD_TG_APPROVE_DESC="  openclaw-telegram approve <code>       Approve pairing (verification code)"
 MSG_CMD_TG_ALT="Or use directly:"
 MSG_CMD_TG_ALT_CMD="  openclaw channels login --channel telegram"
-
-# openclaw-whatsapp
-MSG_CMD_WA_COMMENT="WhatsApp Login (scan QR code)"
 
 # --- Completion Output ---
 MSG_FINAL_COMPLETE="Deployment Complete!"
@@ -185,28 +176,10 @@ MSG_REFRESH_CMD_SHELL="  openclaw-shell          Enter VM"
 MSG_REFRESH_CMD_CONFIG="  openclaw-config         Configuration"
 MSG_REFRESH_CMD_UPDATE="  openclaw-update         Update version"
 MSG_REFRESH_CMD_REBUILD="  openclaw-sandbox-rebuild Rebuild sandbox images"
+MSG_REFRESH_CMD_DOCTOR="  openclaw-doctor         Run diagnostics"
 MSG_REFRESH_CMD_TELEGRAM="  openclaw-telegram       Telegram management"
 MSG_REFRESH_CMD_WHATSAPP="  openclaw-whatsapp       WhatsApp login"
 MSG_REFRESH_PATH_HINT="Make sure ~/bin is in PATH: export PATH=\"\$HOME/bin:\$PATH\""
-
-# --- repair-existing-install.sh ---
-MSG_REPAIR_TITLE="OpenClaw Installation Repair"
-MSG_REPAIR_DETECTING="Detecting installation status..."
-MSG_REPAIR_NOT_NEEDED="Installation is already up to date. No repair needed."
-MSG_REPAIR_VM_MIGRATING="Migrating VM service (system-level → user-level)..."
-MSG_REPAIR_VM_STOP_SYSTEM="Stopping system-level service..."
-MSG_REPAIR_VM_DISABLE_SYSTEM="Disabling and removing system-level service..."
-MSG_REPAIR_VM_KILL_PORT="Cleaning up port and lock files..."
-MSG_REPAIR_VM_ENABLE_LINGER="Enabling lingering for user services..."
-MSG_REPAIR_VM_ENABLE_USER="Enabling user-level gateway service..."
-MSG_REPAIR_VM_START="Starting gateway..."
-MSG_REPAIR_VM_DONE="VM service migration complete"
-MSG_REPAIR_MAC_UPDATING="Updating Mac commands..."
-MSG_REPAIR_MAC_DONE="Mac commands updated"
-MSG_REPAIR_VERIFY="Verifying gateway status..."
-MSG_REPAIR_DONE="Repair complete!"
-MSG_REPAIR_COMMANDS_HINT="You can now manage the gateway with:"
-MSG_REPAIR_FULL_REFRESH_HINT="To regenerate all Mac commands: bash scripts/refresh-mac-commands.sh"
 
 # --- openclaw-update auto-repair ---
 MSG_UPDATE_AUTO_UPGRADE="🔧 Detected outdated service configuration, auto-repairing..."

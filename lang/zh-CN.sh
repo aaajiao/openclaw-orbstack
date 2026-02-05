@@ -5,10 +5,7 @@
 # OpenClaw 中文语言包
 # ============================================================================
 
-# --- 脚本头部 ---
-MSG_SCRIPT_TITLE="OpenClaw OrbStack 一键部署脚本 (本地安装版)"
-
-# --- 步骤标题 ---
+# --- Step Titles ---
 MSG_STEP_1="检查 OrbStack"
 MSG_STEP_2="创建 Ubuntu VM"
 MSG_STEP_3="安装 Docker"
@@ -52,6 +49,7 @@ MSG_INFO_NPM_INSTALL="安装依赖 (npm install)..."
 MSG_INFO_NPM_BUILD="编译项目 (npm run build)..."
 MSG_INFO_UI_BUILD="构建 Control UI..."
 MSG_INFO_GLOBAL_INSTALL="全局安装 CLI..."
+MSG_INFO_CHECKOUT_RELEASE="切换到最新发布版本: %s ..."
 MSG_OK_BUILD_DONE="OpenClaw 构建完成 (CLI: openclaw)"
 
 # --- Step 6: Sandbox ---
@@ -87,10 +85,7 @@ MSG_INFO_SANDBOX_CONFIG="写入沙箱配置..."
 MSG_OK_SANDBOX_CONFIG="沙箱配置已写入"
 MSG_INFO_PATH_ADDED="已添加 ~/bin 到 PATH (%s)"
 
-# --- Mac 命令内嵌文本 ---
-# openclaw
-MSG_CMD_CLI_COMMENT="OpenClaw CLI - 透传到 VM 的官方 CLI"
-
+# --- Mac Command Embedded Text ---
 # openclaw-config
 MSG_CMD_CONFIG_OPENING="正在打开配置编辑器..."
 MSG_CMD_CONFIG_SAVED="配置已保存。运行 openclaw-restart 使更改生效。"
@@ -136,7 +131,6 @@ MSG_CMD_REBUILD_DONE="✅ 沙箱镜像重建完成！"
 MSG_CMD_REBUILD_NOTE="💡 已运行的容器仍使用旧镜像，运行 openclaw-restart 使新镜像生效"
 
 # openclaw-telegram
-MSG_CMD_TG_COMMENT="Telegram Bot 管理"
 MSG_CMD_TG_ADD_USAGE="用法: openclaw-telegram add <bot_token>"
 MSG_CMD_TG_ADD_HINT="从 @BotFather 获取 token"
 MSG_CMD_TG_APPROVE_USAGE="用法: openclaw-telegram approve <pairing_code>"
@@ -148,10 +142,8 @@ MSG_CMD_TG_APPROVE_DESC="  openclaw-telegram approve <code>       批准配对 (
 MSG_CMD_TG_ALT="或直接使用:"
 MSG_CMD_TG_ALT_CMD="  openclaw channels login --channel telegram"
 
-# openclaw-whatsapp
-MSG_CMD_WA_COMMENT="WhatsApp 登录 (扫码)"
 
-# --- 完成输出 ---
+# --- Completion Output ---
 MSG_FINAL_COMPLETE="部署完成！"
 MSG_FINAL_ARCH="架构:"
 MSG_FINAL_ARCH_DETAIL_1="  Mac → OrbStack → Ubuntu VM"
@@ -185,30 +177,12 @@ MSG_REFRESH_CMD_SHELL="  openclaw-shell          进入 VM"
 MSG_REFRESH_CMD_CONFIG="  openclaw-config         配置管理"
 MSG_REFRESH_CMD_UPDATE="  openclaw-update         更新版本"
 MSG_REFRESH_CMD_REBUILD="  openclaw-sandbox-rebuild 重建沙箱镜像"
+MSG_REFRESH_CMD_DOCTOR="  openclaw-doctor         运行诊断"
 MSG_REFRESH_CMD_TELEGRAM="  openclaw-telegram       Telegram 管理"
 MSG_REFRESH_CMD_WHATSAPP="  openclaw-whatsapp       WhatsApp 登录"
 MSG_REFRESH_PATH_HINT="确保 ~/bin 在 PATH 中: export PATH=\"\$HOME/bin:\$PATH\""
 
-# --- repair-existing-install.sh ---
-MSG_REPAIR_TITLE="OpenClaw 安装修复"
-MSG_REPAIR_DETECTING="正在检测安装状态..."
-MSG_REPAIR_NOT_NEEDED="安装已是最新状态，无需修复。"
-MSG_REPAIR_VM_MIGRATING="迁移 VM 服务（系统级 → 用户级）..."
-MSG_REPAIR_VM_STOP_SYSTEM="停止系统级服务..."
-MSG_REPAIR_VM_DISABLE_SYSTEM="禁用并删除系统级服务..."
-MSG_REPAIR_VM_KILL_PORT="清理端口和 lock 文件..."
-MSG_REPAIR_VM_ENABLE_LINGER="启用 lingering（允许用户服务在未登录时运行）..."
-MSG_REPAIR_VM_ENABLE_USER="启用用户级 gateway 服务..."
-MSG_REPAIR_VM_START="启动 gateway..."
-MSG_REPAIR_VM_DONE="VM 服务迁移完成"
-MSG_REPAIR_MAC_UPDATING="更新 Mac 端命令..."
-MSG_REPAIR_MAC_DONE="Mac 端命令已更新"
-MSG_REPAIR_VERIFY="验证 gateway 状态..."
-MSG_REPAIR_DONE="修复完成！"
-MSG_REPAIR_COMMANDS_HINT="现在可以使用以下命令管理 gateway："
-MSG_REPAIR_FULL_REFRESH_HINT="如需重新生成所有 Mac 命令: bash scripts/refresh-mac-commands.sh"
-
-# --- openclaw-update 自动修复 ---
+# --- openclaw-update auto-repair ---
 MSG_UPDATE_AUTO_UPGRADE="🔧 检测到旧版服务配置，正在自动修复..."
 MSG_UPDATE_AUTO_UPGRADE_DONE="✓ 服务配置已修复，继续更新..."
 MSG_UPDATE_ENV_CREATED="✓ 已创建 ~/.openclaw/.env（Bonjour 配置）"
