@@ -64,7 +64,7 @@ Web Console: `http://openclaw-vm.orb.local:18789`
 ## Quick Start
 
 ```bash
-# Add ~/bin to PATH
+# Add ~/bin to PATH (use ~/.bashrc for bash, ~/.config/fish/config.fish for fish)
 echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
 
 # Check service status
@@ -103,6 +103,7 @@ openclaw doctor
 | `openclaw-restart` | Restart service |
 | `openclaw-stop/start` | Stop/start service |
 | `openclaw-shell` | Enter VM terminal |
+| `openclaw-doctor` | Run diagnostics |
 | `openclaw-update` | Update app (`--sandbox` to rebuild images) |
 | `openclaw-sandbox-rebuild` | Rebuild sandbox Docker images |
 

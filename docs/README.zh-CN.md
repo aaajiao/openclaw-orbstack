@@ -64,7 +64,7 @@ Web 控制台: `http://openclaw-vm.orb.local:18789`
 ## 快速开始
 
 ```bash
-# 添加 ~/bin 到 PATH
+# 添加 ~/bin 到 PATH (bash 用 ~/.bashrc, fish 用 ~/.config/fish/config.fish)
 echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
 
 # 查看服务状态
@@ -103,6 +103,7 @@ openclaw doctor
 | `openclaw-restart` | 重启服务 |
 | `openclaw-stop/start` | 停止/启动服务 |
 | `openclaw-shell` | 进入 VM |
+| `openclaw-doctor` | 运行诊断 |
 | `openclaw-update` | 更新版本 (仅应用，`--sandbox` 重建镜像) |
 | `openclaw-sandbox-rebuild` | 重建沙箱镜像 |
 
