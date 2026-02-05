@@ -289,6 +289,7 @@ ok "$MSG_OK_ONBOARD_DONE"
 # --- Extract secrets from config into .env ---
 info "$MSG_INFO_EXTRACTING_ENV"
 
+# shellcheck disable=SC1012,SC1083
 vm_exec 'python3 << "PYEOF"
 import json, os, re
 
