@@ -136,7 +136,7 @@ else
 fi
 
 # Wait for VM to be ready (up to 30s)
-for i in $(seq 1 30); do
+for _ in $(seq 1 30); do
     if vm_exec "true" 2>/dev/null; then break; fi
     sleep 1
 done
@@ -391,7 +391,7 @@ with open(env_path, "w") as f:
     f.write("# OpenClaw Environment Variables (auto-generated)\n")
     f.write("# Do not commit this file to version control\n\n")
     for k, v in existing.items():
-        f.write(f'{k}="{v}"\n')
+        f.write('{}="{}"\n'.format(k, v))
 
 os.chmod(env_path, 0o600)
 
@@ -437,7 +437,7 @@ vm_exec "systemctl --user enable openclaw-gateway.service"
 vm_exec "openclaw gateway start"
 
 # Wait for Gateway to be ready (up to 15s)
-for i in $(seq 1 15); do
+for _ in $(seq 1 15); do
     if vm_exec "openclaw gateway status 2>/dev/null | grep -q 'RPC probe.*ok'"; then break; fi
     sleep 1
 done
