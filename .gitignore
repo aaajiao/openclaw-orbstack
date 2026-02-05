@@ -9,3 +9,4 @@ local/
 .claude/
 .mcp.json.example.claude
 opencode.json.example
+docs/local-config.md
