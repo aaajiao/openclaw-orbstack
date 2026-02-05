@@ -51,7 +51,7 @@ EOF
 ### JSON Configuration
 
 - 2-space indentation
-- No trailing commas
+- JSON5 format (comments and trailing commas allowed)
 - Use `jq` for dynamic modifications
 
 ### Documentation
@@ -129,8 +129,8 @@ OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh  # Fresh install
 # Verbose execution
 OPENCLAW_LANG=en bash -x openclaw-orbstack-setup.sh
 
-# Check VM state
-orb -m openclaw-vm bash -c "docker compose -f ~/openclaw/docker-compose.yml config"
+# Check Gateway status
+orb -m openclaw-vm bash -c "openclaw gateway status"
 
 # Check sandbox containers
 orb -m openclaw-vm bash -c "docker ps -a | grep openclaw-sbx"

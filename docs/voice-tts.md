@@ -165,7 +165,7 @@ Talk Mode 是连续语音对话功能，需要麦克风和扬声器。
 │  │  OpenClaw macOS │◄──►│        OrbStack VM               │ │
 │  │      App        │ WS │  ┌─────────────────────────┐    │ │
 │  │                 │    │  │   openclaw-gateway      │    │ │
-│  │ - Voice Wake    │    │  │   (Docker Container)    │    │ │
+│  │ - Voice Wake    │    │  │   (systemd service)     │    │ │
 │  │ - Talk Mode     │    │  │                         │    │ │
 │  │ - 麦克风/扬声器  │    │  │ - AI 模型调用           │    │ │
 │  └─────────────────┘    │  │ - ElevenLabs TTS API    │    │ │
@@ -266,7 +266,7 @@ Talk Mode 是连续语音对话功能，需要麦克风和扬声器。
 ```bash
 openclaw-shell
 # 查看日志
-docker logs openclaw-gateway 2>&1 | grep -i audio
+openclaw logs 2>&1 | grep -i audio
 ```
 
 ### Talk Mode 无法使用

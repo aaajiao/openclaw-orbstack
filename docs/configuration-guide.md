@@ -711,8 +711,7 @@ OpenClaw 使用严格的配置验证。如果配置无效：
 openclaw-doctor
 
 # 自动修复
-openclaw-shell
-cd ~/openclaw && docker compose run --rm openclaw-cli doctor --fix
+openclaw-doctor --fix
 ```
 
 ---

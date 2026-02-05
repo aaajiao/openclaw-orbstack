@@ -4,12 +4,12 @@
 
 在 Mac 上有两类命令可用：
 
-1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 12 个命令
+1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 13 个命令
 2. **官方 CLI 命令** (`openclaw <command>`) - 透传到 VM 的 150+ 官方命令
 
 ---
 
-## OrbStack 管理命令 (12 个)
+## OrbStack 管理命令 (13 个)
 
 这些命令在 `~/bin/` 目录下，用于管理 OrbStack VM 和服务：
 
@@ -60,6 +60,7 @@ openclaw-whatsapp                      # 扫码登录
 | `openclaw-stop` | 停止服务 |
 | `openclaw-start` | 启动服务 |
 | `openclaw-shell` | 进入 VM 终端 |
+| `openclaw-doctor` | 运行诊断 (openclaw doctor) |
 | `openclaw-update` | 更新版本 (仅应用，`--sandbox` 重建镜像) |
 | `openclaw-sandbox-rebuild` | 重建沙箱 Docker 镜像 |
 

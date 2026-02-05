@@ -49,49 +49,68 @@ fi
 
 echo "$MSG_REFRESH_START"
 
+# Load VM name from saved config or use default
+VM_NAME="${OPENCLAW_VM_NAME:-openclaw-vm}"
+if [ -f "$HOME/bin/.openclaw-vm" ]; then
+    # shellcheck disable=SC1091
+    source "$HOME/bin/.openclaw-vm"
+    VM_NAME="${OPENCLAW_VM:-$VM_NAME}"
+fi
+
 mkdir -p ~/bin
 
-# Save language preference
+# Save language preference and VM name
 cat > ~/bin/.openclaw-lang << LANG_EOF
 OPENCLAW_LANG=$OPENCLAW_LANG_CODE
 LANG_EOF
 
-cat > ~/bin/openclaw-status << 'EOF'
+cat > ~/bin/.openclaw-vm << VM_EOF
+OPENCLAW_VM=$VM_NAME
+VM_EOF
+
+cat > ~/bin/openclaw-status << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway status"
+set -e
+orb -m "$VM_NAME" bash -c "openclaw gateway status"
 EOF
 
-cat > ~/bin/openclaw-logs << 'EOF'
+cat > ~/bin/openclaw-logs << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw logs --follow"
+set -e
+orb -m "$VM_NAME" bash -c "openclaw logs --follow"
 EOF
 
-cat > ~/bin/openclaw-restart << 'EOF'
+cat > ~/bin/openclaw-restart << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway restart"
+set -e
+orb -m "$VM_NAME" bash -c "openclaw gateway restart"
 EOF
 
-cat > ~/bin/openclaw-stop << 'EOF'
+cat > ~/bin/openclaw-stop << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway stop"
+set -e
+orb -m "$VM_NAME" bash -c "openclaw gateway stop"
 EOF
 
-cat > ~/bin/openclaw-start << 'EOF'
+cat > ~/bin/openclaw-start << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway start"
+set -e
+orb -m "$VM_NAME" bash -c "openclaw gateway start"
 EOF
 
-cat > ~/bin/openclaw-shell << 'EOF'
+cat > ~/bin/openclaw-shell << EOF
 #!/bin/bash
-orb -m openclaw-vm
+orb -m "$VM_NAME"
 EOF
 
-cat > ~/bin/openclaw << 'EOF'
+cat > ~/bin/openclaw << EOF
 #!/bin/bash
-if [ $# -eq 0 ]; then
+set -e
+if [ \$# -eq 0 ]; then
     set -- "--help"
 fi
-orb -m openclaw-vm bash -c "openclaw $*"
+ARGS=\$(printf '%q ' "\$@")
+orb -m "$VM_NAME" bash -c "openclaw \$ARGS"
 EOF
 
 # --- Helper: load language for commands ---
@@ -115,15 +134,15 @@ ACTION="\${1:-edit}"
 case "\$ACTION" in
     edit)
         echo "\$MSG_CMD_CONFIG_OPENING"
-        orb -m openclaw-vm bash -c "nano ~/.openclaw/openclaw.json 2>/dev/null || vi ~/.openclaw/openclaw.json"
+        orb -m $VM_NAME bash -c "nano ~/.openclaw/openclaw.json 2>/dev/null || vi ~/.openclaw/openclaw.json"
         echo "\$MSG_CMD_CONFIG_SAVED"
         ;;
     show)
-        orb -m openclaw-vm bash -c "cat ~/.openclaw/openclaw.json"
+        orb -m $VM_NAME bash -c "cat ~/.openclaw/openclaw.json"
         ;;
     backup)
         BACKUP="openclaw-config-\$(date +%Y%m%d-%H%M%S).json"
-        orb -m openclaw-vm bash -c "cat ~/.openclaw/openclaw.json" > "\$BACKUP"
+        orb -m $VM_NAME bash -c "cat ~/.openclaw/openclaw.json" > "\$BACKUP"
         printf "\$MSG_CMD_CONFIG_BACKED_UP\n" "\$BACKUP"
         ;;
     *)
@@ -159,78 +178,78 @@ done
 if grep -q "systemctl status openclaw" ~/bin/openclaw-status 2>/dev/null; then
     echo "\$MSG_UPDATE_AUTO_UPGRADE"
     # VM: migrate from system-level to user-level service
-    orb -m openclaw-vm bash -c "sudo systemctl stop openclaw 2>/dev/null || true"
-    orb -m openclaw-vm bash -c "sudo systemctl disable openclaw 2>/dev/null || true"
-    orb -m openclaw-vm bash -c "sudo rm -f /etc/systemd/system/openclaw.service && sudo systemctl daemon-reload"
-    orb -m openclaw-vm bash -c "sudo loginctl enable-linger \\\$(whoami)"
-    orb -m openclaw-vm bash -c "systemctl --user enable openclaw-gateway.service 2>/dev/null || true"
+    orb -m $VM_NAME bash -c "sudo systemctl stop openclaw 2>/dev/null || true"
+    orb -m $VM_NAME bash -c "sudo systemctl disable openclaw 2>/dev/null || true"
+    orb -m $VM_NAME bash -c "sudo rm -f /etc/systemd/system/openclaw.service && sudo systemctl daemon-reload"
+    orb -m $VM_NAME bash -c "sudo loginctl enable-linger \\\$(whoami)"
+    orb -m $VM_NAME bash -c "systemctl --user enable openclaw-gateway.service 2>/dev/null || true"
     # Mac: fix stale commands
     cat > ~/bin/openclaw-status << 'FIXEOF'
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway status"
+orb -m $VM_NAME bash -c "openclaw gateway status"
 FIXEOF
     cat > ~/bin/openclaw-logs << 'FIXEOF'
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw logs --follow"
+orb -m $VM_NAME bash -c "openclaw logs --follow"
 FIXEOF
     cat > ~/bin/openclaw-restart << 'FIXEOF'
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway restart"
+orb -m $VM_NAME bash -c "openclaw gateway restart"
 FIXEOF
     cat > ~/bin/openclaw-stop << 'FIXEOF'
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway stop"
+orb -m $VM_NAME bash -c "openclaw gateway stop"
 FIXEOF
     cat > ~/bin/openclaw-start << 'FIXEOF'
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw gateway start"
+orb -m $VM_NAME bash -c "openclaw gateway start"
 FIXEOF
     chmod +x ~/bin/openclaw-status ~/bin/openclaw-logs ~/bin/openclaw-restart ~/bin/openclaw-stop ~/bin/openclaw-start
     echo "\$MSG_UPDATE_AUTO_UPGRADE_DONE"
 fi
 
 # Ensure .env exists with at least Bonjour vars
-if ! orb -m openclaw-vm bash -c 'test -f ~/.openclaw/.env' 2>/dev/null; then
-    orb -m openclaw-vm bash -c 'mkdir -p ~/.openclaw && printf "# OpenClaw Environment Variables\nOPENCLAW_DISABLE_BONJOUR=1\nCLAWDBOT_DISABLE_BONJOUR=1\n" > ~/.openclaw/.env && chmod 600 ~/.openclaw/.env'
+if ! orb -m $VM_NAME bash -c 'test -f ~/.openclaw/.env' 2>/dev/null; then
+    orb -m $VM_NAME bash -c 'mkdir -p ~/.openclaw && printf "# OpenClaw Environment Variables\nOPENCLAW_DISABLE_BONJOUR=1\nCLAWDBOT_DISABLE_BONJOUR=1\n" > ~/.openclaw/.env && chmod 600 ~/.openclaw/.env'
     echo "  \$MSG_UPDATE_ENV_CREATED"
 fi
 
 echo "\$MSG_CMD_UPDATE_UPDATING"
 
 echo "\$MSG_CMD_UPDATE_STOPPING"
-orb -m openclaw-vm bash -c "openclaw gateway stop"
+orb -m $VM_NAME bash -c "openclaw gateway stop"
 
 echo "\$MSG_CMD_UPDATE_PULLING"
-orb -m openclaw-vm bash -c "cd ~/openclaw && git fetch --tags"
-LATEST_TAG=\$(orb -m openclaw-vm bash -c "cd ~/openclaw && git describe --tags \\\$(git rev-list --tags --max-count=1)")
-echo "Checking out latest release: \$LATEST_TAG ..."
-orb -m openclaw-vm bash -c "cd ~/openclaw && git checkout '\$LATEST_TAG'"
+orb -m $VM_NAME bash -c "cd ~/openclaw && git fetch --tags"
+LATEST_TAG=\$(orb -m $VM_NAME bash -c "cd ~/openclaw && git describe --tags \\\$(git rev-list --tags --max-count=1)")
+echo "  -> \$LATEST_TAG"
+orb -m $VM_NAME bash -c "cd ~/openclaw && git checkout '\$LATEST_TAG'"
 
 echo "\$MSG_CMD_UPDATE_INSTALLING"
-orb -m openclaw-vm bash -c "cd ~/openclaw && npm install"
+orb -m $VM_NAME bash -c "cd ~/openclaw && npm install"
 
 echo "\$MSG_CMD_UPDATE_BUILDING"
-orb -m openclaw-vm bash -c "cd ~/openclaw && npm run build"
+orb -m $VM_NAME bash -c "cd ~/openclaw && npm run build"
 
 echo "\$MSG_CMD_UPDATE_UI"
-orb -m openclaw-vm bash -c "cd ~/openclaw && pnpm ui:build"
+orb -m $VM_NAME bash -c "cd ~/openclaw && pnpm ui:build"
 
 echo "\$MSG_CMD_UPDATE_REINSTALL"
-orb -m openclaw-vm bash -c "cd ~/openclaw && sudo npm install -g ."
+orb -m $VM_NAME bash -c "cd ~/openclaw && sudo npm install -g ."
 
 if [ "\$SANDBOX" = true ]; then
     echo "\$MSG_CMD_UPDATE_SANDBOX_REBUILD"
     echo "\$MSG_CMD_UPDATE_SANDBOX_BASE"
-    orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_COMMON"
-    orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_BROWSER"
-    orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_NOTE"
 fi
 
 echo "\$MSG_CMD_UPDATE_STARTING"
-orb -m openclaw-vm bash -c "openclaw gateway start"
+orb -m $VM_NAME bash -c "openclaw gateway start"
 
 echo "\$MSG_CMD_UPDATE_DONE"
 if [ "\$SANDBOX" = false ]; then
@@ -246,25 +265,25 @@ $_LANG_LOADER
 echo "\$MSG_CMD_REBUILD_START"
 
 echo "\$MSG_CMD_REBUILD_BASE"
-if orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BASE_OK"
-elif orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
+elif orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BASE_OK_DF"
 else
     echo "\$MSG_CMD_REBUILD_BASE_FAIL"
 fi
 
 echo "\$MSG_CMD_REBUILD_COMMON"
-if orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_COMMON_OK"
 else
     echo "\$MSG_CMD_REBUILD_COMMON_FAIL"
 fi
 
 echo "\$MSG_CMD_REBUILD_BROWSER"
-if orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BROWSER_OK"
-elif orb -m openclaw-vm bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
+elif orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BROWSER_OK_DF"
 else
     echo "\$MSG_CMD_REBUILD_BROWSER_FAIL"
@@ -287,7 +306,7 @@ case "\$ACTION" in
             echo "\$MSG_CMD_TG_ADD_HINT"
             exit 1
         fi
-        orb -m openclaw-vm bash -c "openclaw channels add --channel telegram --token \$2"
+        orb -m $VM_NAME bash -c "openclaw channels add --channel telegram --token \$(printf '%q' "\$2")"
         ;;
     approve)
         if [ -z "\$2" ]; then
@@ -295,7 +314,7 @@ case "\$ACTION" in
             echo "\$MSG_CMD_TG_APPROVE_HINT"
             exit 1
         fi
-        orb -m openclaw-vm bash -c "openclaw pairing approve telegram \$2"
+        orb -m $VM_NAME bash -c "openclaw pairing approve telegram \$(printf '%q' "\$2")"
         ;;
     *)
         echo "\$MSG_CMD_TG_TITLE"
@@ -310,9 +329,17 @@ case "\$ACTION" in
 esac
 CMDEOF
 
-cat > ~/bin/openclaw-whatsapp << 'EOF'
+cat > ~/bin/openclaw-doctor << EOF
 #!/bin/bash
-orb -m openclaw-vm bash -c "openclaw channels login --channel whatsapp"
+set -e
+ARGS=\$(printf '%q ' "\$@")
+orb -m "$VM_NAME" bash -c "openclaw doctor \$ARGS"
+EOF
+
+cat > ~/bin/openclaw-whatsapp << EOF
+#!/bin/bash
+set -e
+orb -m "$VM_NAME" bash -c "openclaw channels login --channel whatsapp"
 EOF
 
 chmod +x ~/bin/openclaw-*
@@ -330,6 +357,7 @@ echo "$MSG_REFRESH_CMD_SHELL"
 echo "$MSG_REFRESH_CMD_CONFIG"
 echo "$MSG_REFRESH_CMD_UPDATE"
 echo "$MSG_REFRESH_CMD_REBUILD"
+echo "$MSG_REFRESH_CMD_DOCTOR"
 echo "$MSG_REFRESH_CMD_TELEGRAM"
 echo "$MSG_REFRESH_CMD_WHATSAPP"
 echo ""
