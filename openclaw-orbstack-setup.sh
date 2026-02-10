@@ -267,6 +267,9 @@ else
     warn "$MSG_WARN_SANDBOX_COMMON_FAIL"
 fi
 
+# Save sandbox build hash for staleness detection during updates
+vm_exec "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
+
 # ============================================================================
 # Step 7/8
 # ============================================================================
@@ -633,6 +636,14 @@ orb -m $VM_NAME bash -c "cd ~/openclaw && pnpm ui:build"
 echo "\$MSG_CMD_UPDATE_REINSTALL"
 orb -m $VM_NAME bash -c "cd ~/openclaw && sudo npm install -g ."
 
+# Auto-detect sandbox Dockerfile changes
+OLD_HASH=\$(orb -m $VM_NAME bash -c "cat ~/.openclaw/.sandbox-build-hash 2>/dev/null || echo none")
+NEW_HASH=\$(orb -m $VM_NAME bash -c "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1")
+if [ "\$OLD_HASH" != "\$NEW_HASH" ]; then
+    SANDBOX=true
+    echo "\$MSG_CMD_UPDATE_SANDBOX_CHANGED"
+fi
+
 if [ "\$SANDBOX" = true ]; then
     echo "\$MSG_CMD_UPDATE_SANDBOX_REBUILD"
     echo "\$MSG_CMD_UPDATE_SANDBOX_BASE"
@@ -642,6 +653,8 @@ if [ "\$SANDBOX" = true ]; then
     echo "\$MSG_CMD_UPDATE_SANDBOX_BROWSER"
     orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_NOTE"
+    # Save new sandbox build hash
+    orb -m $VM_NAME bash -c "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
 fi
 
 echo "\$MSG_CMD_UPDATE_STARTING"
@@ -685,6 +698,9 @@ elif orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c 'docker build -t ope
 else
     echo "\$MSG_CMD_REBUILD_BROWSER_FAIL"
 fi
+
+# Save new sandbox build hash
+orb -m $VM_NAME bash -c "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
 
 echo ""
 echo "\$MSG_CMD_REBUILD_DONE"
