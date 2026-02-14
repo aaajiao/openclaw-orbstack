@@ -322,10 +322,20 @@ SENSITIVE_PATHS = [
     ("channels.discord.token",                             "DISCORD_TOKEN"),
     ("channels.slack.botToken",                            "SLACK_BOT_TOKEN"),
     ("channels.slack.appToken",                            "SLACK_APP_TOKEN"),
+    ("channels.whatsapp.authToken",                        "WHATSAPP_AUTH_TOKEN"),
+    ("channels.googlechat.serviceAccountKey",              "GOOGLECHAT_SA_KEY"),
     ("gateway.auth.token",                                 "GATEWAY_AUTH_TOKEN"),
     ("agents.defaults.sandbox.docker.env.OPENAI_API_KEY",  "OPENAI_API_KEY"),
     ("agents.defaults.sandbox.docker.env.GOOGLE_API_KEY",  "GOOGLE_API_KEY"),
     ("agents.defaults.sandbox.docker.env.ANTHROPIC_API_KEY","ANTHROPIC_API_KEY"),
+    ("agents.defaults.sandbox.docker.env.OPENROUTER_API_KEY","OPENROUTER_API_KEY"),
+    ("agents.defaults.sandbox.docker.env.GROQ_API_KEY",    "GROQ_API_KEY"),
+    ("agents.defaults.sandbox.docker.env.XAI_API_KEY",     "XAI_API_KEY"),
+    ("agents.defaults.sandbox.docker.env.MISTRAL_API_KEY", "MISTRAL_API_KEY"),
+    ("agents.defaults.sandbox.docker.env.CEREBRAS_API_KEY","CEREBRAS_API_KEY"),
+    ("agents.defaults.sandbox.docker.env.DEEPSEEK_API_KEY","DEEPSEEK_API_KEY"),
+    ("agents.defaults.sandbox.docker.env.OPENCODE_API_KEY","OPENCODE_API_KEY"),
+    ("agents.defaults.sandbox.docker.env.ZAI_API_KEY",     "ZAI_API_KEY"),
     ("agents.defaults.sandbox.docker.env.TG_BOT_TOKEN",   "TG_BOT_TOKEN"),
 ]
 
@@ -806,7 +816,7 @@ vm_exec 'cat > /tmp/sandbox-config.json << '\''SANDBOX_EOF'\''
   "tools": {
     "sandbox": {
       "tools": {
-        "allow": ["group:runtime", "group:fs", "group:sessions", "group:ui"],
+        "allow": ["group:runtime", "group:fs", "group:sessions", "group:ui", "cron", "web_search", "web_fetch", "memory_search", "memory_get"],
         "deny": ["canvas", "nodes", "gateway", "telegram", "whatsapp", "discord", "googlechat", "slack", "signal", "imessage"]
       }
     }
@@ -921,5 +931,13 @@ echo ""
 echo "$MSG_FINAL_SANDBOX_TITLE"
 echo "$MSG_FINAL_SANDBOX_COMMON"
 echo "$MSG_FINAL_SANDBOX_BROWSER"
+echo ""
+echo "$MSG_FINAL_NEXT_STEPS"
+echo ""
+echo -e "  ${GREEN}openclaw configure${NC}       $MSG_FINAL_NEXT_CONFIGURE_DESC"
+echo -e "  ${GREEN}openclaw dashboard${NC}       $MSG_FINAL_NEXT_DASHBOARD_DESC"
+echo -e "  ${GREEN}openclaw channels list${NC}   $MSG_FINAL_NEXT_CHANNELS_DESC"
+echo ""
+echo "$MSG_FINAL_NEXT_DOCS"
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
