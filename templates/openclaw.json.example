@@ -15,6 +15,11 @@
   //   2. 特定 Agent 配置 (agents.list[].*)
   //   3. 全局默认值 (agents.defaults.*)
   //   4. 内置默认值
+  //
+  // 多文件配置 (可选):
+  //   $include: "./channels.json"                    // 引用单个文件
+  //   $include: ["./agents.json", "./channels.json"] // 引用多个文件
+  //   支持嵌套引用，最多 10 层
   // ============================================================================
 
   // --------------------------------------------------------------------------
@@ -103,7 +108,7 @@
         // 主模型 (格式: 提供商/模型名)
         primary: "anthropic/claude-sonnet-4-5",
         // 备用模型 (主模型失败时使用)
-        fallbacks: ["anthropic/claude-haiku-4", "openai/gpt-4o"]
+        fallbacks: ["anthropic/claude-haiku-4-5", "openai/gpt-5.1-codex"]
       },
       
       // 图像模型 (可选)
@@ -113,9 +118,9 @@
       
       // 模型别名 (可选)
       models: {
-        "anthropic/claude-opus-4-5": { alias: "opus" },
+        "anthropic/claude-opus-4-6": { alias: "opus" },
         "anthropic/claude-sonnet-4-5": { alias: "sonnet" },
-        "anthropic/claude-haiku-4": { alias: "haiku" }
+        "anthropic/claude-haiku-4-5": { alias: "haiku" }
       },
       
       // 默认思考级别: "off" | "low" | "high"
@@ -298,7 +303,7 @@
       //   default: true,
       //   name: "个人助手",
       //   workspace: "~/.openclaw/workspace-personal",
-      //   model: { primary: "anthropic/claude-opus-4-5" },
+      //   model: { primary: "anthropic/claude-opus-4-6" },
       //   sandbox: { mode: "off" }
       // },
       
@@ -307,7 +312,7 @@
       //   id: "public",
       //   name: "公共助手",
       //   workspace: "~/.openclaw/workspace-public",
-      //   model: { primary: "anthropic/claude-haiku-4" },
+      //   model: { primary: "anthropic/claude-haiku-4-5" },
       //   sandbox: {
       //     mode: "all",
       //     scope: "session",
@@ -554,17 +559,35 @@
       }
     },
     
+    // ========== Google Chat ==========
+    googlechat: {
+      enabled: false
+      // 通过 openclaw channels add --channel googlechat 配置
+    },
+
     // ========== Signal ==========
     signal: {
-      enabled: false,
+      enabled: false
       // 手机号 (E.164 格式)
       // number: "+8613800138000"
     },
-    
-    // ========== iMessage (仅 macOS) ==========
+
+    // ========== BlueBubbles (推荐替代 iMessage legacy) ==========
+    bluebubbles: {
+      enabled: false
+      // 支持编辑、反应、群管理等完整功能
+      // 通过 openclaw channels add --channel bluebubbles 配置
+    },
+
+    // ========== iMessage legacy (不推荐，建议用 BlueBubbles) ==========
     imessage: {
       enabled: false
     }
+
+    // ========== 插件频道 (需要 openclaw plugins install) ==========
+    // 支持: Feishu (飞书), Mattermost, Microsoft Teams, LINE,
+    //       Nextcloud Talk, Matrix, Nostr, Tlon, Twitch, Zalo
+    // 通过 openclaw plugins list 查看可用插件
   },
 
   // --------------------------------------------------------------------------
@@ -730,8 +753,12 @@
   // 八、会话配置
   // --------------------------------------------------------------------------
   session: {
-    // 会话范围: "per-sender" | "per-channel"
-    scope: "per-sender",
+    // 会话范围:
+    //   "main"                    - 所有 DM 共享一个会话
+    //   "per-peer"                - 每个联系人独立会话
+    //   "per-channel-peer"        - 每个渠道+联系人独立会话
+    //   "per-account-channel-peer" - 每个账号+渠道+联系人独立会话
+    dmScope: "per-channel-peer",
     
     // 会话重置
     reset: {
@@ -781,7 +808,7 @@
     
     // 配置热重载
     reload: {
-      mode: "hybrid",     // "off" | "hybrid" | "full"
+      mode: "hybrid",     // "hybrid" | "hot" | "restart" | "off"
       debounceMs: 1000
     }
   },
@@ -916,11 +943,30 @@
   hooks: {
     enabled: false,
     path: "/hooks",
-    token: ""
+    token: "",
+    defaultSessionKey: "hooks",
+    allowRequestSessionKey: true,
+    // allowedSessionKeyPrefixes: ["ci-"],
     // presets: ["gmail"],
     // transformsDir: "~/.openclaw/hooks",
-    // mappings: [...]
+    // mappings: [
+    //   {
+    //     match: { source: "github", event: "push" },
+    //     action: "message",
+    //     agentId: "dev",
+    //     deliver: { channel: "telegram", peer: "123456789" }
+    //   }
+    // ]
   },
+
+  // --------------------------------------------------------------------------
+  // 十六(b)、插件配置 (可选, 需要重启)
+  // --------------------------------------------------------------------------
+  // plugins: {
+  //   list: [
+  //     { id: "my-plugin", enabled: true }
+  //   ]
+  // },
 
   // --------------------------------------------------------------------------
   // 十七、浏览器工具 (全局开关)

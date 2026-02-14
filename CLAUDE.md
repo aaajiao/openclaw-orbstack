@@ -66,11 +66,18 @@ openclaw gateway restart
 |---------|---------|
 | `auth.profiles` | Provider auth metadata (actual keys in `auth-profiles.json` on VM) |
 | `agents.defaults.model` | Primary/fallback models for main agent |
+| `agents.defaults.models` | Model catalog/allowlist, custom providers via `models.providers` |
 | `agents.defaults.memorySearch` | Vector memory index settings (SQLite, embedding provider, hybrid search) |
 | `agents.defaults.sandbox` | Docker sandbox config (image, limits, env vars) |
 | `channels.telegram` | Telegram bot settings (token, groups, policies) |
-| `gateway` | Port, auth, Tailscale settings |
+| `session` | DM scope (per-peer, per-channel-peer, etc.), auto-reset |
+| `hooks` | External event triggers (e.g., GitHub webhook → AI action) |
+| `cron` | Scheduled tasks (enabled, maxConcurrentRuns, sessionRetention) |
+| `gateway` | Port, auth, Tailscale, reload mode settings |
+| `env` | Static vars + shellEnv (login shell import) |
 | `skills.entries` | Skill-specific API keys |
+| `plugins` | Plugin system (requires restart) |
+| `$include` | Multi-file config support (single file or array, nested up to 10 levels) |
 
 ### memorySearch Config
 
@@ -193,9 +200,13 @@ Three independent scopes — they do NOT inherit from each other:
 
 | Topic | URL |
 |-------|-----|
-| OpenCode Zen models | https://opencode.ai/docs/zen/ |
+| OpenClaw getting started | https://docs.openclaw.ai/start/getting-started |
 | OpenClaw config | https://docs.openclaw.ai/gateway/configuration |
 | OpenClaw model providers | https://docs.openclaw.ai/concepts/model-providers |
+| OpenClaw channels | https://docs.openclaw.ai/channels |
+| OpenClaw install methods | https://docs.openclaw.ai/install |
+| OpenClaw env vars | https://docs.openclaw.ai/help/environment |
+| OpenCode Zen models | https://opencode.ai/docs/zen/ |
 
 ## Git
 

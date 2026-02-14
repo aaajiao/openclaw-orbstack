@@ -122,10 +122,10 @@ OpenClaw 使用 **JSON5** 格式，支持：
   agents: {
     defaults: {
       workspace: "~/.openclaw/workspace",
-      model: { primary: "anthropic/claude-sonnet-4-5" }
+      model: { primary: "anthropic/claude-sonnet-4-5" },
     }
   },
-  
+
   // WhatsApp 配置
   channels: {
     whatsapp: {
@@ -248,7 +248,7 @@ OpenClaw 使用 **JSON5** 格式，支持：
   agents: {
     defaults: {
       workspace: "~/.openclaw/workspace",
-      model: { primary: "anthropic/claude-haiku-4" },  // 使用便宜的模型
+      model: { primary: "anthropic/claude-haiku-4-5" },  // 使用便宜的模型
       sandbox: {
         mode: "all",
         scope: "session",
@@ -302,7 +302,7 @@ OpenClaw 使用 **JSON5** 格式，支持：
         id: "personal",
         default: true,
         workspace: "~/.openclaw/workspace-personal",
-        model: { primary: "anthropic/claude-opus-4-5" }
+        model: { primary: "anthropic/claude-opus-4-6" }
       },
       {
         id: "work",
@@ -328,19 +328,64 @@ OpenClaw 使用 **JSON5** 格式，支持：
 
 | 配置项 | 说明 | 示例 |
 |--------|------|------|
-| `model.primary` | 主模型 | `"anthropic/claude-sonnet-4-5"` |
-| `model.fallbacks` | 备用模型列表 | `["anthropic/claude-haiku-4", "openai/gpt-4o"]` |
-| `models` | 模型别名 | `{ "anthropic/claude-opus-4-5": { alias: "opus" } }` |
+| `model.primary` | 主模型 | `"anthropic/claude-opus-4-6"` |
+| `model.fallbacks` | 备用模型列表 | `["anthropic/claude-sonnet-4-5", "openai/gpt-5.1-codex"]` |
+| `models` | 模型别名/目录 | `{ "anthropic/claude-opus-4-6": { alias: "opus" } }` |
 | `imageModel` | 图像处理模型 | `{ primary: "openai/gpt-4o" }` |
 
-**支持的提供商**:
-- `anthropic` - Claude 系列
-- `openai` - GPT 系列
-- `google` - Gemini 系列
-- `openrouter` - 聚合多个提供商
-- `groq` - 高速推理
-- `deepseek` - DeepSeek 系列
-- `minimax` - MiniMax 系列
+**内置提供商** (Pi-AI Catalog, 最少配置即可使用):
+
+| 提供商 | 模型示例 | 认证环境变量 |
+|--------|----------|-------------|
+| `anthropic` | `anthropic/claude-opus-4-6` | `ANTHROPIC_API_KEY` |
+| `openai` | `openai/gpt-5.1-codex` | `OPENAI_API_KEY` |
+| `openai-codex` | `openai-codex/gpt-5.3-codex` | OAuth (ChatGPT) |
+| `opencode` | `opencode/claude-opus-4-6` | `OPENCODE_API_KEY` |
+| `google` | `google/gemini-3-pro-preview` | `GEMINI_API_KEY` |
+| `zai` | `zai/glm-4.7` | `ZAI_API_KEY` |
+| `vercel-ai-gateway` | `vercel-ai-gateway/anthropic/claude-opus-4.6` | `AI_GATEWAY_API_KEY` |
+| `openrouter` | `openrouter/anthropic/claude-opus-4-6` | `OPENROUTER_API_KEY` |
+| `xai` | xAI 模型 | `XAI_API_KEY` |
+| `groq` | Groq 模型 | `GROQ_API_KEY` |
+| `cerebras` | Cerebras 模型 | `CEREBRAS_API_KEY` |
+| `mistral` | Mistral 模型 | `MISTRAL_API_KEY` |
+| `github-copilot` | GitHub Copilot 模型 | `COPILOT_GITHUB_TOKEN` |
+| `huggingface` | Hugging Face 模型 | `HUGGINGFACE_HUB_TOKEN` |
+
+**自定义/代理提供商** (通过 `models.providers` 配置):
+
+| 提供商 | 兼容协议 | 说明 |
+|--------|----------|------|
+| Moonshot AI (Kimi) | OpenAI 兼容 | 自定义 endpoint |
+| Kimi Coding | Anthropic 兼容 | 自定义 endpoint |
+| Qwen OAuth | 设备码流程 | 免费 tier |
+| MiniMax | 自定义 endpoint | |
+| Ollama | OpenAI 兼容 | 本地运行 |
+| vLLM | OpenAI 兼容 | 自托管 |
+| LM Studio / LiteLLM | OpenAI 兼容 | 本地代理 |
+
+自定义提供商配置示例：
+
+```json5
+{
+  agents: {
+    defaults: {
+      models: {
+        providers: {
+          "my-proxy": {
+            baseUrl: "https://api.example.com/v1",
+            apiKey: "${MY_API_KEY}",
+            api: "openai",  // openai | anthropic
+            models: {
+              "my-model": { name: "My Custom Model" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
 
 ### 聊天频道配置
 
@@ -426,6 +471,27 @@ OpenClaw 使用 **JSON5** 格式，支持：
   }
 }
 ```
+
+#### 更多频道
+
+OpenClaw 支持 21+ 频道：
+
+**内置频道** (开箱即用):
+WhatsApp, Telegram, Discord, IRC, Slack, Google Chat, Signal, BlueBubbles (iMessage 替代), WebChat
+
+**插件频道** (需单独安装):
+Feishu (飞书), Mattermost, Microsoft Teams, LINE, Nextcloud Talk, Matrix, Nostr, Tlon, Twitch, Zalo
+
+> iMessage (legacy) 已不推荐，建议使用 BlueBubbles 替代，功能更全面（支持编辑、反应、群管理）。
+
+添加频道：
+```bash
+openclaw channels add                                  # 交互式
+openclaw channels add --channel signal                 # 指定频道
+openclaw channels add --channel googlechat --token <TOKEN>
+```
+
+---
 
 ### 沙箱配置
 
@@ -698,6 +764,202 @@ openclaw memory index
 
 ---
 
+## 多文件配置 ($include)
+
+OpenClaw 支持将配置拆分为多个文件，通过 `$include` 引用：
+
+```json5
+{
+  // 引用单个文件
+  $include: "./channels.json",
+
+  // 引用多个文件
+  $include: ["./agents.json", "./channels.json", "./tools.json"],
+
+  // 其他配置项会与 include 的内容合并
+  gateway: { port: 18789 }
+}
+```
+
+- 支持嵌套引用，最多 10 层
+- 后定义的字段覆盖先定义的（合并语义）
+- 适合将 agents、channels、tools 等分离管理
+
+---
+
+## 配置热重载
+
+Gateway 支持多种热重载模式，通过 `gateway.reload` 配置：
+
+```json5
+{
+  gateway: {
+    reload: {
+      mode: "hybrid",     // hybrid | hot | restart | off
+      debounceMs: 1000    // 防抖间隔
+    }
+  }
+}
+```
+
+| 模式 | 行为 |
+|------|------|
+| `hybrid` | **默认** — 大部分字段热重载，少数需要重启的自动重启 |
+| `hot` | 只热重载，需要重启的字段忽略 |
+| `restart` | 所有变更都触发完整重启 |
+| `off` | 禁用自动重载 |
+
+**热重载支持情况**：
+
+| 分类 | 字段 | 需要重启？ |
+|------|------|-----------|
+| 频道 | `channels.*`, `web` | 否 |
+| Agent & 模型 | `agents`, `models`, `routing` | 否 |
+| 自动化 | `hooks`, `cron`, `agent.heartbeat` | 否 |
+| 会话 & 消息 | `session`, `messages` | 否 |
+| 工具 & 媒体 | `tools`, `browser`, `skills`, `audio`, `talk` | 否 |
+| UI & 其他 | `ui`, `logging`, `identity`, `bindings` | 否 |
+| **Gateway 服务器** | `gateway.*` (port, bind, auth, TLS) | **是** |
+| **基础设施** | `discovery`, `canvasHost`, `plugins` | **是** |
+
+> 例外：`gateway.reload` 和 `gateway.remote` 的变更不会触发重启。
+
+---
+
+## 会话配置
+
+通过 `session` 控制会话范围和自动重置：
+
+```json5
+{
+  session: {
+    // DM 会话范围
+    dmScope: "per-channel-peer",  // main | per-peer | per-channel-peer | per-account-channel-peer
+
+    // 自动重置
+    reset: {
+      mode: "daily",       // daily | idle
+      atHour: 4,           // mode: daily 时，每天几点重置 (0-23)
+      idleMinutes: 30      // mode: idle 时，空闲多久后重置
+    }
+  }
+}
+```
+
+| dmScope | 行为 |
+|---------|------|
+| `main` | 所有 DM 共享一个会话 |
+| `per-peer` | 每个联系人独立会话 |
+| `per-channel-peer` | 每个渠道+联系人独立会话 |
+| `per-account-channel-peer` | 每个账号+渠道+联系人独立会话 |
+
+**跨频道身份链接** (可选)：
+
+```json5
+{
+  session: {
+    identityLinks: {
+      alice: ["telegram:123456789", "discord:987654321012345678"]
+    }
+  }
+}
+```
+
+这样 alice 在 Telegram 和 Discord 上会共享同一个会话上下文。
+
+---
+
+## Hooks 配置
+
+Hooks 允许外部系统向 Gateway 推送事件触发 AI 动作：
+
+```json5
+{
+  hooks: {
+    enabled: true,
+    token: "${HOOKS_TOKEN}",           // 认证 token
+    path: "/hooks",                     // 入口路径
+    defaultSessionKey: "hooks",         // 默认会话 key
+    allowRequestSessionKey: true,       // 允许请求指定会话 key
+    allowedSessionKeyPrefixes: ["ci-"], // 允许的会话 key 前缀
+    mappings: [
+      {
+        match: { source: "github", event: "push" },
+        action: "message",
+        agentId: "dev",
+        deliver: { channel: "telegram", peer: "123456789" }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 环境变量导入 (Shell Env)
+
+Gateway 可以从 login shell 导入环境变量：
+
+```json5
+{
+  env: {
+    // 静态变量
+    vars: {
+      MY_VAR: "value"
+    },
+    // 从 login shell 导入
+    shellEnv: {
+      enabled: true,          // 或设置 OPENCLAW_LOAD_SHELL_ENV=1
+      timeoutMs: 15000        // 导入超时 (默认 15 秒)
+    }
+  }
+}
+```
+
+**环境变量加载优先级**（从高到低）：
+1. 进程环境变量
+2. 本地 `.env` 文件
+3. 全局 `~/.openclaw/.env`
+4. 配置文件 `env` 块
+5. Login shell 导入（可选）
+
+> **规则**：后加载的源不会覆盖已存在的变量。
+
+---
+
+## 定时任务 (Cron)
+
+```json5
+{
+  cron: {
+    enabled: true,
+    maxConcurrentRuns: 3,       // 最大并发任务数
+    sessionRetention: "7d"      // 会话保留时间
+  }
+}
+```
+
+通过 CLI 管理定时任务：`openclaw cron list`、`openclaw cron add` 等。
+
+---
+
+## 插件配置
+
+```json5
+{
+  plugins: {
+    // 插件列表
+    list: [
+      { id: "my-plugin", enabled: true }
+    ]
+  }
+}
+```
+
+> 插件配置需要重启 Gateway 才能生效。通过 `openclaw plugins list` 查看可用插件。
+
+---
+
 ## 配置验证
 
 OpenClaw 使用严格的配置验证。如果配置无效：
@@ -744,11 +1006,14 @@ openclaw-whatsapp
 - `bindings`
 - `channels.*.allowFrom`
 - `skills.*`
+- `session.*`
+- `hooks.mappings`
 
 需要重启:
-- `gateway.port`
+- `gateway.port` 及其他 gateway 服务器设置
 - `channels.*.botToken`
 - `plugins.*`
+- `discovery`、`canvasHost`
 
 ---
 

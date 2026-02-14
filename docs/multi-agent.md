@@ -201,7 +201,7 @@ Telegram 用强模型，WhatsApp 用快速模型：
         workspace: "~/.openclaw/workspace-opus",
         // 对象形式：覆盖主模型和 fallback
         model: {
-          primary: "opencode/claude-opus-4-5",
+          primary: "opencode/claude-opus-4-6",
           fallbacks: ["openrouter/anthropic/claude-sonnet-4"]
         }
       }

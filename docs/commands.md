@@ -408,7 +408,7 @@ openclaw --help                    # 帮助
 
 以下命令主要用于开发和系统集成，一般用户无需使用：
 
-`acp`, `system`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `security`, `tui`
+`acp`, `system`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `security`, `tui`, `talk`
 
 运行 `openclaw <command> --help` 查看详情。
 
@@ -445,6 +445,16 @@ orb delete openclaw-vm             # 删除 VM (危险!)
 | `OPENCLAW_DISABLE_BONJOUR` | 禁用 Bonjour/mDNS 广播 | `1` (已启用) |
 | `CLAWDBOT_DISABLE_BONJOUR` | 禁用 Bonjour (兼容旧版) | `1` (已启用) |
 | `NODE_ENV` | Node.js 环境 | `production` |
+
+### OpenClaw 路径环境变量
+
+| 变量 | 用途 | 默认值 |
+|------|------|--------|
+| `OPENCLAW_HOME` | 覆盖 home 目录 | `~` |
+| `OPENCLAW_STATE_DIR` | 覆盖状态目录 | `~/.openclaw` |
+| `OPENCLAW_CONFIG_PATH` | 覆盖配置文件路径 | `~/.openclaw/openclaw.json` |
+| `OPENCLAW_LOAD_SHELL_ENV` | 从 login shell 导入环境变量 | 未设置 |
+| `OPENCLAW_SHELL_ENV_TIMEOUT_MS` | shell 环境导入超时 | `15000` |
 
 ---
 

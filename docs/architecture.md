@@ -33,6 +33,19 @@
 
 **沙箱是 AI 的"手"**——AI 在云端思考决策，通过 Gateway 指挥沙箱执行具体操作。
 
+## 扩展能力
+
+Gateway 还支持以下扩展能力：
+
+| 能力 | 说明 | 配置位置 |
+|------|------|----------|
+| **Hooks** | 外部事件触发 AI 动作（如 GitHub push → 自动处理） | `hooks` |
+| **Cron** | 定时任务（定期执行 AI 工作流） | `cron` |
+| **Plugins** | 插件系统，扩展频道和功能 | `plugins` |
+| **Skills** | 可复用能力包，按 Agent 隔离 | `skills` |
+| **Talk Mode** | 实时语音对话（需 macOS/iOS/Android App） | `talk` |
+| **$include** | 多文件配置，拆分管理大型配置 | 配置文件根级别 |
+
 ## 系统概览
 
 ```
