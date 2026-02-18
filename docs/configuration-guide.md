@@ -337,7 +337,7 @@ OpenClaw 使用 **JSON5** 格式，支持：
 
 | 提供商 | 模型示例 | 认证环境变量 |
 |--------|----------|-------------|
-| `anthropic` | `anthropic/claude-opus-4-6` | `ANTHROPIC_API_KEY` |
+| `anthropic` | `anthropic/claude-opus-4-6`, `anthropic/claude-sonnet-4-6` | `ANTHROPIC_API_KEY` |
 | `openai` | `openai/gpt-5.1-codex` | `OPENAI_API_KEY` |
 | `openai-codex` | `openai-codex/gpt-5.3-codex` | OAuth (ChatGPT) |
 | `opencode` | `opencode/claude-opus-4-6` | `OPENCODE_API_KEY` |
@@ -783,6 +783,7 @@ OpenClaw 支持将配置拆分为多个文件，通过 `$include` 引用：
 
 - 支持嵌套引用，最多 10 层
 - 后定义的字段覆盖先定义的（合并语义）
+- 路径遍历防护：`$include` 路径不允许包含 `..` 或绝对路径，防止引用配置目录外的文件 (OC-09)
 - 适合将 agents、channels、tools 等分离管理
 
 ---
@@ -996,7 +997,7 @@ openclaw-whatsapp
 
 ### Q: 如何切换模型?
 
-在聊天中发送 `/model anthropic/claude-opus-4-5` 即可临时切换。
+在聊天中发送 `/model anthropic/claude-opus-4-6` 即可临时切换。
 
 ### Q: 配置热重载支持哪些选项?
 

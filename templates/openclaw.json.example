@@ -110,6 +110,9 @@
         // 备用模型 (主模型失败时使用)
         fallbacks: ["anthropic/claude-haiku-4-5", "openai/gpt-5.1-codex"]
       },
+
+      // Anthropic 1M 上下文 Beta (可选，仅 Claude Sonnet 4.6+)
+      // params: { context1m: true },
       
       // 图像模型 (可选)
       // imageModel: {
@@ -119,6 +122,7 @@
       // 模型别名 (可选)
       models: {
         "anthropic/claude-opus-4-6": { alias: "opus" },
+        "anthropic/claude-sonnet-4-6": { alias: "sonnet46" },
         "anthropic/claude-sonnet-4-5": { alias: "sonnet" },
         "anthropic/claude-haiku-4-5": { alias: "haiku" }
       },
@@ -432,6 +436,12 @@
       
       // 流式传输模式: "off" | "partial" | "block"
       streamMode: "partial",
+
+      // 内联按钮样式: "primary" | "success" | "danger" (可选)
+      // buttonStyle: "primary",
+
+      // 用户消息反应作为系统事件 (默认开启)
+      // surfaceReactions: true,
       
       // 媒体大小限制 (MB)
       mediaMaxMb: 5,
@@ -524,7 +534,13 @@
         permissions: true,
         roles: false,      // 危险操作默认关闭
         moderation: false  // 危险操作默认关闭
-      }
+      },
+
+      // 可复用交互组件
+      // components: { reusable: true },
+
+      // 原生 /exec 命令 (带自动补全)
+      // exec: { enabled: true }
     },
     
     // ========== Slack ==========
@@ -556,7 +572,11 @@
         name: "openclaw",
         sessionPrefix: "slack:slash",
         ephemeral: true
-      }
+      },
+
+      // 消息流式传输模式: "off" | "native" | "draft"
+      // native 使用 Slack 原生单消息流 (chat.startStream/appendStream/stopStream)
+      streamMode: "off"
     },
     
     // ========== Google Chat ==========
@@ -608,6 +628,10 @@
       }
     },
     
+    // Web 工具 URL 白名单 (可选)
+    // webSearch: { allowedUrls: ["*.example.com"] },
+    // webFetch: { allowedUrls: ["*.example.com"] },
+
     // 执行工具配置
     exec: {
       backgroundMs: 10000,      // 后台执行阈值 (毫秒)
@@ -935,6 +959,8 @@
     enabled: false,
     store: "~/.openclaw/cron/cron.json",
     maxConcurrentRuns: 2
+    // 单任务 Webhook 投递 (可选)
+    // delivery: { mode: "webhook", url: "https://example.com/hook" },
   },
 
   // --------------------------------------------------------------------------
@@ -973,6 +999,8 @@
   // --------------------------------------------------------------------------
   browser: {
     enabled: true     // 启用浏览器工具
+    // Chrome 自定义启动参数 (可选)
+    // extraArgs: ["--disable-gpu", "--no-sandbox"],
     // 更多选项见官方文档: https://docs.openclaw.ai/tools/browser
   }
 }

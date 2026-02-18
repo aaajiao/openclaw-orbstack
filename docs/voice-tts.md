@@ -222,7 +222,7 @@ Talk Mode 是连续语音对话功能，需要麦克风和扬声器。
     "tts": {
       "auto": "inbound",
       "provider": "elevenlabs",
-      "summaryModel": "openai/gpt-4.1-mini",
+      "summaryModel": "openai/gpt-4o-mini",
       "elevenlabs": {
         "apiKey": "your_elevenlabs_api_key",
         "voiceId": "your_voice_id",
