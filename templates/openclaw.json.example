@@ -119,6 +119,7 @@
       // 模型别名 (可选)
       // Anthropic 1M 上下文 Beta (可选，Opus 4.6 / Sonnet 4.6 / 4.5 / 4)
       // 在模型条目中添加 params: { context1m: true } 启用
+      // 注意: 仅 API Key 模式 (mode: "api_key") 支持，token/OAuth 模式不支持
       // 超过 200K token 按 premium pricing 计费 (输入 2x，输出 1.5x)
       // 需要 Usage Tier 4+
       models: {
