@@ -222,6 +222,8 @@ Gateway (VM 进程)
 | `sandbox.docker` | `openclaw-sandbox-common` | 代码执行 (exec, read, write) | 按需启动 |
 | `sandbox.browser` | `openclaw-sandbox-browser` | 浏览器自动化 (Playwright) | `autoStart: true` |
 
+> **v2026.2.21+**: The browser sandbox container now uses a dedicated Docker network (`openclaw-browser-net`) for network isolation. This is handled automatically by the upstream OpenClaw Docker setup — no configuration needed in `openclaw-orbstack-setup.sh`.
+
 **注意**: `sandbox.docker` 这个配置名容易误解——它不是"Docker 通用配置"，而是"代码执行沙箱的配置"。
 
 ### 通信协议

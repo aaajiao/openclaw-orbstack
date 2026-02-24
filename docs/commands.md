@@ -455,6 +455,9 @@ orb delete openclaw-vm             # 删除 VM (危险!)
 | `OPENCLAW_CONFIG_PATH` | 覆盖配置文件路径 | `~/.openclaw/openclaw.json` |
 | `OPENCLAW_LOAD_SHELL_ENV` | 从 login shell 导入环境变量 | 未设置 |
 | `OPENCLAW_SHELL_ENV_TIMEOUT_MS` | shell 环境导入超时 | `15000` |
+| `OPENCLAW_BROWSER_NO_SANDBOX` | Disable Chromium sandbox in browser container | 未设置 |
+| `OPENCLAW_TELEGRAM_DNS_RESULT_ORDER` | Override DNS result order for Telegram | 未设置 |
+| `OPENCLAW_NODE_EXEC_HOST` | Override Node.js execution host for sandbox | 未设置 |
 
 ---
 

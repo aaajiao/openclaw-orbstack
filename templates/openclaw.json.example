@@ -127,7 +127,9 @@
         // "anthropic/claude-opus-4-6": { alias: "opus", params: { context1m: true } },
         "anthropic/claude-sonnet-4-6": { alias: "sonnet46" },
         "anthropic/claude-sonnet-4-5": { alias: "sonnet" },
-        "anthropic/claude-haiku-4-5": { alias: "haiku" }
+        "anthropic/claude-haiku-4-5": { alias: "haiku" },
+        "google/gemini-3-pro-preview": { alias: "gemini3" },
+        "google/gemini-3.1-pro-preview": { alias: "gemini31" }
       },
       
       // 默认思考级别: "off" | "low" | "high"
@@ -286,6 +288,12 @@
           autoStart: true,              // 自动启动浏览器沙箱
           autoStartTimeoutMs: 30000,    // 启动超时 30 秒
           allowHostControl: true,       // 允许 target="host" 访问宿主浏览器
+          // SSRF 保护策略 (v2026.2.20+)
+          // "strict" - 阻止访问私有网络地址 (默认)
+          // "warn"   - 记录警告但允许
+          // "off"    - 关闭检查
+          // ssrfPolicy: "strict",
+          // dangerouslyAllowPrivateNetwork: false,  // 仅调试用
           // 浏览器沙箱环境变量 (可选，通常不需要配置)
           // OPENCLAW_GATEWAY_TOKEN 由 Gateway 自动注入
           // env: {
@@ -611,6 +619,12 @@
     // 支持: Feishu (飞书), Mattermost, Microsoft Teams, LINE,
     //       Nextcloud Talk, Matrix, Nostr, Tlon, Twitch, Zalo
     // 通过 openclaw plugins list 查看可用插件
+
+    // 按频道指定模型 (v2026.2.21+)
+    // modelByChannel: {
+    //   telegram: "anthropic/claude-sonnet-4-5",
+    //   discord: "anthropic/claude-haiku-4-5"
+    // }
   },
 
   // --------------------------------------------------------------------------
@@ -798,7 +812,13 @@
     resetTriggers: ["/new", "/reset"],
     
     // 打字指示器间隔 (秒)
-    typingIntervalSeconds: 5
+    typingIntervalSeconds: 5,
+    // 会话磁盘管理 (v2026.2.23+)
+    // maintenance: {
+    //   maxDiskBytes: 524288000,   // 磁盘配额 (~500MB)
+    //   highWaterBytes: 419430400, // 触发清理阈值 (~400MB)
+    //   pruneOlderThanDays: 30    // 清理超过 N 天的会话
+    // },
   },
 
   // --------------------------------------------------------------------------
@@ -837,7 +857,15 @@
     reload: {
       mode: "hybrid",     // "hybrid" | "hot" | "restart" | "off"
       debounceMs: 1000
-    }
+    },
+    // HTTP 安全响应头 (v2026.2.21+, 公网暴露时使用)
+    // http: {
+    //   securityHeaders: {
+    //     "Strict-Transport-Security": "max-age=31536000",
+    //     "X-Content-Type-Options": "nosniff",
+    //     "X-Frame-Options": "DENY"
+    //   }
+    // },
   },
 
   // --------------------------------------------------------------------------
@@ -932,6 +960,20 @@
       //       maxTokens: 32000
       //     }
       //   ]
+      // },
+      // Kilo Gateway (多模型网关)
+      // "kilo": {
+      //   baseUrl: "https://api.kilo.ai/v1",
+      //   apiKey: "${KILO_API_KEY}",
+      //   api: "openai",
+      //   models: [{ id: "kilo-router", name: "Kilo Router" }]
+      // },
+      // Moonshot AI / Kimi (月之暗面)
+      // "moonshot": {
+      //   baseUrl: "https://api.moonshot.cn/v1",
+      //   apiKey: "${MOONSHOT_API_KEY}",
+      //   api: "openai",
+      //   models: [{ id: "moonshot-v1-128k", name: "Moonshot v1 128K" }]
       // }
     }
   },
@@ -995,6 +1037,11 @@
   //   list: [
   //     { id: "my-plugin", enabled: true }
   //   ]
+  // },
+
+  // 自动更新 (v2026.2.22+, 默认关闭)
+  // update: {
+  //   auto: { enabled: false, channel: "stable", intervalHours: 24 }
   // },
 
   // --------------------------------------------------------------------------

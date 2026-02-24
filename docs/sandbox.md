@@ -229,6 +229,8 @@ Docker 容器看不到！只能看到 /workspace
 | `openclaw-sandbox-common:bookworm-slim` | 基于上层 + Node, Python, Go, Rust | **运行时** — 代码执行沙箱 (`sandbox.docker`) |
 | `openclaw-sandbox-browser:bookworm-slim` | 独立构建，Chromium, CDP, Xvfb | **运行时** — 浏览器沙箱 (`sandbox.browser`) |
 
+> **Note**: Since v2026.2.20, upstream OpenClaw Dockerfiles pin base images by SHA256 digest (e.g., `node:22-bookworm@sha256:...`) for reproducible builds. The `openclaw-orbstack-setup.sh` script uses these pinned images automatically.
+
 ## 浏览器沙箱配置
 
 | 设置 | 默认值 | 说明 |
@@ -260,6 +262,12 @@ docker rm -f $(docker ps -aq --filter "name=openclaw-sbx") 2>/dev/null || true
 # 重启 gateway
 openclaw-restart
 ```
+
+### `OPENCLAW_BROWSER_NO_SANDBOX`
+
+Controls Chromium's internal sandbox within the browser container. When set to `true`, Chromium launches with `--no-sandbox`.
+
+In OrbStack environments, this is **not needed** — the Docker container already provides sufficient isolation. Only set this if you encounter Chromium launch failures in constrained environments (e.g., nested containers or CI runners without `/dev/shm`).
 
 ## 环境变量 (重要)
 

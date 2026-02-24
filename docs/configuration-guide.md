@@ -341,7 +341,7 @@ OpenClaw 使用 **JSON5** 格式，支持：
 | `openai` | `openai/gpt-5.1-codex` | `OPENAI_API_KEY` |
 | `openai-codex` | `openai-codex/gpt-5.3-codex` | OAuth (ChatGPT) |
 | `opencode` | `opencode/claude-opus-4-6` | `OPENCODE_API_KEY` |
-| `google` | `google/gemini-3-pro-preview` | `GEMINI_API_KEY` |
+| `google` | `google/gemini-3-pro-preview`, `google/gemini-3.1-pro-preview` | `GEMINI_API_KEY` |
 | `zai` | `zai/glm-4.7` | `ZAI_API_KEY` |
 | `vercel-ai-gateway` | `vercel-ai-gateway/anthropic/claude-opus-4.6` | `AI_GATEWAY_API_KEY` |
 | `openrouter` | `openrouter/anthropic/claude-opus-4-6` | `OPENROUTER_API_KEY` |
@@ -351,6 +351,8 @@ OpenClaw 使用 **JSON5** 格式，支持：
 | `mistral` | Mistral 模型 | `MISTRAL_API_KEY` |
 | `github-copilot` | GitHub Copilot 模型 | `COPILOT_GITHUB_TOKEN` |
 | `huggingface` | Hugging Face 模型 | `HUGGINGFACE_HUB_TOKEN` |
+| `kilo-gateway` | `kilo-router` (multi-model gateway) | `KILO_API_KEY` |
+| `moonshot` | `moonshot-v1-128k` | `MOONSHOT_API_KEY` |
 
 **自定义/代理提供商** (通过 `models.providers` 配置):
 
@@ -545,6 +547,24 @@ openclaw channels add --channel googlechat --token <TOKEN>
 > 即使设置 `network: "bridge"`，Mac 文件仍然受到保护，因为容器只能访问挂载的 `/workspace`。
 
 > **重要**: 沙箱容器不会继承 Gateway 的环境变量！`sandbox.docker.env` 和 `sandbox.browser.env` 需要分别配置。详见 [sandbox.md](sandbox.md#environment-variables-重要)。
+
+### Browser SSRF Protection
+
+v2026.2.20 introduced SSRF (Server-Side Request Forgery) protection for the browser sandbox.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `browser.ssrfPolicy` | `string` | `"strict"` | SSRF protection policy: `"strict"` (block private network), `"warn"` (log only), `"off"` (disable) |
+| `browser.dangerouslyAllowPrivateNetwork` | `boolean` | `false` | Allow browser sandbox to access private network addresses (debug only) |
+
+```json5
+browser: {
+  ssrfPolicy: "strict",
+  dangerouslyAllowPrivateNetwork: false
+}
+```
+
+In OrbStack environments, the default `"strict"` policy is recommended. Only set `dangerouslyAllowPrivateNetwork: true` for local development/debugging.
 
 ### TTS 语音配置
 
@@ -761,6 +781,9 @@ openclaw memory index
 | `TG_BOT_TOKEN` | Telegram Bot Token (沙箱内使用，不要用 `TELEGRAM_BOT_TOKEN`，该名被 Gateway 保留) |
 | `DISCORD_TOKEN` | Discord Bot Token (沙箱内使用，不要用 `DISCORD_BOT_TOKEN`，该名被 Gateway 保留) |
 | `OPENCLAW_STATE_DIR` | 状态目录 |
+| `OPENCLAW_BROWSER_NO_SANDBOX` | Disable Chromium sandbox in browser container (not needed in OrbStack) |
+| `OPENCLAW_TELEGRAM_DNS_RESULT_ORDER` | Override DNS result order for Telegram connections |
+| `OPENCLAW_NODE_EXEC_HOST` | Override Node.js execution host for sandbox |
 
 ---
 
@@ -825,6 +848,24 @@ Gateway 支持多种热重载模式，通过 `gateway.reload` 配置：
 
 > 例外：`gateway.reload` 和 `gateway.remote` 的变更不会触发重启。
 
+### HTTP Security Headers
+
+v2026.2.21 added support for custom HTTP security response headers, useful when exposing the Gateway to the public internet.
+
+```json5
+gateway: {
+  http: {
+    securityHeaders: {
+      "Strict-Transport-Security": "max-age=31536000",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY"
+    }
+  }
+}
+```
+
+These headers are added to all Gateway HTTP responses. For OrbStack local-only access, this is optional. Enable it if you expose the Gateway via Tailscale or a reverse proxy.
+
 ---
 
 ## 会话配置
@@ -867,6 +908,28 @@ Gateway 支持多种热重载模式，通过 `gateway.reload` 配置：
 ```
 
 这样 alice 在 Telegram 和 Discord 上会共享同一个会话上下文。
+
+### Session Disk Management
+
+v2026.2.23 added disk-based session maintenance to prevent unbounded storage growth.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `session.maintenance.maxDiskBytes` | `number` | `524288000` | Total disk quota for sessions (~500MB) |
+| `session.maintenance.highWaterBytes` | `number` | `419430400` | Trigger cleanup when usage exceeds this (~400MB) |
+| `session.maintenance.pruneOlderThanDays` | `number` | `30` | Delete sessions older than N days during cleanup |
+
+```json5
+session: {
+  maintenance: {
+    maxDiskBytes: 524288000,
+    highWaterBytes: 419430400,
+    pruneOlderThanDays: 30
+  }
+}
+```
+
+When disk usage exceeds `highWaterBytes`, sessions older than `pruneOlderThanDays` are automatically deleted until usage drops below the threshold.
 
 ---
 

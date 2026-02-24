@@ -283,7 +283,7 @@ echo ""
 echo -e "${YELLOW}$MSG_PRESS_ENTER${NC}"
 read -r
 
-vm_exec "mkdir -p ~/.openclaw"
+vm_exec "mkdir -p ~/.openclaw ~/.openclaw/identity"
 
 orb -m "$VM_NAME" openclaw onboard
 
