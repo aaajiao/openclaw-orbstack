@@ -408,7 +408,7 @@ openclaw --help                    # 帮助
 
 以下命令主要用于开发和系统集成，一般用户无需使用：
 
-`acp`, `system`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `security`, `tui`, `talk`
+`acp`, `approvals`, `daemon`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tui`, `talk`, `voicecall`
 
 运行 `openclaw <command> --help` 查看详情。
 
