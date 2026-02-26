@@ -158,6 +158,15 @@
         mode: "natural"  // "off" | "natural" | "fixed"
       },
       
+      // ========== 心跳配置 (v2026.2.25+) ==========
+      // heartbeat: {
+      //   every: "30m",              // 心跳间隔: "30m" | "1h" | "2h"
+      //   target: "none",            // 投递目标: "none" | "last" | channel/peer
+      //   // DM 投递策略 (v2026.2.25+)
+      //   // v2026.2.24 曾默认改为 block，v2026.2.25 恢复为 allow
+      //   directPolicy: "allow",     // "allow" - 允许投递到私聊 | "block" - 只投递到群组/频道
+      // },
+
       // 块流式传输配置
       blockStreamingDefault: "off",  // "off" | "on"
       blockStreamingBreak: "text_end",
@@ -277,7 +286,11 @@
           // 可选配置:
           // setupCommand: "apt-get update && apt-get install -y git",
           // dns: ["1.1.1.1", "8.8.8.8"],
-          // extraHosts: ["myhost:192.168.1.1"]
+          // extraHosts: ["myhost:192.168.1.1"],
+          // 容器网络命名空间共享 (v2026.2.24+ 默认阻止)
+          // Docker network: "container:<id>" 模式已被默认禁用
+          // 如需恢复旧行为，显式设置为 true
+          // dangerouslyAllowContainerNamespaceJoin: false
         },
         
         // ===== 浏览器沙箱配置 (sandbox.browser) =====
@@ -810,7 +823,11 @@
     
     // 重置触发命令
     resetTriggers: ["/new", "/reset"],
-    
+
+    // Slack 线程父会话 token 上限 (v2026.2.25+)
+    // 防止父会话过大导致子线程继承时卡死
+    // parentForkMaxTokens: 100000,
+
     // 打字指示器间隔 (秒)
     typingIntervalSeconds: 5,
     // 会话磁盘管理 (v2026.2.23+)
@@ -1045,7 +1062,19 @@
   // },
 
   // --------------------------------------------------------------------------
-  // 十七、浏览器工具 (全局开关)
+  // 十七、安全配置 (v2026.2.24+)
+  // --------------------------------------------------------------------------
+  // security: {
+  //   trust_model: {
+  //     // 多用户检测启发式 (v2026.2.24+)
+  //     // 检测到多用户共享同一实例时发出警告
+  //     // 多用户场景建议: sandbox.mode="all", 工作区隔离, 限制工具权限
+  //     multi_user_heuristic: true
+  //   }
+  // },
+
+  // --------------------------------------------------------------------------
+  // 十八、浏览器工具 (全局开关)
   // --------------------------------------------------------------------------
   browser: {
     enabled: true     // 启用浏览器工具

@@ -548,6 +548,16 @@ openclaw channels add --channel googlechat --token <TOKEN>
 
 > **重要**: 沙箱容器不会继承 Gateway 的环境变量！`sandbox.docker.env` 和 `sandbox.browser.env` 需要分别配置。详见 [sandbox.md](sandbox.md#environment-variables-重要)。
 
+### Docker Namespace Join (v2026.2.24+)
+
+v2026.2.24 起，Docker `network: "container:<id>"` 命名空间共享模式被**默认阻止**，防止沙箱容器共享其他容器的网络命名空间。
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `docker.dangerouslyAllowContainerNamespaceJoin` | `boolean` | `false` | 允许沙箱容器使用 `network: "container:<id>"` 模式 |
+
+> 我们的默认配置使用 `network: "bridge"`，不受此变更影响。仅在需要容器间网络命名空间共享的高级场景中才需要设置为 `true`。
+
 ### Browser SSRF Protection
 
 v2026.2.20 introduced SSRF (Server-Side Request Forgery) protection for the browser sandbox.
@@ -565,6 +575,65 @@ browser: {
 ```
 
 In OrbStack environments, the default `"strict"` policy is recommended. Only set `dangerouslyAllowPrivateNetwork: true` for local development/debugging.
+
+### Heartbeat 心跳配置 (v2026.2.25+)
+
+心跳允许 AI 在空闲时主动检查并发送消息。v2026.2.25 引入了 `directPolicy` 配置项：
+
+```json5
+{
+  agents: {
+    defaults: {
+      heartbeat: {
+        every: "30m",              // 心跳间隔
+        target: "none",            // 投递目标: "none" | "last" | channel/peer
+        directPolicy: "allow",    // "allow" | "block"
+      }
+    }
+  }
+}
+```
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `heartbeat.every` | `string` | — | 心跳间隔 (`"30m"`, `"1h"`, `"2h"`) |
+| `heartbeat.target` | `string` | `"none"` | 投递目标 (v2026.2.24 从 `"last"` 改为 `"none"`，需要主动 opt-in) |
+| `heartbeat.directPolicy` | `string` | `"allow"` | DM 投递策略: `"allow"` 允许投递到私聊, `"block"` 只投递到群组/频道 |
+
+> **版本变更记录**: v2026.2.24 曾将心跳 DM 投递默认改为阻止，v2026.2.25 恢复为 `"allow"` 并引入显式 `directPolicy` 配置。如需阻止心跳投递到私聊，设置 `directPolicy: "block"`。
+
+支持 per-agent 覆盖:
+
+```json5
+{
+  agents: {
+    list: [{
+      id: "public",
+      heartbeat: { directPolicy: "block" }
+    }]
+  }
+}
+```
+
+### Security Trust Model (v2026.2.24+)
+
+v2026.2.24 新增了 `security` 顶层配置块，支持多用户安全检测：
+
+```json5
+{
+  security: {
+    trust_model: {
+      multi_user_heuristic: true  // 检测到多用户共享同一实例时发出警告
+    }
+  }
+}
+```
+
+**多用户场景建议**:
+- 确保 `sandbox.mode: "all"` (所有会话沙箱化)
+- 使用工作区隔离 (`sandbox.scope: "session"`)
+- 限制工具权限 (减少 `tools.allow` 范围)
+- 不要在共享实例上配置个人身份/隐私信息
 
 ### TTS 语音配置
 
@@ -908,6 +977,20 @@ These headers are added to all Gateway HTTP responses. For OrbStack local-only a
 ```
 
 这样 alice 在 Telegram 和 Discord 上会共享同一个会话上下文。
+
+### Session Parent Fork Limit (v2026.2.25+)
+
+v2026.2.25 added `parentForkMaxTokens` to prevent oversized parent sessions from bricking child thread sessions (primarily affects Slack thread workflows).
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `session.parentForkMaxTokens` | `number` | `100000` | Maximum tokens inherited from parent session when forking threads |
+
+```json5
+session: {
+  parentForkMaxTokens: 100000
+}
+```
 
 ### Session Disk Management
 

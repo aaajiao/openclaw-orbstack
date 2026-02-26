@@ -337,7 +337,8 @@ openclaw memory status             # 内存索引状态
 openclaw memory status --deep      # 探测 embedding
 openclaw memory index              # 重建索引
 openclaw memory index --force      # 强制重建
-openclaw memory search <query>     # 搜索记忆
+openclaw memory search <query>     # 搜索记忆 (位置参数)
+openclaw memory search --query <text>  # 搜索记忆 (v2026.2.24+ 命名参数)
 ```
 
 ### 插件
