@@ -124,6 +124,8 @@ openclaw gateway usage-cost                # 使用成本摘要
 
 # 生命周期管理 (OrbStack 环境下一般用 openclaw-start/stop/restart 快捷命令)
 openclaw gateway run                       # 前台运行 Gateway
+openclaw gateway run --auth none           # 无认证模式运行 (v2026.2.26+)
+openclaw gateway run --auth trusted-proxy  # 信任代理模式运行 (v2026.2.26+)
 openclaw gateway install                   # 安装 Gateway 服务
 openclaw gateway uninstall                 # 卸载 Gateway 服务
 openclaw gateway start                     # 启动 Gateway 服务
@@ -248,6 +250,11 @@ openclaw agents add <name>         # 添加新 Agent
 openclaw agents add --workspace <dir>
 openclaw agents set-identity       # 更新身份
 openclaw agents delete <id>        # 删除 Agent
+
+# 路由绑定管理 (v2026.2.26+)
+openclaw agents bindings           # 列出所有路由绑定
+openclaw agents bind <agentId>     # 添加路由绑定
+openclaw agents unbind <agentId>   # 移除路由绑定
 
 # 发送消息
 openclaw agent -m "消息内容"
@@ -386,11 +393,23 @@ openclaw completion --install              # 安装补全脚本到 shell 配置
 openclaw completion --install --yes        # 跳过确认直接安装
 ```
 
+### Secrets 管理 (v2026.2.26+)
+
+```bash
+openclaw secrets audit             # 审计当前 secrets 状态
+openclaw secrets configure         # 配置外部 secrets 源
+openclaw secrets apply             # 应用 secrets 快照到运行时
+openclaw secrets reload            # 重新加载 secrets (不重启)
+```
+
+> 外部 Secrets 管理允许从外部源（如 Vault、AWS Secrets Manager 等）拉取密钥，通过快照机制激活到 Gateway 运行时。详见 [configuration-guide.md](configuration-guide.md#外部-secrets-管理-v2026226)。
+
 ### 其他
 
 ```bash
 openclaw sessions                  # 会话列表
 openclaw sessions --active 60      # 最近 60 分钟活跃的
+openclaw sessions cleanup --fix-missing  # 清理缺失/损坏的会话文件 (v2026.2.26+)
 
 openclaw dashboard                 # 打开控制面板
 openclaw dashboard --no-open       # 只打印 URL
@@ -409,7 +428,7 @@ openclaw --help                    # 帮助
 
 以下命令主要用于开发和系统集成，一般用户无需使用：
 
-`acp`, `approvals`, `daemon`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tui`, `talk`, `voicecall`
+`acp`, `approvals`, `daemon`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `secrets`, `security`, `tui`, `talk`, `voicecall`
 
 运行 `openclaw <command> --help` 查看详情。
 

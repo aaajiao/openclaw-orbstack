@@ -53,6 +53,14 @@
   // --------------------------------------------------------------------------
   // 三、认证配置 (API Key / OAuth)
   // --------------------------------------------------------------------------
+  // 外部 Secrets 管理 (v2026.2.26+):
+  //   openclaw secrets audit/configure/apply/reload
+  //   支持从 Vault、AWS Secrets Manager 等外部源拉取密钥，通过运行时快照激活
+  //
+  // Auth profiles 别名规范化 (v2026.2.26+):
+  //   旧别名仍可使用，但建议更新:
+  //     mode → type    (如 mode: "api_key" → type: "api_key")
+  //     apiKey → key   (如 apiKey: "sk-xxx" → key: "sk-xxx")
   auth: {
     // 认证配置文件元数据 (实际密钥存储在 auth-profiles.json)
     profiles: {
@@ -128,6 +136,9 @@
         "anthropic/claude-sonnet-4-6": { alias: "sonnet46" },
         "anthropic/claude-sonnet-4-5": { alias: "sonnet" },
         "anthropic/claude-haiku-4-5": { alias: "haiku" },
+        // Gemini 裸模型 ID 规范化 (v2026.2.26+):
+        //   gemini-3-pro 等不带后缀的 ID 会自动规范化到 -low tier
+        //   建议使用完整 ID: gemini-3-pro-preview, gemini-3-pro-low 等
         "google/gemini-3-pro-preview": { alias: "gemini3" },
         "google/gemini-3.1-pro-preview": { alias: "gemini31" }
       },

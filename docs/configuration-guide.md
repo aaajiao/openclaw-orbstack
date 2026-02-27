@@ -615,6 +615,44 @@ In OrbStack environments, the default `"strict"` policy is recommended. Only set
 }
 ```
 
+### 外部 Secrets 管理 (v2026.2.26+)
+
+v2026.2.26 引入了外部 Secrets 管理工作流，允许从外部源拉取密钥并通过运行时快照机制激活：
+
+```bash
+openclaw secrets audit             # 审计当前 secrets 状态
+openclaw secrets configure         # 配置外部 secrets 源
+openclaw secrets apply             # 应用 secrets 快照到运行时
+openclaw secrets reload            # 重新加载 secrets (不重启 Gateway)
+```
+
+**工作流**：
+1. `openclaw secrets configure` — 设置外部 secrets 源（如 Vault、AWS Secrets Manager）
+2. `openclaw secrets apply` — 从外部源拉取并创建运行时快照
+3. `openclaw secrets reload` — 热加载新的 secrets（无需重启）
+4. `openclaw secrets audit` — 检查 secrets 状态和过期情况
+
+> 此功能补充了现有的 `.env` 文件管理方式，适合需要集中式密钥管理的团队场景。
+
+### DM Allowlist 运行时继承 (v2026.2.26+)
+
+v2026.2.26 加强了 DM allowlist 的运行时继承执行：
+
+- **`dmPolicy: "allowlist"` 配合空 `allowFrom`**：现在会被**拒绝启动**（之前是静默忽略）
+  - 运行 `openclaw doctor --fix` 可以自动修复（回退到 `dmPolicy: "pairing"`）
+- **所有支持账户的频道**（WhatsApp、Telegram、Discord 等）现在统一执行 allowlist 继承规则
+- 多账户场景下，子账户的 `allowFrom` 会继承父级默认值
+
+### Channel Plugin 交互式引导 (v2026.2.26+)
+
+插件频道现在支持 `configureInteractive` 和 `configureWhenConfigured` 钩子，允许插件在安装和配置时提供交互式引导流程。
+
+### 模型 ID 规范化 (v2026.2.26+)
+
+- **Gemini 裸模型 ID 规范化**：`gemini-3-pro` 等不带后缀的裸 ID 会自动规范化到 `-low` tier（如 `gemini-3-pro-low`）。建议在配置中使用完整模型 ID（如 `gemini-3-pro-preview`）。
+- **MiniMax auth header 默认值修复**：MiniMax 提供商的 auth header 默认行为已修正。
+- **Auth profiles 别名规范化**：`mode` → `type`、`apiKey` → `key` 别名现在会自动规范化。旧别名仍可使用，但建议更新到新名称。
+
 ### Security Trust Model (v2026.2.24+)
 
 v2026.2.24 新增了 `security` 顶层配置块，支持多用户安全检测：
