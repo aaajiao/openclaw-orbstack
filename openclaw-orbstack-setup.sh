@@ -260,6 +260,14 @@ else
     warn "$MSG_WARN_SANDBOX_BROWSER_FAIL"
 fi
 
+# OrbStack VM kernel restricts unprivileged user namespaces; Chromium needs --no-sandbox
+info "Applying browser --no-sandbox overlay for OrbStack VM..."
+if vm_exec "printf 'FROM openclaw-sandbox-browser:bookworm-slim\nENV OPENCLAW_BROWSER_NO_SANDBOX=1\n' | sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -'" 2>/dev/null; then
+    ok "Browser --no-sandbox overlay applied"
+else
+    warn "Browser --no-sandbox overlay failed (non-critical)"
+fi
+
 info "$MSG_INFO_SANDBOX_COMMON"
 if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
     ok "$MSG_OK_SANDBOX_COMMON"
@@ -662,6 +670,9 @@ if [ "\$SANDBOX" = true ]; then
     orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_BROWSER"
     orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null || true
+    # OrbStack VM kernel restricts unprivileged user namespaces; Chromium needs --no-sandbox
+    echo "  Applying browser --no-sandbox overlay..."
+    orb -m $VM_NAME bash -c "printf 'FROM openclaw-sandbox-browser:bookworm-slim\nENV OPENCLAW_BROWSER_NO_SANDBOX=1\n' | sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_NOTE"
     # Save new sandbox build hash
     orb -m $VM_NAME bash -c "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
@@ -708,6 +719,10 @@ elif orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c 'docker build -t ope
 else
     echo "\$MSG_CMD_REBUILD_BROWSER_FAIL"
 fi
+
+# OrbStack VM kernel restricts unprivileged user namespaces; Chromium needs --no-sandbox
+echo "  Applying browser --no-sandbox overlay..."
+orb -m $VM_NAME bash -c "printf 'FROM openclaw-sandbox-browser:bookworm-slim\nENV OPENCLAW_BROWSER_NO_SANDBOX=1\n' | sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -'" 2>/dev/null || true
 
 # Save new sandbox build hash
 orb -m $VM_NAME bash -c "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
