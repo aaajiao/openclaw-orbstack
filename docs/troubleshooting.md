@@ -158,7 +158,48 @@ openclaw-restart
 
 ---
 
-### 5. Memory Search 无法使用 / 索引为空
+### 5. 浏览器沙箱 Chromium 崩溃 ("No usable sandbox!")
+
+#### 症状
+
+浏览器工具无法使用，Gateway 日志中出现：
+
+```
+No usable sandbox! If this is a Debian system, please install the chromium-sandbox package to solve this problem.
+```
+
+或者浏览器容器启动后立即退出。
+
+#### 原因
+
+OrbStack VM 内核限制 unprivileged user namespaces，Chromium 无法创建自己的命名空间沙箱。需要 `OPENCLAW_BROWSER_NO_SANDBOX=1` 环境变量让 Chromium 以 `--no-sandbox` 模式启动。
+
+最新版的安装脚本会在浏览器镜像构建后自动加一层 Docker overlay 写入此变量，但老用户可能没有这层 overlay。
+
+#### 解决方案
+
+**方法 1：更新脚本并重建沙箱（推荐）**
+
+```bash
+cd ~/openclaw-orbstack && git pull && bash scripts/refresh-mac-commands.sh
+openclaw-sandbox-rebuild
+```
+
+**方法 2：手动打 overlay（不想重建整个沙箱时）**
+
+```bash
+orb -m openclaw-vm bash -c "printf 'FROM openclaw-sandbox-browser:bookworm-slim\nENV OPENCLAW_BROWSER_NO_SANDBOX=1\n' | sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -'"
+openclaw-restart
+```
+
+#### 参考
+
+- [OpenClaw PR #29879](https://github.com/openclaw/openclaw/pull/29879) — 上游 v2026.2.27+ 的运行时修复
+- [安全公告 GHSA-43x4-g22p-3hrq](https://github.com/openclaw/openclaw/security/advisories/GHSA-43x4-g22p-3hrq) — `--no-sandbox` 从默认改为 opt-in 的背景
+
+---
+
+### 6. Memory Search 无法使用 / 索引为空
 
 #### 症状
 
@@ -276,7 +317,7 @@ OpenClaw 会自动下载本地 embedding 模型。
 
 ---
 
-### 6. 服务状态检查
+### 7. 服务状态检查
 
 #### 常用诊断命令
 
