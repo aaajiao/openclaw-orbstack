@@ -71,31 +71,31 @@ VM_EOF
 cat > ~/bin/openclaw-status << EOF
 #!/bin/bash
 set -e
-orb -m "$VM_NAME" bash -c "openclaw gateway status"
+orb -m "$VM_NAME" bash -lc "openclaw gateway status"
 EOF
 
 cat > ~/bin/openclaw-logs << EOF
 #!/bin/bash
 set -e
-orb -m "$VM_NAME" bash -c "openclaw logs --follow"
+orb -m "$VM_NAME" bash -lc "openclaw logs --follow"
 EOF
 
 cat > ~/bin/openclaw-restart << EOF
 #!/bin/bash
 set -e
-orb -m "$VM_NAME" bash -c "openclaw gateway restart"
+orb -m "$VM_NAME" bash -lc "openclaw gateway restart"
 EOF
 
 cat > ~/bin/openclaw-stop << EOF
 #!/bin/bash
 set -e
-orb -m "$VM_NAME" bash -c "openclaw gateway stop"
+orb -m "$VM_NAME" bash -lc "openclaw gateway stop"
 EOF
 
 cat > ~/bin/openclaw-start << EOF
 #!/bin/bash
 set -e
-orb -m "$VM_NAME" bash -c "openclaw gateway start"
+orb -m "$VM_NAME" bash -lc "openclaw gateway start"
 EOF
 
 cat > ~/bin/openclaw-shell << EOF
@@ -110,7 +110,7 @@ if [ \$# -eq 0 ]; then
     set -- "--help"
 fi
 ARGS=\$(printf '%q ' "\$@")
-orb -m "$VM_NAME" bash -c "openclaw \$ARGS"
+orb -m "$VM_NAME" bash -lc "openclaw \$ARGS"
 EOF
 
 # --- Helper: load language for commands ---
@@ -134,15 +134,15 @@ ACTION="\${1:-edit}"
 case "\$ACTION" in
     edit)
         echo "\$MSG_CMD_CONFIG_OPENING"
-        orb -m $VM_NAME bash -c "nano ~/.openclaw/openclaw.json 2>/dev/null || vi ~/.openclaw/openclaw.json"
+        orb -m $VM_NAME bash -lc "nano ~/.openclaw/openclaw.json 2>/dev/null || vi ~/.openclaw/openclaw.json"
         echo "\$MSG_CMD_CONFIG_SAVED"
         ;;
     show)
-        orb -m $VM_NAME bash -c "cat ~/.openclaw/openclaw.json"
+        orb -m $VM_NAME bash -lc "cat ~/.openclaw/openclaw.json"
         ;;
     backup)
         BACKUP="openclaw-config-\$(date +%Y%m%d-%H%M%S).json"
-        orb -m $VM_NAME bash -c "cat ~/.openclaw/openclaw.json" > "\$BACKUP"
+        orb -m $VM_NAME bash -lc "cat ~/.openclaw/openclaw.json" > "\$BACKUP"
         printf "\$MSG_CMD_CONFIG_BACKED_UP\n" "\$BACKUP"
         ;;
     *)
@@ -178,68 +178,68 @@ done
 if grep -q "systemctl status openclaw" ~/bin/openclaw-status 2>/dev/null; then
     echo "\$MSG_UPDATE_AUTO_UPGRADE"
     # VM: migrate from system-level to user-level service
-    orb -m $VM_NAME bash -c "sudo systemctl stop openclaw 2>/dev/null || true"
-    orb -m $VM_NAME bash -c "sudo systemctl disable openclaw 2>/dev/null || true"
-    orb -m $VM_NAME bash -c "sudo rm -f /etc/systemd/system/openclaw.service && sudo systemctl daemon-reload"
-    orb -m $VM_NAME bash -c "sudo loginctl enable-linger \\\$(whoami)"
-    orb -m $VM_NAME bash -c "systemctl --user enable openclaw-gateway.service 2>/dev/null || true"
+    orb -m $VM_NAME bash -lc "sudo systemctl stop openclaw 2>/dev/null || true"
+    orb -m $VM_NAME bash -lc "sudo systemctl disable openclaw 2>/dev/null || true"
+    orb -m $VM_NAME bash -lc "sudo rm -f /etc/systemd/system/openclaw.service && sudo systemctl daemon-reload"
+    orb -m $VM_NAME bash -lc "sudo loginctl enable-linger \\\$(whoami)"
+    orb -m $VM_NAME bash -lc "systemctl --user enable openclaw-gateway.service 2>/dev/null || true"
     # Mac: fix stale commands
     cat > ~/bin/openclaw-status << 'FIXEOF'
 #!/bin/bash
-orb -m $VM_NAME bash -c "openclaw gateway status"
+orb -m $VM_NAME bash -lc "openclaw gateway status"
 FIXEOF
     cat > ~/bin/openclaw-logs << 'FIXEOF'
 #!/bin/bash
-orb -m $VM_NAME bash -c "openclaw logs --follow"
+orb -m $VM_NAME bash -lc "openclaw logs --follow"
 FIXEOF
     cat > ~/bin/openclaw-restart << 'FIXEOF'
 #!/bin/bash
-orb -m $VM_NAME bash -c "openclaw gateway restart"
+orb -m $VM_NAME bash -lc "openclaw gateway restart"
 FIXEOF
     cat > ~/bin/openclaw-stop << 'FIXEOF'
 #!/bin/bash
-orb -m $VM_NAME bash -c "openclaw gateway stop"
+orb -m $VM_NAME bash -lc "openclaw gateway stop"
 FIXEOF
     cat > ~/bin/openclaw-start << 'FIXEOF'
 #!/bin/bash
-orb -m $VM_NAME bash -c "openclaw gateway start"
+orb -m $VM_NAME bash -lc "openclaw gateway start"
 FIXEOF
     chmod +x ~/bin/openclaw-status ~/bin/openclaw-logs ~/bin/openclaw-restart ~/bin/openclaw-stop ~/bin/openclaw-start
     echo "\$MSG_UPDATE_AUTO_UPGRADE_DONE"
 fi
 
 # Ensure .env exists with at least Bonjour vars
-if ! orb -m $VM_NAME bash -c 'test -f ~/.openclaw/.env' 2>/dev/null; then
-    orb -m $VM_NAME bash -c 'mkdir -p ~/.openclaw && printf "# OpenClaw Environment Variables\nOPENCLAW_DISABLE_BONJOUR=1\nCLAWDBOT_DISABLE_BONJOUR=1\n" > ~/.openclaw/.env && chmod 600 ~/.openclaw/.env'
+if ! orb -m $VM_NAME bash -lc 'test -f ~/.openclaw/.env' 2>/dev/null; then
+    orb -m $VM_NAME bash -lc 'mkdir -p ~/.openclaw && printf "# OpenClaw Environment Variables\nOPENCLAW_DISABLE_BONJOUR=1\nCLAWDBOT_DISABLE_BONJOUR=1\n" > ~/.openclaw/.env && chmod 600 ~/.openclaw/.env'
     echo "  \$MSG_UPDATE_ENV_CREATED"
 fi
 
 echo "\$MSG_CMD_UPDATE_UPDATING"
 
 echo "\$MSG_CMD_UPDATE_STOPPING"
-orb -m $VM_NAME bash -c "openclaw gateway stop"
+orb -m $VM_NAME bash -lc "openclaw gateway stop"
 
 echo "\$MSG_CMD_UPDATE_PULLING"
-orb -m $VM_NAME bash -c "cd ~/openclaw && git fetch --tags"
-LATEST_TAG=\$(orb -m $VM_NAME bash -c "cd ~/openclaw && git describe --tags \\\$(git rev-list --tags --max-count=1)")
+orb -m $VM_NAME bash -lc "cd ~/openclaw && git fetch --tags"
+LATEST_TAG=\$(orb -m $VM_NAME bash -lc "cd ~/openclaw && git describe --tags \\\$(git rev-list --tags --max-count=1)")
 echo "  -> \$LATEST_TAG"
-orb -m $VM_NAME bash -c "cd ~/openclaw && git checkout '\$LATEST_TAG'"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && git checkout '\$LATEST_TAG'"
 
 echo "\$MSG_CMD_UPDATE_INSTALLING"
-orb -m $VM_NAME bash -c "cd ~/openclaw && npm install"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && npm install"
 
 echo "\$MSG_CMD_UPDATE_BUILDING"
-orb -m $VM_NAME bash -c "cd ~/openclaw && npm run build"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && npm run build"
 
 echo "\$MSG_CMD_UPDATE_UI"
-orb -m $VM_NAME bash -c "cd ~/openclaw && pnpm ui:build"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && pnpm ui:build"
 
 echo "\$MSG_CMD_UPDATE_REINSTALL"
-orb -m $VM_NAME bash -c "cd ~/openclaw && sudo npm install -g ."
+orb -m $VM_NAME bash -lc "cd ~/openclaw && sudo npm install -g ."
 
 # Auto-detect sandbox Dockerfile changes
-OLD_HASH=\$(orb -m $VM_NAME bash -c "cat ~/.openclaw/.sandbox-build-hash 2>/dev/null || echo none")
-NEW_HASH=\$(orb -m $VM_NAME bash -c "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1")
+OLD_HASH=\$(orb -m $VM_NAME bash -lc "cat ~/.openclaw/.sandbox-build-hash 2>/dev/null || echo none")
+NEW_HASH=\$(orb -m $VM_NAME bash -lc "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1")
 if [ "\$OLD_HASH" != "\$NEW_HASH" ]; then
     SANDBOX=true
     echo "\$MSG_CMD_UPDATE_SANDBOX_CHANGED"
@@ -248,18 +248,18 @@ fi
 if [ "\$SANDBOX" = true ]; then
     echo "\$MSG_CMD_UPDATE_SANDBOX_REBUILD"
     echo "\$MSG_CMD_UPDATE_SANDBOX_BASE"
-    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_COMMON"
-    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_BROWSER"
-    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_NOTE"
     # Save new sandbox build hash
-    orb -m $VM_NAME bash -c "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
+    orb -m $VM_NAME bash -lc "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
 fi
 
 echo "\$MSG_CMD_UPDATE_STARTING"
-orb -m $VM_NAME bash -c "openclaw gateway start"
+orb -m $VM_NAME bash -lc "openclaw gateway start"
 
 echo "\$MSG_CMD_UPDATE_DONE"
 if [ "\$SANDBOX" = false ]; then
@@ -275,32 +275,32 @@ $_LANG_LOADER
 echo "\$MSG_CMD_REBUILD_START"
 
 echo "\$MSG_CMD_REBUILD_BASE"
-if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BASE_OK"
-elif orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
+elif orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BASE_OK_DF"
 else
     echo "\$MSG_CMD_REBUILD_BASE_FAIL"
 fi
 
 echo "\$MSG_CMD_REBUILD_COMMON"
-if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_COMMON_OK"
 else
     echo "\$MSG_CMD_REBUILD_COMMON_FAIL"
 fi
 
 echo "\$MSG_CMD_REBUILD_BROWSER"
-if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BROWSER_OK"
-elif orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
+elif orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BROWSER_OK_DF"
 else
     echo "\$MSG_CMD_REBUILD_BROWSER_FAIL"
 fi
 
 # Save new sandbox build hash
-orb -m $VM_NAME bash -c "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
 
 echo ""
 echo "\$MSG_CMD_REBUILD_DONE"
@@ -319,7 +319,7 @@ case "\$ACTION" in
             echo "\$MSG_CMD_TG_ADD_HINT"
             exit 1
         fi
-        orb -m $VM_NAME bash -c "openclaw channels add --channel telegram --token \$(printf '%q' "\$2")"
+        orb -m $VM_NAME bash -lc "openclaw channels add --channel telegram --token \$(printf '%q' "\$2")"
         ;;
     approve)
         if [ -z "\$2" ]; then
@@ -327,7 +327,7 @@ case "\$ACTION" in
             echo "\$MSG_CMD_TG_APPROVE_HINT"
             exit 1
         fi
-        orb -m $VM_NAME bash -c "openclaw pairing approve telegram \$(printf '%q' "\$2")"
+        orb -m $VM_NAME bash -lc "openclaw pairing approve telegram \$(printf '%q' "\$2")"
         ;;
     *)
         echo "\$MSG_CMD_TG_TITLE"
@@ -346,13 +346,13 @@ cat > ~/bin/openclaw-doctor << EOF
 #!/bin/bash
 set -e
 ARGS=\$(printf '%q ' "\$@")
-orb -m "$VM_NAME" bash -c "openclaw doctor \$ARGS"
+orb -m "$VM_NAME" bash -lc "openclaw doctor \$ARGS"
 EOF
 
 cat > ~/bin/openclaw-whatsapp << EOF
 #!/bin/bash
 set -e
-orb -m "$VM_NAME" bash -c "openclaw channels login --channel whatsapp"
+orb -m "$VM_NAME" bash -lc "openclaw channels login --channel whatsapp"
 EOF
 
 chmod +x ~/bin/openclaw-*

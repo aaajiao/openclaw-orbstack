@@ -99,7 +99,7 @@ info()    { echo -e "  $1"; }
 
 # --- VM Command Execution ---
 vm_exec() {
-    orb -m "$VM_NAME" bash -c "$1"
+    orb -m "$VM_NAME" bash -lc "$1"
 }
 
 # ============================================================================
@@ -626,29 +626,29 @@ fi
 echo "\$MSG_CMD_UPDATE_UPDATING"
 
 echo "\$MSG_CMD_UPDATE_STOPPING"
-orb -m $VM_NAME bash -c "openclaw gateway stop"
+orb -m $VM_NAME bash -lc "openclaw gateway stop"
 
 echo "\$MSG_CMD_UPDATE_PULLING"
-orb -m $VM_NAME bash -c "cd ~/openclaw && git fetch --tags"
-LATEST_TAG=\$(orb -m $VM_NAME bash -c "cd ~/openclaw && git describe --tags \\\$(git rev-list --tags --max-count=1)")
+orb -m $VM_NAME bash -lc "cd ~/openclaw && git fetch --tags"
+LATEST_TAG=\$(orb -m $VM_NAME bash -lc "cd ~/openclaw && git describe --tags \\\$(git rev-list --tags --max-count=1)")
 echo "  -> \$LATEST_TAG"
-orb -m $VM_NAME bash -c "cd ~/openclaw && git checkout '\$LATEST_TAG'"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && git checkout '\$LATEST_TAG'"
 
 echo "\$MSG_CMD_UPDATE_INSTALLING"
-orb -m $VM_NAME bash -c "cd ~/openclaw && npm install"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && npm install"
 
 echo "\$MSG_CMD_UPDATE_BUILDING"
-orb -m $VM_NAME bash -c "cd ~/openclaw && npm run build"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && npm run build"
 
 echo "\$MSG_CMD_UPDATE_UI"
-orb -m $VM_NAME bash -c "cd ~/openclaw && pnpm ui:build"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && pnpm ui:build"
 
 echo "\$MSG_CMD_UPDATE_REINSTALL"
-orb -m $VM_NAME bash -c "cd ~/openclaw && sudo npm install -g ."
+orb -m $VM_NAME bash -lc "cd ~/openclaw && sudo npm install -g ."
 
 # Auto-detect sandbox Dockerfile changes
-OLD_HASH=\$(orb -m $VM_NAME bash -c "cat ~/.openclaw/.sandbox-build-hash 2>/dev/null || echo none")
-NEW_HASH=\$(orb -m $VM_NAME bash -c "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1")
+OLD_HASH=\$(orb -m $VM_NAME bash -lc "cat ~/.openclaw/.sandbox-build-hash 2>/dev/null || echo none")
+NEW_HASH=\$(orb -m $VM_NAME bash -lc "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1")
 if [ "\$OLD_HASH" != "\$NEW_HASH" ]; then
     SANDBOX=true
     echo "\$MSG_CMD_UPDATE_SANDBOX_CHANGED"
@@ -657,18 +657,18 @@ fi
 if [ "\$SANDBOX" = true ]; then
     echo "\$MSG_CMD_UPDATE_SANDBOX_REBUILD"
     echo "\$MSG_CMD_UPDATE_SANDBOX_BASE"
-    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_COMMON"
-    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_BROWSER"
-    orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null || true
+    orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null || true
     echo "\$MSG_CMD_UPDATE_SANDBOX_NOTE"
     # Save new sandbox build hash
-    orb -m $VM_NAME bash -c "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
+    orb -m $VM_NAME bash -lc "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
 fi
 
 echo "\$MSG_CMD_UPDATE_STARTING"
-orb -m $VM_NAME bash -c "openclaw gateway start"
+orb -m $VM_NAME bash -lc "openclaw gateway start"
 
 echo "\$MSG_CMD_UPDATE_DONE"
 if [ "\$SANDBOX" = false ]; then
@@ -685,32 +685,32 @@ $_LANG_LOADER
 echo "\$MSG_CMD_REBUILD_START"
 
 echo "\$MSG_CMD_REBUILD_BASE"
-if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BASE_OK"
-elif orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
+elif orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BASE_OK_DF"
 else
     echo "\$MSG_CMD_REBUILD_BASE_FAIL"
 fi
 
 echo "\$MSG_CMD_REBUILD_COMMON"
-if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_COMMON_OK"
 else
     echo "\$MSG_CMD_REBUILD_COMMON_FAIL"
 fi
 
 echo "\$MSG_CMD_REBUILD_BROWSER"
-if orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
+if orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BROWSER_OK"
-elif orb -m $VM_NAME bash -c "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
+elif orb -m $VM_NAME bash -lc "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
     echo "\$MSG_CMD_REBUILD_BROWSER_OK_DF"
 else
     echo "\$MSG_CMD_REBUILD_BROWSER_FAIL"
 fi
 
 # Save new sandbox build hash
-orb -m $VM_NAME bash -c "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
 
 echo ""
 echo "\$MSG_CMD_REBUILD_DONE"
