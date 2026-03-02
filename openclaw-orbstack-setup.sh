@@ -192,7 +192,7 @@ fi
 
 # pnpm via Corepack (Node.js 22+ built-in, auto-downloads version from packageManager field)
 info "$MSG_INFO_INSTALLING_PNPM"
-vm_exec "corepack enable"
+vm_exec "sudo corepack enable"
 ok "$MSG_OK_PNPM_INSTALLED: $(vm_exec 'pnpm --version')"
 
 # --- Pre-flight: disk space check (need ~5GB for clone + build + Docker images) ---
@@ -631,7 +631,7 @@ echo "  -> \$LATEST_TAG"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && git checkout '\$LATEST_TAG'"
 
 # Ensure Corepack is enabled (auto-downloads pnpm from packageManager field)
-orb -m $VM_NAME bash -lc "corepack enable" 2>/dev/null || true
+orb -m $VM_NAME bash -lc "sudo corepack enable" 2>/dev/null || true
 
 echo "\$MSG_CMD_UPDATE_INSTALLING"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && pnpm install"
