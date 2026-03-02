@@ -225,6 +225,9 @@ LATEST_TAG=\$(orb -m $VM_NAME bash -lc "cd ~/openclaw && git describe --tags \\\
 echo "  -> \$LATEST_TAG"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && git checkout '\$LATEST_TAG'"
 
+# Ensure Corepack is enabled (auto-downloads pnpm from packageManager field)
+orb -m $VM_NAME bash -lc "corepack enable" 2>/dev/null || true
+
 echo "\$MSG_CMD_UPDATE_INSTALLING"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && pnpm install"
 

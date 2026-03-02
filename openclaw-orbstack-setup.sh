@@ -190,15 +190,10 @@ if ! vm_exec "sudo apt-get install -y build-essential git"; then
     warn "build-essential install had issues, attempting to continue..."
 fi
 
-# pnpm (required by OpenClaw build — upstream uses packageManager: pnpm@10.23.0)
-if vm_exec "command -v pnpm &> /dev/null"; then
-    ok "$MSG_OK_PNPM_INSTALLED: $(vm_exec 'pnpm --version')"
-else
-    info "$MSG_INFO_INSTALLING_PNPM"
-    vm_exec "corepack enable && corepack prepare pnpm@latest --activate" 2>/dev/null \
-        || vm_exec "sudo npm install -g pnpm"
-    ok "$MSG_OK_PNPM_INSTALLED: $(vm_exec 'pnpm --version')"
-fi
+# pnpm via Corepack (Node.js 22+ built-in, auto-downloads version from packageManager field)
+info "$MSG_INFO_INSTALLING_PNPM"
+vm_exec "corepack enable"
+ok "$MSG_OK_PNPM_INSTALLED: $(vm_exec 'pnpm --version')"
 
 # --- Pre-flight: disk space check (need ~5GB for clone + build + Docker images) ---
 AVAIL_MB=$(vm_exec "df -m /home 2>/dev/null | awk 'NR==2{print \$4}'" 2>/dev/null || echo "0")
@@ -634,6 +629,9 @@ orb -m $VM_NAME bash -lc "cd ~/openclaw && git fetch --tags"
 LATEST_TAG=\$(orb -m $VM_NAME bash -lc "cd ~/openclaw && git describe --tags \\\$(git rev-list --tags --max-count=1)")
 echo "  -> \$LATEST_TAG"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && git checkout '\$LATEST_TAG'"
+
+# Ensure Corepack is enabled (auto-downloads pnpm from packageManager field)
+orb -m $VM_NAME bash -lc "corepack enable" 2>/dev/null || true
 
 echo "\$MSG_CMD_UPDATE_INSTALLING"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && pnpm install"
