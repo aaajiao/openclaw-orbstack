@@ -214,8 +214,8 @@ else
     vm_exec "git clone https://github.com/openclaw/openclaw.git ~/openclaw"
 fi
 
-# Get latest release tag from openclaw/openclaw repo
-OPENCLAW_VERSION=$(vm_exec "cd ~/openclaw && git describe --tags \$(git rev-list --tags --max-count=1)")
+# Get latest stable release tag (skip beta/rc/alpha pre-releases)
+OPENCLAW_VERSION=$(vm_exec "cd ~/openclaw && git tag -l 'v*' | grep -vE '-(beta|rc|alpha)' | sort -V | tail -1")
 info "$(printf "$MSG_INFO_CHECKOUT_RELEASE" "$OPENCLAW_VERSION")"
 vm_exec "cd ~/openclaw && git checkout '$OPENCLAW_VERSION'"
 
@@ -626,7 +626,7 @@ orb -m $VM_NAME bash -lc "openclaw gateway stop"
 
 echo "\$MSG_CMD_UPDATE_PULLING"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && git fetch --tags"
-LATEST_TAG=\$(orb -m $VM_NAME bash -lc "cd ~/openclaw && git describe --tags \\\$(git rev-list --tags --max-count=1)")
+LATEST_TAG=\$(orb -m $VM_NAME bash -lc "cd ~/openclaw && git tag -l 'v*' | grep -vE '-(beta|rc|alpha)' | sort -V | tail -1")
 echo "  -> \$LATEST_TAG"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && git checkout '\$LATEST_TAG'"
 
