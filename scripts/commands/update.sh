@@ -80,7 +80,7 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway stop"
 
 echo "$MSG_CMD_UPDATE_PULLING"
 orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git fetch --tags"
-LATEST_TAG=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git tag -l 'v*' | grep -vE '-(beta|rc|alpha)' | sort -V | tail -1")
+LATEST_TAG=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
 echo "  -> $LATEST_TAG"
 orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git checkout '$LATEST_TAG'"
 

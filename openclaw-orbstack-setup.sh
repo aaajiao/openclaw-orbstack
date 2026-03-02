@@ -215,7 +215,7 @@ else
 fi
 
 # Get latest stable release tag (skip beta/rc/alpha pre-releases)
-OPENCLAW_VERSION=$(vm_exec "cd ~/openclaw && git tag -l 'v*' | grep -vE '-(beta|rc|alpha)' | sort -V | tail -1")
+OPENCLAW_VERSION=$(vm_exec "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
 info "$(printf "$MSG_INFO_CHECKOUT_RELEASE" "$OPENCLAW_VERSION")"
 vm_exec "cd ~/openclaw && git checkout '$OPENCLAW_VERSION'"
 
