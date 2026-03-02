@@ -190,12 +190,13 @@ if ! vm_exec "sudo apt-get install -y build-essential git"; then
     warn "build-essential install had issues, attempting to continue..."
 fi
 
-# pnpm (required by OpenClaw build)
+# pnpm (required by OpenClaw build — upstream uses packageManager: pnpm@10.23.0)
 if vm_exec "command -v pnpm &> /dev/null"; then
     ok "$MSG_OK_PNPM_INSTALLED: $(vm_exec 'pnpm --version')"
 else
     info "$MSG_INFO_INSTALLING_PNPM"
-    vm_exec "sudo npm install -g pnpm"
+    vm_exec "corepack enable && corepack prepare pnpm@latest --activate" 2>/dev/null \
+        || vm_exec "sudo npm install -g pnpm"
     ok "$MSG_OK_PNPM_INSTALLED: $(vm_exec 'pnpm --version')"
 fi
 
@@ -224,10 +225,10 @@ info "$(printf "$MSG_INFO_CHECKOUT_RELEASE" "$OPENCLAW_VERSION")"
 vm_exec "cd ~/openclaw && git checkout '$OPENCLAW_VERSION'"
 
 info "$MSG_INFO_NPM_INSTALL"
-vm_exec "cd ~/openclaw && npm install"
+vm_exec "cd ~/openclaw && pnpm install"
 
 info "$MSG_INFO_NPM_BUILD"
-vm_exec "cd ~/openclaw && npm run build"
+vm_exec "cd ~/openclaw && pnpm build"
 
 info "$MSG_INFO_UI_BUILD"
 vm_exec "cd ~/openclaw && pnpm ui:build"
@@ -635,10 +636,10 @@ echo "  -> \$LATEST_TAG"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && git checkout '\$LATEST_TAG'"
 
 echo "\$MSG_CMD_UPDATE_INSTALLING"
-orb -m $VM_NAME bash -lc "cd ~/openclaw && npm install"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && pnpm install"
 
 echo "\$MSG_CMD_UPDATE_BUILDING"
-orb -m $VM_NAME bash -lc "cd ~/openclaw && npm run build"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && pnpm build"
 
 echo "\$MSG_CMD_UPDATE_UI"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && pnpm ui:build"

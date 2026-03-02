@@ -226,10 +226,10 @@ echo "  -> \$LATEST_TAG"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && git checkout '\$LATEST_TAG'"
 
 echo "\$MSG_CMD_UPDATE_INSTALLING"
-orb -m $VM_NAME bash -lc "cd ~/openclaw && npm install"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && pnpm install"
 
 echo "\$MSG_CMD_UPDATE_BUILDING"
-orb -m $VM_NAME bash -lc "cd ~/openclaw && npm run build"
+orb -m $VM_NAME bash -lc "cd ~/openclaw && pnpm build"
 
 echo "\$MSG_CMD_UPDATE_UI"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && pnpm ui:build"
