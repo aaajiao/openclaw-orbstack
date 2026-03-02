@@ -630,13 +630,12 @@ LATEST_TAG=\$(orb -m $VM_NAME bash -lc "cd ~/openclaw && git describe --tags \\\
 echo "  -> \$LATEST_TAG"
 orb -m $VM_NAME bash -lc "cd ~/openclaw && git checkout '\$LATEST_TAG'"
 
-# Ensure pnpm is available (npm/corepack may be missing after apt upgrade)
+# Ensure pnpm is available (npm/corepack may vanish after apt upgrade)
 orb -m $VM_NAME bash -lc '
 if ! command -v pnpm &>/dev/null; then
     if ! command -v npm &>/dev/null; then
-        echo "  npm missing, reinstalling Node.js from NodeSource..."
-        curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-        sudo apt-get install -y nodejs
+        echo "  npm missing, reinstalling Node.js package..."
+        sudo apt-get install --reinstall -y nodejs
     fi
     sudo corepack enable 2>/dev/null || sudo npm install -g pnpm
 fi
