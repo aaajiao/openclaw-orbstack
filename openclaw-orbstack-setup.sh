@@ -208,7 +208,7 @@ step 5 "$MSG_STEP_5"
 
 if vm_exec "test -d ~/openclaw"; then
     info "$MSG_INFO_REPO_EXISTS"
-    vm_exec "cd ~/openclaw && git fetch --tags"
+    vm_exec "cd ~/openclaw && git fetch --tags --force"
 else
     info "$MSG_INFO_CLONING"
     vm_exec "git clone https://github.com/openclaw/openclaw.git ~/openclaw"
