@@ -174,28 +174,15 @@ No usable sandbox! If this is a Debian system, please install the chromium-sandb
 
 OrbStack VM 内核限制 unprivileged user namespaces，Chromium 无法创建自己的命名空间沙箱。需要 `OPENCLAW_BROWSER_NO_SANDBOX=1` 环境变量让 Chromium 以 `--no-sandbox` 模式启动。
 
-最新版的安装脚本会在浏览器镜像构建后自动加一层 Docker overlay 写入此变量，但老用户可能没有这层 overlay。
+**v2026.3.1+**：上游已修复（PR #29879），Gateway 会自动传此变量给浏览器容器，升级即可解决。
 
 #### 解决方案
 
-**方法 1：更新脚本并重建沙箱（推荐）**
+升级到 v2026.3.1+：
 
 ```bash
-cd ~/openclaw-orbstack && git pull && bash scripts/refresh-mac-commands.sh
-openclaw-sandbox-rebuild
+openclaw-update
 ```
-
-**方法 2：手动打 overlay（不想重建整个沙箱时）**
-
-```bash
-orb -m openclaw-vm bash -c "printf 'FROM openclaw-sandbox-browser:bookworm-slim\nENV OPENCLAW_BROWSER_NO_SANDBOX=1\n' | sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -'"
-openclaw-restart
-```
-
-#### 参考
-
-- [OpenClaw PR #29879](https://github.com/openclaw/openclaw/pull/29879) — 上游 v2026.2.27+ 的运行时修复
-- [安全公告 GHSA-43x4-g22p-3hrq](https://github.com/openclaw/openclaw/security/advisories/GHSA-43x4-g22p-3hrq) — `--no-sandbox` 从默认改为 opt-in 的背景
 
 ---
 

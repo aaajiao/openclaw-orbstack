@@ -267,9 +267,7 @@ openclaw-restart
 
 Controls Chromium's internal sandbox within the browser container. When set to `1`, Chromium launches with `--no-sandbox --disable-setuid-sandbox`.
 
-In OrbStack environments, this is **required** — OrbStack VM kernel restricts unprivileged user namespaces, causing Chromium to crash with "No usable sandbox!". The installer automatically applies a Docker image overlay that bakes this env var into the browser image. If you manually rebuild the browser image, run `openclaw-sandbox-rebuild` (which includes the overlay) rather than building the image directly.
-
-> **Note**: Upstream OpenClaw v2026.2.27+ (PR #29879) also passes this env var at container runtime, making the image overlay redundant but harmless as belt-and-suspenders protection.
+Since v2026.3.1, the Gateway automatically passes this env var to browser containers at runtime (PR #29879). In OrbStack environments this is essential — the VM kernel restricts unprivileged user namespaces, causing Chromium to crash with "No usable sandbox!" without it. No manual configuration needed.
 
 ## 环境变量 (重要)
 
