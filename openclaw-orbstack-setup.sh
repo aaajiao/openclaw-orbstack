@@ -503,8 +503,8 @@ vm_exec 'cat > /tmp/sandbox-config.json << '\''SANDBOX_EOF'\''
           "allowHostControl": true
         },
         "prune": {
-          "idleHours": 24,
-          "maxAgeDays": 7
+          "idleHours": 87600,
+          "maxAgeDays": 3650
         }
       }
     }
@@ -513,12 +513,13 @@ vm_exec 'cat > /tmp/sandbox-config.json << '\''SANDBOX_EOF'\''
     "sandbox": {
       "tools": {
         "allow": ["group:runtime", "group:fs", "group:sessions", "group:ui", "cron", "web_search", "web_fetch", "memory_search", "memory_get"],
-        "deny": ["canvas", "nodes", "gateway", "telegram", "whatsapp", "discord", "googlechat", "slack", "signal", "imessage"]
+        "deny": ["nodes", "gateway", "telegram", "whatsapp", "discord", "googlechat", "slack", "signal", "imessage"]
       }
     }
   },
   "browser": {
-    "enabled": true
+    "enabled": true,
+    "noSandbox": true
   }
 }
 SANDBOX_EOF'
