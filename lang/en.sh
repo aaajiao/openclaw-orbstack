@@ -116,6 +116,11 @@ MSG_CMD_UPDATE_STARTING="  Starting service..."
 MSG_CMD_UPDATE_DONE="✅ Update complete!"
 MSG_CMD_UPDATE_SANDBOX_HINT="💡 To rebuild sandbox images: openclaw-update --sandbox"
 MSG_CMD_UPDATE_NPM_REINSTALL="npm missing, reinstalling Node.js package..."
+MSG_CMD_UPDATE_RECOVER="  ⚠ Build failed, restarting service with previous version..."
+MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL="    ✗ common image build failed"
+MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL="    ✗ browser image build failed"
+MSG_CMD_UPDATE_SANDBOX_PARTIAL="  ⚠ Some sandbox images failed to build. Next update will retry."
+MSG_CMD_UPDATE_PULL_WARN="  ⚠ Failed to update openclaw-orbstack repo, using cached version"
 
 # openclaw-sandbox-rebuild
 MSG_CMD_REBUILD_START="🔨 Rebuilding sandbox Docker images..."
@@ -132,6 +137,7 @@ MSG_CMD_REBUILD_BROWSER_OK_DF="  ✓ sandbox-browser image built (Dockerfile)"
 MSG_CMD_REBUILD_BROWSER_FAIL="  ✗ sandbox-browser image build failed"
 MSG_CMD_REBUILD_DONE="✅ Sandbox image rebuild complete!"
 MSG_CMD_REBUILD_NOTE="💡 Running containers still use old images, run openclaw-restart to apply"
+MSG_CMD_REBUILD_PARTIAL="  ⚠ Some images failed. Hash not saved, next update will retry."
 
 # openclaw-telegram
 MSG_CMD_TG_ADD_USAGE="Usage: openclaw-telegram add <bot_token>"

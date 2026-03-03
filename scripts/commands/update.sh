@@ -32,38 +32,9 @@ if grep -q "systemctl status openclaw" ~/bin/openclaw-status 2>/dev/null; then
     orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -f /etc/systemd/system/openclaw.service && sudo systemctl daemon-reload"
     orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo loginctl enable-linger \$(whoami)"
     orb -m "$OPENCLAW_VM_NAME" bash -lc "systemctl --user enable openclaw-gateway.service 2>/dev/null || true"
-    # Mac: fix stale commands
-    cat > ~/bin/openclaw-status << 'FIXEOF'
-#!/bin/bash
-set -e
-_VM="openclaw-vm"; [ -f "$HOME/bin/.openclaw-vm" ] && source "$HOME/bin/.openclaw-vm" && _VM="${OPENCLAW_VM:-$_VM}"
-orb -m "$_VM" bash -lc "openclaw gateway status"
-FIXEOF
-    cat > ~/bin/openclaw-logs << 'FIXEOF'
-#!/bin/bash
-set -e
-_VM="openclaw-vm"; [ -f "$HOME/bin/.openclaw-vm" ] && source "$HOME/bin/.openclaw-vm" && _VM="${OPENCLAW_VM:-$_VM}"
-orb -m "$_VM" bash -lc "openclaw logs --follow"
-FIXEOF
-    cat > ~/bin/openclaw-restart << 'FIXEOF'
-#!/bin/bash
-set -e
-_VM="openclaw-vm"; [ -f "$HOME/bin/.openclaw-vm" ] && source "$HOME/bin/.openclaw-vm" && _VM="${OPENCLAW_VM:-$_VM}"
-orb -m "$_VM" bash -lc "openclaw gateway restart"
-FIXEOF
-    cat > ~/bin/openclaw-stop << 'FIXEOF'
-#!/bin/bash
-set -e
-_VM="openclaw-vm"; [ -f "$HOME/bin/.openclaw-vm" ] && source "$HOME/bin/.openclaw-vm" && _VM="${OPENCLAW_VM:-$_VM}"
-orb -m "$_VM" bash -lc "openclaw gateway stop"
-FIXEOF
-    cat > ~/bin/openclaw-start << 'FIXEOF'
-#!/bin/bash
-set -e
-_VM="openclaw-vm"; [ -f "$HOME/bin/.openclaw-vm" ] && source "$HOME/bin/.openclaw-vm" && _VM="${OPENCLAW_VM:-$_VM}"
-orb -m "$_VM" bash -lc "openclaw gateway start"
-FIXEOF
-    chmod +x ~/bin/openclaw-status ~/bin/openclaw-logs ~/bin/openclaw-restart ~/bin/openclaw-stop ~/bin/openclaw-start
+    # Mac: regenerate all commands
+    OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
+        bash "$OPENCLAW_REPO_DIR/scripts/refresh-mac-commands.sh" 2>/dev/null || true
     echo "$MSG_UPDATE_AUTO_UPGRADE_DONE"
 fi
 
@@ -77,6 +48,11 @@ echo "$MSG_CMD_UPDATE_UPDATING"
 
 echo "$MSG_CMD_UPDATE_STOPPING"
 orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway stop"
+GATEWAY_STOPPED=true
+trap 'if [ "$GATEWAY_STOPPED" = true ]; then
+    echo "$MSG_CMD_UPDATE_RECOVER"
+    orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start" 2>/dev/null || true
+fi' EXIT
 
 echo "$MSG_CMD_UPDATE_PULLING"
 orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git fetch --tags --force"
@@ -121,24 +97,39 @@ fi
 
 if [ "$SANDBOX" = true ]; then
     echo "$MSG_CMD_UPDATE_SANDBOX_REBUILD"
-    SANDBOX_OK=false
+    SANDBOX_OK=true
     echo "$MSG_CMD_UPDATE_SANDBOX_BASE"
-    if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
-        SANDBOX_OK=true
+    if ! orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
+        SANDBOX_OK=false
     fi
     echo "$MSG_CMD_UPDATE_SANDBOX_COMMON"
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null || true
+    if ! orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
+        echo "$MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL"
+        SANDBOX_OK=false
+    fi
     echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER"
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null || true
+    if ! orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
+        echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL"
+        SANDBOX_OK=false
+    fi
     echo "$MSG_CMD_UPDATE_SANDBOX_NOTE"
-    # Save new sandbox build hash only if base build succeeded
+    # Save new sandbox build hash only if all builds succeeded
     if [ "$SANDBOX_OK" = true ]; then
         orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
+    else
+        echo "$MSG_CMD_UPDATE_SANDBOX_PARTIAL"
     fi
 fi
 
+GATEWAY_STOPPED=false
+trap - EXIT
+
 echo "$MSG_CMD_UPDATE_STARTING"
 orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start"
+
+# Refresh Mac commands (picks up any wrapper changes)
+OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
+    bash "$OPENCLAW_REPO_DIR/scripts/refresh-mac-commands.sh" 2>/dev/null || true
 
 echo "$MSG_CMD_UPDATE_DONE"
 if [ "$SANDBOX" = false ]; then

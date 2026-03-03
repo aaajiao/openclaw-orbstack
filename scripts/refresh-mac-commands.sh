@@ -156,7 +156,7 @@ if [ -z "$REPO" ] || [ ! -d "$REPO" ]; then
     exit 1
 fi
 # Self-update: pull latest openclaw-orbstack repo before executing
-cd "$REPO" && git pull -q 2>/dev/null || true
+cd "$REPO" && git pull -q 2>/dev/null || echo "⚠ Failed to update openclaw-orbstack repo, using cached version"
 exec bash "$REPO/scripts/commands/update.sh" "$@"
 CMDEOF
 

@@ -116,6 +116,11 @@ MSG_CMD_UPDATE_STARTING="  启动服务..."
 MSG_CMD_UPDATE_DONE="✅ 更新完成！"
 MSG_CMD_UPDATE_SANDBOX_HINT="💡 如需重建沙箱镜像: openclaw-update --sandbox"
 MSG_CMD_UPDATE_NPM_REINSTALL="npm 缺失，正在重新安装 Node.js 软件包..."
+MSG_CMD_UPDATE_RECOVER="  ⚠ 构建失败，正在使用上一版本重启服务..."
+MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL="    ✗ common 镜像构建失败"
+MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL="    ✗ 浏览器镜像构建失败"
+MSG_CMD_UPDATE_SANDBOX_PARTIAL="  ⚠ 部分沙箱镜像构建失败，下次更新将重试。"
+MSG_CMD_UPDATE_PULL_WARN="  ⚠ 更新 openclaw-orbstack 仓库失败，使用缓存版本"
 
 # openclaw-sandbox-rebuild
 MSG_CMD_REBUILD_START="🔨 正在重建沙箱 Docker 镜像..."
@@ -132,6 +137,7 @@ MSG_CMD_REBUILD_BROWSER_OK_DF="  ✓ sandbox-browser 镜像构建完成 (Dockerf
 MSG_CMD_REBUILD_BROWSER_FAIL="  ✗ sandbox-browser 镜像构建失败"
 MSG_CMD_REBUILD_DONE="✅ 沙箱镜像重建完成！"
 MSG_CMD_REBUILD_NOTE="💡 已运行的容器仍使用旧镜像，运行 openclaw-restart 使新镜像生效"
+MSG_CMD_REBUILD_PARTIAL="  ⚠ 部分镜像构建失败，未保存哈希，下次更新将重试。"
 
 # openclaw-telegram
 MSG_CMD_TG_ADD_USAGE="用法: openclaw-telegram add <bot_token>"
