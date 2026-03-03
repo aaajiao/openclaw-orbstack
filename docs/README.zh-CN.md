@@ -176,6 +176,15 @@ exit
 openclaw-restart
 ```
 
+### 备份和恢复
+
+```bash
+orb export openclaw-vm ~/Desktop/backup.tar.zst   # 导出 VM 快照
+orb import -n openclaw-vm ~/Desktop/backup.tar.zst # 从快照恢复
+```
+
+详见 [troubleshooting.md](troubleshooting.md)。
+
 ## 文档
 
 | 文档 | 内容 |

@@ -396,6 +396,30 @@ bash openclaw-orbstack-setup.sh
 
 ---
 
+## VM 备份和恢复
+
+在重置或删除 VM 前，建议先导出完整快照：
+
+### 导出（备份）
+
+```bash
+orb export openclaw-vm ~/Desktop/openclaw-vm-backup.tar.zst
+```
+
+导出期间 VM 会自动暂停，完成后恢复。文件使用 zstd 压缩。
+
+### 导入（恢复）
+
+```bash
+# 删除旧 VM 后导入
+orb delete openclaw-vm
+orb import -n openclaw-vm ~/Desktop/openclaw-vm-backup.tar.zst
+```
+
+> **注意**：`~/OrbStack/openclaw-vm/` 只是 VM 文件系统的挂载视图，不是本地副本。删除 VM 后该目录会消失，不能依赖它做备份。
+
+---
+
 ## 获取帮助
 
 1. 查看日志：`openclaw-logs`

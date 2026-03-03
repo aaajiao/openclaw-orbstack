@@ -146,6 +146,10 @@ openclaw config validate --json             # JSON output for CI
 
 # Clean reinstall
 orb delete openclaw-vm && OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh
+
+# Backup / Restore VM
+orb export openclaw-vm ~/Desktop/openclaw-vm-backup.tar.zst
+orb import -n openclaw-vm ~/Desktop/openclaw-vm-backup.tar.zst
 ```
 
 No automated test suite. Validation is syntax checks + shellcheck + manual testing.

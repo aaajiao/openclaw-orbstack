@@ -458,6 +458,8 @@ orb -m openclaw-vm bash -c "..."   # 在 VM 中执行命令
 orb stop openclaw-vm               # 停止 VM
 orb start openclaw-vm              # 启动 VM
 orb delete openclaw-vm             # 删除 VM (危险!)
+orb export openclaw-vm backup.tar.zst   # 导出 VM 快照
+orb import -n openclaw-vm backup.tar.zst # 从快照恢复 VM
 ```
 
 ---

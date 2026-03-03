@@ -176,6 +176,15 @@ exit
 openclaw-restart
 ```
 
+### Backup & Restore
+
+```bash
+orb export openclaw-vm ~/Desktop/backup.tar.zst   # Full VM snapshot
+orb import -n openclaw-vm ~/Desktop/backup.tar.zst # Restore from snapshot
+```
+
+See [docs/troubleshooting.md](docs/troubleshooting.md) for details.
+
 ## Documentation
 
 | Document | Content |
