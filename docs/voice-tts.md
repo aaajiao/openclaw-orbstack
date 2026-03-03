@@ -21,6 +21,11 @@ OpenClaw 支持完整的语音交互功能，包括语音消息收发和实时�
 
 Telegram 会显示为原生圆形语音气泡，不是普通音频附件。
 
+### v2026.3.2 变更
+
+- Telegram `streamMode` 默认值从 `"off"` 变更为 `"partial"`，语音回复会以流式方式逐步生成
+- 新增 `disableAudioPreflight` 选项，可跳过 TTS 能力预检（适用于已确认 TTS 配置正确的场景）
+
 ### 配置 TTS
 
 编辑配置文件：

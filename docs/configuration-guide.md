@@ -332,6 +332,9 @@ OpenClaw 使用 **JSON5** 格式，支持：
 | `model.fallbacks` | 备用模型列表 | `["anthropic/claude-sonnet-4-5", "openai/gpt-5.1-codex"]` |
 | `models` | 模型别名/目录 | `{ "anthropic/claude-opus-4-6": { alias: "opus" } }` |
 | `imageModel` | 图像处理模型 | `{ primary: "openai/gpt-4o" }` |
+| `pdfModel` | PDF 分析模型配置 | `{ provider: "anthropic", model: "claude-sonnet-4-6" }` |
+| `pdfMaxBytesMb` | PDF 文件大小限制 | `30` (MB) |
+| `pdfMaxPages` | PDF 最大页数 | `100` |
 
 **内置提供商** (Pi-AI Catalog, 最少配置即可使用):
 
@@ -361,7 +364,7 @@ OpenClaw 使用 **JSON5** 格式，支持：
 | Moonshot AI (Kimi) | OpenAI 兼容 | 自定义 endpoint |
 | Kimi Coding | Anthropic 兼容 | 自定义 endpoint |
 | Qwen OAuth | 设备码流程 | 免费 tier |
-| MiniMax | 自定义 endpoint | |
+| MiniMax | 自定义 endpoint | M2.5-highspeed (一等模型) |
 | Ollama | OpenAI 兼容 | 本地运行 |
 | vLLM | OpenAI 兼容 | 自托管 |
 | LM Studio / LiteLLM | OpenAI 兼容 | 本地代理 |
@@ -388,6 +391,26 @@ OpenClaw 使用 **JSON5** 格式，支持：
   }
 }
 ```
+
+### PDF 分析配置
+
+v2026.3.2 新增 PDF 文件分析功能，通过 `pdfModel` 配置分析模型：
+
+```json
+"pdfModel": {
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "pdfMaxBytesMb": 30,
+  "pdfMaxPages": 100
+}
+```
+
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| `provider` | 模型提供商 | 继承主模型 |
+| `model` | 分析模型 | 继承主模型 |
+| `pdfMaxBytesMb` | 最大文件大小 (MB) | 30 |
+| `pdfMaxPages` | 最大页数 | 100 |
 
 ### 聊天频道配置
 
@@ -439,7 +462,8 @@ OpenClaw 使用 **JSON5** 格式，支持：
       
       historyLimit: 50,
       replyToMode: "first",
-      streamMode: "partial"
+      streamMode: "partial",       // v2026.3.2 默认值从 "off" 变更为 "partial"
+      disableAudioPreflight: false // v2026.3.2 新增：跳过 TTS 能力检查
     }
   }
 }
@@ -476,13 +500,13 @@ OpenClaw 使用 **JSON5** 格式，支持：
 
 #### 更多频道
 
-OpenClaw 支持 21+ 频道：
+OpenClaw 支持 25+ 频道：
 
 **内置频道** (开箱即用):
 WhatsApp, Telegram, Discord, IRC, Slack, Google Chat, Signal, BlueBubbles (iMessage 替代), WebChat
 
 **插件频道** (需单独安装):
-Feishu (飞书), Mattermost, Microsoft Teams, LINE, Nextcloud Talk, Matrix, Nostr, Tlon, Twitch, Zalo
+Feishu (飞书), Mattermost, Microsoft Teams, LINE, Nextcloud Talk, Matrix, Nostr, Tlon, Twitch, Zalo（v2026.3.2 原生重写）
 
 > iMessage (legacy) 已不推荐，建议使用 BlueBubbles 替代，功能更全面（支持编辑、反应、群管理）。
 
@@ -673,6 +697,22 @@ v2026.2.24 新增了 `security` 顶层配置块，支持多用户安全检测：
 - 限制工具权限 (减少 `tools.allow` 范围)
 - 不要在共享实例上配置个人身份/隐私信息
 
+### ACP 调度（Agent Communication Protocol）
+
+v2026.3.2 起 ACP 调度默认启用，允许代理间通过标准协议通信：
+
+```json5
+{
+  acp: {
+    dispatch: {
+      enabled: true
+    }
+  }
+}
+```
+
+如需禁用，设置 `"enabled": false`。
+
 ### TTS 语音配置
 
 ```json5
@@ -713,7 +753,7 @@ Memory Search 允许 AI 搜索历史记忆。**需要配置 embedding provider �
   agents: {
     defaults: {
       memorySearch: {
-        provider: "auto",  // auto | openai | gemini | local
+        provider: "auto",  // auto | openai | gemini | local | ollama
         // auto 模式会按以下顺序尝试:
         // 1. local (如果配置了 modelPath)
         // 2. openai (如果有 API key)
@@ -809,6 +849,24 @@ openclaw memory index
   }
 }
 ```
+
+#### 使用 Ollama 嵌入
+
+v2026.3.2 新增 Ollama 作为嵌入提供商，支持完全本地化的向量搜索：
+
+```json5
+{
+  agents: {
+    defaults: {
+      memorySearch: {
+        provider: "ollama"
+      }
+    }
+  }
+}
+```
+
+需要在 VM 中安装并运行 Ollama 服务。
 
 详见 [troubleshooting.md](troubleshooting.md#5-memory-search-无法使用--索引为空) 获取更多帮助。
 
@@ -1160,6 +1218,15 @@ openclaw-doctor
 # 自动修复
 openclaw-doctor --fix
 ```
+
+v2026.3.2 新增 `openclaw config validate` 命令，支持更细粒度的配置验证：
+
+```bash
+openclaw config validate           # 验证配置语法
+openclaw config validate --json    # JSON 格式输出（适用于 CI）
+```
+
+检查 `openclaw.json` 的语法错误、未知字段、类型不匹配等问题。
 
 ---
 

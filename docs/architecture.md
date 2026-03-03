@@ -45,6 +45,8 @@ Gateway 还支持以下扩展能力：
 | **Skills** | 可复用能力包，按 Agent 隔离 | `skills` |
 | **Talk Mode** | 实时语音对话（需 macOS/iOS/Android App） | `talk` |
 | **$include** | 多文件配置，拆分管理大型配置 | 配置文件根级别 |
+| **PDF 分析** | 文档内容提取与分析 | `agents.defaults.pdfModel` |
+| **ACP 调度** | 代理间标准通信协议 | `acp` |
 
 ## 系统概览
 

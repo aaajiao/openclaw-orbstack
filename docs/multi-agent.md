@@ -346,6 +346,7 @@ openclaw agent -m "test" --agent <id>
 - **禁止共用 agentDir**：多个 Agent 不能指向同一个 `agentDir`，否则会导致认证和会话冲突。
 - **Skills 隔离**：每个 Agent 通过各自 workspace 的 `skills/` 目录加载 Skills，`~/.openclaw/skills` 为全局共享。
 - **Sub-Agent 限制**：Sub-agent 不能再嵌套 sub-agent（无递归展开）。可以为 sub-agent 配置更便宜的模型以节省开销。
+- **ACP 调度**：v2026.3.2 起 ACP 调度默认启用（`acp.dispatch.enabled: true`），Agent 间可通过标准协议进行通信和任务分发。
 
 ---
 

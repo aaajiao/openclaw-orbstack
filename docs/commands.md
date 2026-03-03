@@ -294,6 +294,15 @@ openclaw config set <path> <value> # 设置配置值
 openclaw config unset <path>       # 删除配置值
 ```
 
+#### 配置验证
+
+```bash
+openclaw config validate           # 验证配置文件语法和结构
+openclaw config validate --json    # JSON 格式输出，适用于 CI/CD 集成
+```
+
+检查 `openclaw.json` 的语法错误、未知字段、类型不匹配等问题。
+
 ### 浏览器控制
 
 ```bash
@@ -403,6 +412,8 @@ openclaw secrets reload            # 重新加载 secrets (不重启)
 ```
 
 > 外部 Secrets 管理允许从外部源（如 Vault、AWS Secrets Manager 等）拉取密钥，通过快照机制激活到 Gateway 运行时。详见 [configuration-guide.md](configuration-guide.md#外部-secrets-管理-v2026226)。
+
+> v2026.3.2: SecretRef 扩展至 64 个目标位置，覆盖更多配置字段。
 
 ### 其他
 

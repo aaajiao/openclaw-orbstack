@@ -333,6 +333,35 @@ orb -m openclaw-vm bash -c 'systemctl --user status openclaw-gateway'
 
 ---
 
+### 8. 配置验证错误
+
+#### 症状
+
+Gateway 启动失败，日志显示配置错误。
+
+#### 诊断
+
+```bash
+openclaw config validate --json
+```
+
+#### 常见问题
+
+- JSON 语法错误（缺少逗号、多余逗号）
+- 未知配置字段
+- 类型不匹配（字符串 vs 数字）
+
+#### 修复
+
+根据 `validate` 输出修正 `openclaw.json`，然后重启 Gateway。
+
+```bash
+openclaw-config edit     # 修正配置
+openclaw-restart         # 重启 Gateway
+```
+
+---
+
 ## 重启服务
 
 ### 正常重启

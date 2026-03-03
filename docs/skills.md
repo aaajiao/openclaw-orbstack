@@ -79,6 +79,10 @@ openclaw skills check
 - **load.extraDirs**：额外的 Skills 搜索路径，适合团队共享目录。
 - **entries**：为某个 Skill 单独配置参数（如 API Key / 环境变量）。
 
+### Onboarding 工具配置文件默认值
+
+v2026.3.2 起，新用户 onboarding 时默认工具配置文件为 `"messaging"`。这意味着新安装的 Agent 默认启用消息类工具（Telegram、WhatsApp 等），其他工具需要手动在 `skills.entries` 或工具权限中启用。
+
 ## 多 Agent 场景下的建议
 
 - 将不同技能放在不同 Agent 的 workspace 下：

@@ -123,7 +123,15 @@
       // imageModel: {
       //   primary: "openai/dall-e-3"
       // },
-      
+
+      // PDF analysis model (v2026.3.2+)
+      // "pdfModel": {
+      //   "provider": "anthropic",
+      //   "model": "claude-sonnet-4-6",
+      //   "pdfMaxBytesMb": 30,
+      //   "pdfMaxPages": 100
+      // },
+
       // 模型别名 (可选)
       // Anthropic 1M 上下文 Beta (可选，Opus 4.6 / Sonnet 4.6 / 4.5 / 4)
       // 在模型条目中添加 params: { context1m: true } 启用
@@ -199,7 +207,7 @@
       //
       // 详见 docs/configuration-guide.md 和 docs/troubleshooting.md
       memorySearch: {
-        provider: "auto",  // "auto" | "openai" | "gemini" | "local"
+        provider: "auto",  // "auto" | "openai" | "gemini" | "local" | "ollama"
         // auto 模式会按顺序尝试: local → openai → gemini
         // 如果没有可用的 embedding provider，memory search 会被静默禁用
         
@@ -470,6 +478,7 @@
       linkPreview: true,
       
       // 流式传输模式: "off" | "partial" | "block"
+      // v2026.3.2: streamMode default changed from "off" to "partial"
       streamMode: "partial",
 
       // 内联按钮样式: "primary" | "success" | "danger" (可选)
@@ -488,7 +497,9 @@
         // { command: "backup", description: "Git 备份" },
         // { command: "image", description: "生成图片" }
       ]
-      
+
+      // disableAudioPreflight: false,  // Skip TTS capability check before voice reply
+
       // 代理设置 (可选)
       // proxy: "socks5://localhost:9050"
       
@@ -640,8 +651,7 @@
     }
 
     // ========== 插件频道 (需要 openclaw plugins install) ==========
-    // 支持: Feishu (飞书), Mattermost, Microsoft Teams, LINE,
-    //       Nextcloud Talk, Matrix, Nostr, Tlon, Twitch, Zalo
+    // 25+ channels via plugins: Feishu, Mattermost, Teams, LINE, Matrix, Zalo (v2026.3.2: native rewrite), ...
     // 通过 openclaw plugins list 查看可用插件
 
     // 按频道指定模型 (v2026.2.21+)
@@ -1002,7 +1012,14 @@
       //   apiKey: "${MOONSHOT_API_KEY}",
       //   api: "openai",
       //   models: [{ id: "moonshot-v1-128k", name: "Moonshot v1 128K" }]
-      // }
+      // },
+      // MiniMax (v2026.3.2+)
+      // "minimax": {
+      //   baseUrl: "https://api.minimaxi.chat/v1",
+      //   apiKey: "${MINIMAX_API_KEY}",
+      //   api: "openai",
+      //   models: ["MiniMax-M2.5-highspeed"]
+      // },
     }
   },
 
@@ -1081,6 +1098,13 @@
   //     // 检测到多用户共享同一实例时发出警告
   //     // 多用户场景建议: sandbox.mode="all", 工作区隔离, 限制工具权限
   //     multi_user_heuristic: true
+  //   }
+  // },
+
+  // Agent Communication Protocol (ACP)
+  // "acp": {
+  //   "dispatch": {
+  //     "enabled": true  // Default: true since v2026.3.2
   //   }
   // },
 

@@ -182,6 +182,8 @@ Docker 容器看不到！只能看到 /workspace
 | `workspaceAccess: rw` | - | 只能读写 workspace 文件 |
 | Docker 隔离 | **Mac 文件系统受保护** | 只能看到挂载的 workspace |
 
+> **v2026.3.2**: ACP 调度设置会被沙箱会话继承。通过 ACP 分发的子会话自动继承父会话的沙箱配置（scope、网络、工具权限）。
+
 ### 网络配置选项
 
 | 值 | 行为 | 使用场景 |
@@ -220,6 +222,8 @@ Docker 容器看不到！只能看到 /workspace
 | `group:ui` | browser, canvas |
 
 默认配置允许 `group:ui`（包含 browser），但 deny 了 `canvas`。
+
+> **注意**：`pdf` 工具在 Gateway 层运行，不在沙箱容器内执行。PDF 分析由 Gateway 直接调用模型完成，无需沙箱权限。
 
 ## 沙箱镜像
 
@@ -268,6 +272,10 @@ openclaw-restart
 Controls Chromium's internal sandbox within the browser container. When set to `1`, Chromium launches with `--no-sandbox --disable-setuid-sandbox`.
 
 Since v2026.3.1, the Gateway automatically passes this env var to browser containers at runtime (PR #29879). In OrbStack environments this is essential — the VM kernel restricts unprivileged user namespaces, causing Chromium to crash with "No usable sandbox!" without it. No manual configuration needed.
+
+### Webhook 安全加固
+
+v2026.3.2 起，Gateway 在 webhook 端点上**先验证认证再读取请求 body**（auth-before-body）。这可防止未认证的请求消耗服务器资源解析大体积 payload。如果使用自定义 webhook（`hooks` 配置），确保认证 token 通过 URL 参数或 HTTP header 传递，而非 body 内。
 
 ## 环境变量 (重要)
 

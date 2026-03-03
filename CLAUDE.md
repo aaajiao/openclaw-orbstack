@@ -69,6 +69,8 @@ openclaw gateway restart
 | `agents.defaults.models` | Model catalog/allowlist, custom providers via `models.providers` |
 | `agents.defaults.memorySearch` | Vector memory index settings (SQLite, embedding provider, hybrid search) |
 | `agents.defaults.sandbox` | Docker sandbox config (image, limits, env vars) |
+| `agents.defaults.pdfModel` | PDF analysis model config (model, maxBytesMb, maxPages) |
+| `acp` | Agent Communication Protocol dispatch (default: true since v2026.3.2) |
 | `channels.telegram` | Telegram bot settings (token, groups, policies) |
 | `session` | DM scope (per-peer, per-channel-peer, etc.), auto-reset |
 | `hooks` | External event triggers (e.g., GitHub webhook → AI action) |
@@ -110,7 +112,7 @@ Memory search creates a SQLite vector index (`~/.openclaw/memory/<agentId>.sqlit
 }
 ```
 
-**Provider selection** (when `provider` is omitted): OpenClaw auto-selects `local` → `openai` → `gemini` based on available API keys. Valid explicit values: `"auto"` | `"openai"` | `"gemini"` | `"local"`.
+**Provider selection** (when `provider` is omitted): OpenClaw auto-selects `local` → `openai` → `gemini` based on available API keys. Valid explicit values: `"auto"` | `"openai"` | `"gemini"` | `"local"` | `"ollama"`.
 
 **Full documentation**: See [docs/configuration-guide.md](docs/configuration-guide.md) for complete configuration guide.
 
@@ -139,6 +141,8 @@ OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh
 # Validate
 bash -n openclaw-orbstack-setup.sh          # syntax check
 shellcheck openclaw-orbstack-setup.sh       # lint
+openclaw config validate                    # validate config syntax
+openclaw config validate --json             # JSON output for CI
 
 # Clean reinstall
 orb delete openclaw-vm && OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh
