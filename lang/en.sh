@@ -94,10 +94,12 @@ MSG_CMD_CONFIG_BACKED_UP="Backed up to: %s"
 MSG_CMD_CONFIG_USAGE="Usage: openclaw-config [edit|show|backup]"
 
 # openclaw-update
-MSG_CMD_UPDATE_USAGE="Usage: openclaw-update [--sandbox]"
+MSG_CMD_UPDATE_USAGE="Usage: openclaw-update [--sandbox] [--force]"
 MSG_CMD_UPDATE_DESC="Update OpenClaw to the latest version."
 MSG_CMD_UPDATE_OPTIONS="Options:"
 MSG_CMD_UPDATE_SANDBOX_OPT="  --sandbox    Also rebuild sandbox Docker images"
+MSG_CMD_UPDATE_FORCE_OPT="  --force      Force rebuild even if already on latest version"
+MSG_CMD_UPDATE_ALREADY_CURRENT="✅ Already on the latest version. No update needed.\n💡 Use --force to rebuild anyway."
 MSG_CMD_UPDATE_TIP="Tip: To rebuild sandbox only, use openclaw-sandbox-rebuild"
 MSG_CMD_UPDATE_UPDATING="🔄 Updating OpenClaw..."
 MSG_CMD_UPDATE_STOPPING="  Stopping service..."

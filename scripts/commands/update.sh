@@ -6,9 +6,11 @@
 source "$(dirname "$0")/_common.sh"
 
 SANDBOX=false
+FORCE=false
 for arg in "$@"; do
     case "$arg" in
         --sandbox) SANDBOX=true ;;
+        --force) FORCE=true ;;
         --help|-h)
             echo "$MSG_CMD_UPDATE_USAGE"
             echo ""
@@ -16,6 +18,7 @@ for arg in "$@"; do
             echo ""
             echo "$MSG_CMD_UPDATE_OPTIONS"
             echo "$MSG_CMD_UPDATE_SANDBOX_OPT"
+            echo "$MSG_CMD_UPDATE_FORCE_OPT"
             echo ""
             echo "$MSG_CMD_UPDATE_TIP"
             exit 0
@@ -46,14 +49,7 @@ fi
 
 echo "$MSG_CMD_UPDATE_UPDATING"
 
-echo "$MSG_CMD_UPDATE_STOPPING"
-orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway stop"
-GATEWAY_STOPPED=true
-trap 'if [ "$GATEWAY_STOPPED" = true ]; then
-    echo "$MSG_CMD_UPDATE_RECOVER"
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start" 2>/dev/null || true
-fi' EXIT
-
+# Fetch tags before stopping gateway to check if update is needed
 echo "$MSG_CMD_UPDATE_PULLING"
 orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git fetch --tags --force"
 LATEST_TAG=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
@@ -62,6 +58,26 @@ if [ -z "$LATEST_TAG" ]; then
     exit 1
 fi
 echo "  -> $LATEST_TAG"
+
+# Check if already on the latest tag
+CURRENT_HEAD=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git rev-parse HEAD 2>/dev/null")
+TAG_COMMIT=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git rev-parse '$LATEST_TAG^{commit}' 2>/dev/null")
+if [ "$CURRENT_HEAD" = "$TAG_COMMIT" ] && [ "$FORCE" = false ] && [ "$SANDBOX" = false ]; then
+    echo -e "$MSG_CMD_UPDATE_ALREADY_CURRENT"
+    # Still refresh Mac commands in case openclaw-orbstack repo changed
+    OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
+        bash "$OPENCLAW_REPO_DIR/scripts/refresh-mac-commands.sh" 2>/dev/null || true
+    exit 0
+fi
+
+echo "$MSG_CMD_UPDATE_STOPPING"
+orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway stop"
+GATEWAY_STOPPED=true
+trap 'if [ "$GATEWAY_STOPPED" = true ]; then
+    echo "$MSG_CMD_UPDATE_RECOVER"
+    orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start" 2>/dev/null || true
+fi' EXIT
+
 orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git checkout -- . 2>/dev/null; git checkout '$LATEST_TAG'"
 
 # Ensure pnpm is available (npm/corepack may vanish after apt upgrade)

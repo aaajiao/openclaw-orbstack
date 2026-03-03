@@ -110,7 +110,7 @@ openclaw doctor
 | `openclaw-stop/start` | Stop/start service |
 | `openclaw-shell` | Enter VM terminal |
 | `openclaw-doctor` | Run diagnostics |
-| `openclaw-update` | Update app (`--sandbox` to rebuild images) |
+| `openclaw-update` | Update app (`--sandbox` rebuild images, `--force` force rebuild) |
 | `openclaw-sandbox-rebuild` | Rebuild sandbox Docker images |
 
 Full command reference: [docs/commands.md](docs/commands.md)

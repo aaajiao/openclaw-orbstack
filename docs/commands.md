@@ -61,24 +61,28 @@ openclaw-whatsapp                      # 扫码登录
 | `openclaw-start` | 启动服务 |
 | `openclaw-shell` | 进入 VM 终端 |
 | `openclaw-doctor` | 运行诊断 (openclaw doctor) |
-| `openclaw-update` | 更新版本 (仅应用，`--sandbox` 重建镜像) |
+| `openclaw-update` | 更新版本 (`--sandbox` 重建镜像，`--force` 强制重建) |
 | `openclaw-sandbox-rebuild` | 重建沙箱 Docker 镜像 |
 
 ### 更新命令详情
 
-`openclaw-update` 默认只更新应用（不重建沙箱镜像）：
-1. 停止 Gateway 服务
-2. 获取最新 release tag 并切换
-3. 安装依赖 (`npm install`)
-4. 编译项目 (`npm run build`)
-5. 构建 Control UI (`pnpm ui:build`)
-6. 重新安装 CLI (`npm install -g .`)
-7. 启动服务
+`openclaw-update` 会先检查是否有新版本。如果已是最新，直接跳过构建流程：
 
-使用 `--sandbox` 标志同时重建沙箱镜像：
 ```bash
-openclaw-update --sandbox
+openclaw-update          # 有新版本才更新，已是最新则跳过
+openclaw-update --force  # 强制重新构建（即使已是最新版本）
+openclaw-update --sandbox  # 同时重建沙箱 Docker 镜像
 ```
+
+有新版本时的更新流程：
+1. 获取最新 release tag
+2. 停止 Gateway 服务
+3. 切换到新版本
+4. 安装依赖 (`pnpm install`)
+5. 编译项目 (`pnpm build`)
+6. 构建 Control UI (`pnpm ui:build`)
+7. 重新安装 CLI (`npm install -g .`)
+8. 启动服务
 
 或单独重建沙箱镜像：
 ```bash

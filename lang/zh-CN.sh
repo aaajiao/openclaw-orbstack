@@ -94,10 +94,12 @@ MSG_CMD_CONFIG_BACKED_UP="已备份到: %s"
 MSG_CMD_CONFIG_USAGE="用法: openclaw-config [edit|show|backup]"
 
 # openclaw-update
-MSG_CMD_UPDATE_USAGE="用法: openclaw-update [--sandbox]"
+MSG_CMD_UPDATE_USAGE="用法: openclaw-update [--sandbox] [--force]"
 MSG_CMD_UPDATE_DESC="更新 OpenClaw 应用到最新版本。"
 MSG_CMD_UPDATE_OPTIONS="选项:"
 MSG_CMD_UPDATE_SANDBOX_OPT="  --sandbox    同时重建沙箱 Docker 镜像"
+MSG_CMD_UPDATE_FORCE_OPT="  --force      即使已是最新版本也强制重新构建"
+MSG_CMD_UPDATE_ALREADY_CURRENT="✅ 已是最新版本，无需更新。\n💡 如需强制重建: openclaw-update --force"
 MSG_CMD_UPDATE_TIP="提示: 单独重建沙箱可用 openclaw-sandbox-rebuild"
 MSG_CMD_UPDATE_UPDATING="🔄 正在更新 OpenClaw..."
 MSG_CMD_UPDATE_STOPPING="  停止服务..."
