@@ -68,12 +68,17 @@ openclaw gateway restart
 | `agents.defaults.model` | Primary/fallback models for main agent |
 | `agents.defaults.models` | Model catalog/allowlist, custom providers via `models.providers` |
 | `agents.defaults.memorySearch` | Vector memory index settings (SQLite, embedding provider, hybrid search) |
+| `agents.defaults.contextPruning` | Context pruning strategy (cache-ttl, soft/hard trim) |
+| `agents.defaults.compaction` | Compaction / memory flush before context eviction |
+| `agents.defaults.subagents` | Sub-agent config (model, concurrency, archive timeout) |
 | `agents.defaults.sandbox` | Docker sandbox config (image, limits, env vars) |
-| `agents.defaults.pdfModel` | PDF analysis model config (model, maxBytesMb, maxPages) |
+| `agents.defaults.pdfModel` | PDF analysis model (`{ primary, fallbacks }`, same level as `model`) |
 | `acp` | Agent Communication Protocol dispatch (default: true since v2026.3.2) |
 | `channels.telegram` | Telegram bot settings (token, groups, policies) |
 | `session` | DM scope (per-peer, per-channel-peer, etc.), auto-reset |
-| `hooks` | External event triggers (e.g., GitHub webhook → AI action) |
+| `hooks.internal` | Built-in hooks (boot-md, command-logger, session-memory) |
+| `hooks` (external) | External event triggers (e.g., GitHub webhook → AI action) |
+| `tools.web.search` | Web search provider (perplexity, tavily, exa, google) |
 | `cron` | Scheduled tasks (enabled, maxConcurrentRuns, sessionRetention) |
 | `gateway` | Port, auth, Tailscale, reload mode settings |
 | `env` | Static vars + shellEnv (login shell import) |

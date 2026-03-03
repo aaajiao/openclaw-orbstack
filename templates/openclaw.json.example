@@ -72,27 +72,40 @@
       //   email: "me@example.com"
       // },
       
+      // OpenCode Zen (推荐，多模型统一入口)
+      "opencode:default": {
+        provider: "opencode",
+        mode: "api_key"
+      },
+
+      // Anthropic Claude
       // API Key 模式
       "anthropic:api": {
         provider: "anthropic",
         mode: "api_key"
       },
-      
+      // Token 模式 (Claude Pro/Max 订阅)
+      // "anthropic:manual": {
+      //   provider: "anthropic",
+      //   mode: "token"
+      // },
+
       // OpenAI
       "openai:default": {
         provider: "openai",
         mode: "api_key"
       },
-      
+
       // Google Gemini
       "google:default": {
         provider: "google",
         mode: "api_key"
       }
     },
-    
+
     // 提供商使用顺序 (用于故障转移/负载均衡)
     order: {
+      opencode: ["opencode:default"],
       anthropic: ["anthropic:api"],
       openai: ["openai:default"],
       google: ["google:default"]
@@ -114,41 +127,41 @@
       // 模型配置
       model: {
         // 主模型 (格式: 提供商/模型名)
-        primary: "anthropic/claude-sonnet-4-5",
+        primary: "anthropic/claude-opus-4-6",
         // 备用模型 (主模型失败时使用)
-        fallbacks: ["anthropic/claude-haiku-4-5", "openai/gpt-5.1-codex"]
+        fallbacks: ["anthropic/claude-sonnet-4-6", "opencode/gemini-3.1-pro"]
       },
 
-      // 图像模型 (可选)
-      // imageModel: {
-      //   primary: "openai/dall-e-3"
-      // },
+      // 图像模型
+      imageModel: {
+        primary: "opencode/gemini-3.1-pro",
+        fallbacks: ["anthropic/claude-sonnet-4-6", "opencode/gemini-3-flash"]
+      },
 
-      // PDF analysis model (v2026.3.2+)
-      // "pdfModel": {
-      //   "provider": "anthropic",
-      //   "model": "claude-sonnet-4-6",
-      //   "pdfMaxBytesMb": 30,
-      //   "pdfMaxPages": 100
-      // },
+      // PDF 分析模型 (v2026.3.2+)
+      // pdfModel 和 pdfMaxBytesMb 是 agents.defaults 的同级字段，不是嵌套关系
+      // 不配也能用，自动 fallback: pdfModel → imageModel → 会话默认模型
+      // 原生模式 (Anthropic/Gemini) 下 pdfMaxPages 无效（整个 PDF 直接发送）
+      pdfModel: {
+        primary: "anthropic/claude-sonnet-4-6",
+        fallbacks: ["opencode/gemini-3-flash"]
+      },
+      pdfMaxBytesMb: 30,   // 单个 PDF 最大 MB，默认 10
 
-      // 模型别名 (可选)
-      // Anthropic 1M 上下文 Beta (可选，Opus 4.6 / Sonnet 4.6 / 4.5 / 4)
-      // 在模型条目中添加 params: { context1m: true } 启用
-      // 注意: 仅 API Key 模式 (mode: "api_key") 支持，token/OAuth 模式不支持
-      // 超过 200K token 按 premium pricing 计费 (输入 2x，输出 1.5x)
-      // 需要 Usage Tier 4+
+      // 模型目录 / 别名
+      // Anthropic 1M 上下文 Beta: params: { context1m: true }
+      //   仅 API Key 模式支持，token/OAuth 不支持；>200K 按 premium 计费
       models: {
-        "anthropic/claude-opus-4-6": { alias: "opus" },
-        // "anthropic/claude-opus-4-6": { alias: "opus", params: { context1m: true } },
-        "anthropic/claude-sonnet-4-6": { alias: "sonnet46" },
-        "anthropic/claude-sonnet-4-5": { alias: "sonnet" },
-        "anthropic/claude-haiku-4-5": { alias: "haiku" },
-        // Gemini 裸模型 ID 规范化 (v2026.2.26+):
-        //   gemini-3-pro 等不带后缀的 ID 会自动规范化到 -low tier
-        //   建议使用完整 ID: gemini-3-pro-preview, gemini-3-pro-low 等
-        "google/gemini-3-pro-preview": { alias: "gemini3" },
-        "google/gemini-3.1-pro-preview": { alias: "gemini31" }
+        "anthropic/claude-opus-4-6": { alias: "Opus 4.6" },
+        // params: { context1m: true } — 仅 API Key 模式，需要 Usage Tier 4+
+        // "anthropic/claude-opus-4-6": { alias: "Opus 4.6", params: { context1m: true } },
+        "anthropic/claude-sonnet-4-6": { alias: "Sonnet 4.6" },
+        "anthropic/claude-haiku-4-5": { alias: "Haiku 4.5" },
+        "opencode/gemini-3.1-pro": { alias: "Gemini 3.1 Pro" },
+        "opencode/gemini-3-flash": { alias: "Gemini 3 Flash" },
+        "opencode/kimi-k2.5": { alias: "Kimi K2.5" },
+        "opencode/gpt-5.2": { alias: "GPT 5.2" },
+        "opencode/gpt-5.3-codex": { alias: "GPT 5.3 Codex" }
       },
       
       // 默认思考级别: "off" | "low" | "high"
@@ -169,8 +182,11 @@
       // 打字指示器间隔 (秒)
       typingIntervalSeconds: 5,
       
+      // 上下文窗口大小 (tokens)
+      contextTokens: 250000,
+
       // 最大并发任务数
-      maxConcurrent: 3,
+      maxConcurrent: 4,
       
       // 人类延迟模拟
       humanDelay: {
@@ -185,6 +201,16 @@
       //   // v2026.2.24 曾默认改为 block，v2026.2.25 恢复为 allow
       //   directPolicy: "allow",     // "allow" - 允许投递到私聊 | "block" - 只投递到群组/频道
       // },
+
+      // ========== 子代理配置 ==========
+      subagents: {
+        maxConcurrent: 4,
+        archiveAfterMinutes: 15,
+        model: {
+          primary: "anthropic/claude-sonnet-4-6",
+          fallbacks: ["opencode/gemini-3-flash", "anthropic/claude-haiku-4-5"]
+        }
+      },
 
       // 块流式传输配置
       blockStreamingDefault: "off",  // "off" | "on"
@@ -207,20 +233,80 @@
       //
       // 详见 docs/configuration-guide.md 和 docs/troubleshooting.md
       memorySearch: {
-        provider: "auto",  // "auto" | "openai" | "gemini" | "local" | "ollama"
+        enabled: true,
+        // provider: "auto",  // "auto" | "openai" | "gemini" | "local" | "ollama"
         // auto 模式会按顺序尝试: local → openai → gemini
         // 如果没有可用的 embedding provider，memory search 会被静默禁用
-        
-        // model: "text-embedding-3-small",  // OpenAI embedding 模型
-        // extraPaths: ["../team-docs", "/srv/shared-notes"],  // 额外索引路径
-        
-        // Batch API 配置 (默认开启，便宜 50% 但较慢)
-        // remote: {
-        //   batch: {
-        //     enabled: true,   // 设为 false 使用实时 API (快但贵)
-        //     concurrency: 2
-        //   }
-        // }
+        sources: ["memory", "sessions"],
+        experimental: {
+          sessionMemory: true   // 索引会话记录
+        },
+        fallback: "openai",     // 主 provider 失败时的后备
+        store: {
+          path: "~/.openclaw/memory/{agentId}.sqlite",
+          vector: {
+            enabled: true
+          }
+        },
+        sync: {
+          watch: true,          // 监控文件变化
+          sessions: {
+            deltaBytes: 50000,  // 每 50KB 变化同步一次
+            deltaMessages: 30   // 或每 30 条消息同步一次
+          }
+        },
+        query: {
+          hybrid: {             // BM25 + 向量混合搜索
+            enabled: true,
+            vectorWeight: 0.7,
+            textWeight: 0.3,
+            candidateMultiplier: 4
+          }
+        },
+        cache: {
+          enabled: true,
+          maxEntries: 50000
+        },
+        remote: {
+          batch: {
+            enabled: true,      // Batch API 便宜 50% 但较慢
+            concurrency: 2
+          }
+        }
+      },
+
+      // ========== 上下文修剪配置 ==========
+      contextPruning: {
+        mode: "cache-ttl",      // "off" | "cache-ttl"
+        ttl: "3h",              // 超过 TTL 的工具结果会被修剪
+        keepLastAssistants: 3,  // 保留最近 N 条助手消息
+        softTrimRatio: 0.25,
+        hardClearRatio: 0.4,
+        minPrunableToolChars: 4000,
+        tools: {
+          deny: ["browser", "canvas"]   // 这些工具的结果不修剪
+        },
+        softTrim: {
+          maxChars: 4000,
+          headChars: 1500,
+          tailChars: 1500
+        },
+        hardClear: {
+          enabled: true,
+          placeholder: "[content pruned to save context space]"
+        }
+      },
+
+      // ========== 压缩 / 记忆刷盘配置 ==========
+      compaction: {
+        mode: "safeguard",      // "off" | "safeguard"
+        reserveTokensFloor: 30000,
+        memoryFlush: {
+          enabled: true,
+          softThresholdTokens: 15000,
+          prompt: "Pre-compaction memory flush. Store durable memories now (use memory/YYYY-MM-DD.md; create memory/ if needed). If nothing to store, reply with NO_REPLY.",
+          systemPrompt: "CRITICAL: Session nearing compaction. Save all important context to memory NOW or it will be lost."
+        }
       },
       
       // ========== 沙箱配置 ==========
@@ -336,8 +422,8 @@
         
         // 自动清理
         prune: {
-          idleHours: 24,   // 空闲多久后清理
-          maxAgeDays: 7    // 最大存活天数
+          idleHours: 87600,   // 空闲多久后清理 (87600h ≈ 10年，基本不自动清理)
+          maxAgeDays: 3650    // 最大存活天数 (3650天 ≈ 10年)
         }
       }
     },
@@ -665,6 +751,16 @@
   // 六、工具权限配置
   // --------------------------------------------------------------------------
   tools: {
+    // Web 搜索工具
+    web: {
+      search: {
+        provider: "perplexity",   // "perplexity" | "tavily" | "exa" | "google"
+        perplexity: {
+          model: "sonar-pro"
+        }
+      }
+    },
+
     // 沙箱工具权限 (仅在沙箱模式下生效)
     sandbox: {
       tools: {
@@ -673,9 +769,29 @@
         //   group:fs       = read, write, edit, apply_patch
         //   group:sessions = sessions_list, sessions_history, sessions_send, sessions_spawn, session_status
         //   group:ui       = browser, canvas
-        allow: ["group:runtime", "group:fs", "group:sessions", "group:ui"],
-        // 禁止的工具 (会覆盖 allow，包括 group:ui 中的 canvas)
-        deny: ["canvas", "nodes", "cron", "gateway", "telegram", "whatsapp", "discord", "googlechat", "slack", "signal", "imessage"]
+        allow: [
+          "group:runtime",
+          "group:fs",
+          "group:sessions",
+          "group:ui",
+          "cron",
+          "memory_search",
+          "memory_get",
+          "web_search",
+          "web_fetch"
+        ],
+        // 禁止的工具 (会覆盖 allow)
+        deny: [
+          "nodes",
+          "gateway",
+          "telegram",
+          "whatsapp",
+          "discord",
+          "googlechat",
+          "slack",
+          "signal",
+          "imessage"
+        ]
       }
     },
     
@@ -692,7 +808,7 @@
     
     // 提权配置 (允许危险操作)
     elevated: {
-      enabled: true,
+      enabled: false,
       // 各频道的提权用户列表
       allowFrom: {
         whatsapp: [
@@ -742,7 +858,8 @@
     
     // 收到消息时的反应 emoji
     ackReaction: "👀",
-    ackReactionScope: "group-mentions",  // "all" | "group-mentions" | "none"
+    ackReactionScope: "all",  // "all" | "group-mentions" | "none"
+    removeAckAfterReply: true,
     
     // 入站消息处理
     inbound: {
@@ -960,7 +1077,7 @@
     // 安装配置
     install: {
       preferBrew: true,
-      nodeManager: "npm"
+      nodeManager: "bun"
     }
     
     // 技能条目配置
@@ -1057,11 +1174,22 @@
   // 十六、Webhook (可选)
   // --------------------------------------------------------------------------
   hooks: {
-    enabled: false,
-    path: "/hooks",
-    token: "",
-    defaultSessionKey: "hooks",
-    allowRequestSessionKey: true,
+    // ========== 内置 Hooks ==========
+    internal: {
+      enabled: true,
+      entries: {
+        "boot-md": { enabled: true },           // 启动时加载 boot.md
+        "command-logger": { enabled: true },     // 记录命令执行日志
+        "session-memory": { enabled: true }      // 会话记忆持久化
+      }
+    },
+
+    // ========== 外部 Webhook (可选) ==========
+    // enabled: false,
+    // path: "/hooks",
+    // token: "",
+    // defaultSessionKey: "hooks",
+    // allowRequestSessionKey: true,
     // allowedSessionKeyPrefixes: ["ci-"],
     // presets: ["gmail"],
     // transformsDir: "~/.openclaw/hooks",
