@@ -2,7 +2,7 @@
 
 在 Mac 上通过 OrbStack 一键部署 [OpenClaw](https://github.com/openclaw/openclaw) 聊天机器人平台。
 
-**[English](../README.md)**
+[![English](https://img.shields.io/badge/Docs-English-blue?style=flat-square)](../README.md)
 
 ## 这是什么？
 

@@ -2,7 +2,7 @@
 
 One-click [OpenClaw](https://github.com/openclaw/openclaw) deployment on macOS via OrbStack VM.
 
-**[中文文档](docs/README.zh-CN.md)**
+[![中文文档](https://img.shields.io/badge/文档-中文-blue?style=flat-square)](docs/README.zh-CN.md)
 
 ## What is this?
 
