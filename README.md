@@ -1,8 +1,14 @@
 # OpenClaw OrbStack
 
-One-click OpenClaw chatbot deployment on macOS via OrbStack VM.
+One-click [OpenClaw](https://github.com/openclaw/openclaw) deployment on macOS via OrbStack VM.
 
 **[中文文档](docs/README.zh-CN.md)**
+
+## What is this?
+
+[OpenClaw](https://docs.openclaw.ai) is an open-source AI chatbot platform that connects to 25+ messaging channels (Telegram, WhatsApp, Discord, Slack, etc.) and supports all major AI providers (Anthropic, OpenAI, Google, etc.).
+
+This project (**openclaw-orbstack**) is a **deployment tool** — it automates the from-source build and OrbStack VM setup on macOS. The architecture below (Gateway process + Docker sandboxes) is [OpenClaw's official design](https://docs.openclaw.ai/install), not something we invented. We simply package it into a one-click installer with Mac convenience commands.
 
 ## Architecture
 

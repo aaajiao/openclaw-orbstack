@@ -1,8 +1,14 @@
 # OpenClaw OrbStack
 
-在 Mac 上通过 OrbStack 一键部署 OpenClaw 聊天机器人平台。
+在 Mac 上通过 OrbStack 一键部署 [OpenClaw](https://github.com/openclaw/openclaw) 聊天机器人平台。
 
 **[English](../README.md)**
+
+## 这是什么？
+
+[OpenClaw](https://docs.openclaw.ai) 是一个开源 AI 聊天机器人平台，支持 25+ 消息渠道（Telegram、WhatsApp、Discord、Slack 等）和所有主流 AI 服务商（Anthropic、OpenAI、Google 等）。
+
+本项目（**openclaw-orbstack**）是一个**部署工具**——自动化 macOS 上的源码构建和 OrbStack VM 配置。下方的架构（Gateway 进程 + Docker 沙箱）是 [OpenClaw 官方设计](https://docs.openclaw.ai/install)，不是我们发明的。我们只是把它打包成一键安装器，并提供 Mac 端便捷命令。
 
 ## 架构
 
