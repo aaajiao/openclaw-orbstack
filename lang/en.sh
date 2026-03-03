@@ -51,6 +51,7 @@ MSG_INFO_UI_BUILD="Building Control UI..."
 MSG_INFO_GLOBAL_INSTALL="Installing CLI globally..."
 MSG_INFO_CHECKOUT_RELEASE="Checking out latest release: %s ..."
 MSG_OK_BUILD_DONE="OpenClaw build complete (CLI: openclaw)"
+MSG_ERR_NO_VERSION="No stable release tag found. Check network or upstream repository."
 
 # --- Step 6: Sandbox ---
 MSG_INFO_SANDBOX_BASE="Building base sandbox image (required by sandbox-common)..."
@@ -114,6 +115,7 @@ MSG_CMD_UPDATE_SANDBOX_NOTE="  💡 Running containers still use old images, res
 MSG_CMD_UPDATE_STARTING="  Starting service..."
 MSG_CMD_UPDATE_DONE="✅ Update complete!"
 MSG_CMD_UPDATE_SANDBOX_HINT="💡 To rebuild sandbox images: openclaw-update --sandbox"
+MSG_CMD_UPDATE_NPM_REINSTALL="npm missing, reinstalling Node.js package..."
 
 # openclaw-sandbox-rebuild
 MSG_CMD_REBUILD_START="🔨 Rebuilding sandbox Docker images..."

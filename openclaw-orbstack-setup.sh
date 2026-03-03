@@ -216,6 +216,10 @@ fi
 
 # Get latest stable release tag (skip beta/rc/alpha pre-releases)
 OPENCLAW_VERSION=$(vm_exec "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
+if [ -z "$OPENCLAW_VERSION" ]; then
+    err "$MSG_ERR_NO_VERSION"
+    exit 1
+fi
 info "$(printf "$MSG_INFO_CHECKOUT_RELEASE" "$OPENCLAW_VERSION")"
 vm_exec "cd ~/openclaw && git checkout '$OPENCLAW_VERSION'"
 
@@ -247,6 +251,13 @@ else
     warn "$MSG_WARN_SANDBOX_BASE_FAIL"
 fi
 
+info "$MSG_INFO_SANDBOX_COMMON"
+if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
+    ok "$MSG_OK_SANDBOX_COMMON"
+else
+    warn "$MSG_WARN_SANDBOX_COMMON_FAIL"
+fi
+
 info "$MSG_INFO_SANDBOX_BROWSER"
 if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
     ok "$MSG_OK_SANDBOX_BROWSER"
@@ -254,13 +265,6 @@ elif vm_exec "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-br
     ok "$MSG_OK_SANDBOX_BROWSER_DF"
 else
     warn "$MSG_WARN_SANDBOX_BROWSER_FAIL"
-fi
-
-info "$MSG_INFO_SANDBOX_COMMON"
-if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
-    ok "$MSG_OK_SANDBOX_COMMON"
-else
-    warn "$MSG_WARN_SANDBOX_COMMON_FAIL"
 fi
 
 # Save sandbox build hash for staleness detection during updates
@@ -562,6 +566,8 @@ if os.path.exists(config_path):
 else:
     print("config not found, skipping sandbox merge")
 PYEOF'
+
+vm_exec "rm -f /tmp/sandbox-config.json"
 
 ok "$MSG_OK_SANDBOX_CONFIG"
 

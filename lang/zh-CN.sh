@@ -51,6 +51,7 @@ MSG_INFO_UI_BUILD="构建 Control UI..."
 MSG_INFO_GLOBAL_INSTALL="全局安装 CLI..."
 MSG_INFO_CHECKOUT_RELEASE="切换到最新发布版本: %s ..."
 MSG_OK_BUILD_DONE="OpenClaw 构建完成 (CLI: openclaw)"
+MSG_ERR_NO_VERSION="未找到稳定发布标签，请检查网络或上游仓库。"
 
 # --- Step 6: Sandbox ---
 MSG_INFO_SANDBOX_BASE="构建基础沙箱镜像 (sandbox-common 的构建依赖)..."
@@ -114,6 +115,7 @@ MSG_CMD_UPDATE_SANDBOX_NOTE="  💡 已运行的容器仍使用旧镜像，重�
 MSG_CMD_UPDATE_STARTING="  启动服务..."
 MSG_CMD_UPDATE_DONE="✅ 更新完成！"
 MSG_CMD_UPDATE_SANDBOX_HINT="💡 如需重建沙箱镜像: openclaw-update --sandbox"
+MSG_CMD_UPDATE_NPM_REINSTALL="npm 缺失，正在重新安装 Node.js 软件包..."
 
 # openclaw-sandbox-rebuild
 MSG_CMD_REBUILD_START="🔨 正在重建沙箱 Docker 镜像..."
