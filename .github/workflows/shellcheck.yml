@@ -5,10 +5,14 @@ on:
     branches: [main]
     paths:
       - "**/*.sh"
+      - "lang/**"
+      - "tests/**"
   pull_request:
     branches: [main]
     paths:
       - "**/*.sh"
+      - "lang/**"
+      - "tests/**"
 
 jobs:
   shellcheck:
@@ -23,3 +27,11 @@ jobs:
         run: |
           find . -name '*.sh' -not -path '*/node_modules/*' -not -path '*/.git/*' \
             -exec shellcheck --severity=warning {} +
+
+  ux-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run UX validation tests
+        run: bash tests/ci-checks.sh
