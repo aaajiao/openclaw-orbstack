@@ -503,8 +503,8 @@ vm_exec 'cat > /tmp/sandbox-config.json << '\''SANDBOX_EOF'\''
           "allowHostControl": true
         },
         "prune": {
-          "idleHours": 87600,
-          "maxAgeDays": 3650
+          "idleHours": 0,
+          "maxAgeDays": 0
         }
       }
     }

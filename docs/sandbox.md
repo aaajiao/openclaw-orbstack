@@ -150,8 +150,8 @@ Docker 容器看不到！只能看到 /workspace
           "allowHostControl": true
         },
         "prune": {
-          "idleHours": 24,
-          "maxAgeDays": 7
+          "idleHours": 0,
+          "maxAgeDays": 0
         }
       }
     }
@@ -243,6 +243,67 @@ Docker 容器看不到！只能看到 /workspace
 | `autoStart` | `true` | 自动启动浏览器容器 |
 | `autoStartTimeoutMs` | `30000` | 启动超时时间 (毫秒) |
 | `allowHostControl` | `true` | 允许 `target="host"` 访问宿主浏览器 |
+
+## 容器生命周期与自动清理 (prune)
+
+**镜像 (images) 和容器 (containers) 是两码事：**
+
+| 概念 | 是什么 | prune 管不管？ | 怎么删 |
+|------|--------|---------------|--------|
+| **镜像** | 构建产物（蓝图），如 `openclaw-sandbox-common:bookworm-slim` | ❌ 不管 | `openclaw-sandbox-rebuild` 或 `docker rmi` |
+| **容器** | 从镜像启动的运行实例 | ✅ 管这个 | 自动 prune 或 `openclaw sandbox recreate` |
+
+### scope 与容器数量
+
+`scope` 决定了容器的创建粒度：
+
+| scope | 容器数量 | 行为 |
+|-------|---------|------|
+| `"agent"` | 每个 Agent ID 一组（代码 + 浏览器） | 默认，容器随 Agent 常驻 |
+| `"session"` | 每个会话一组 | 会话多了容器会增长 |
+| `"shared"` | 全局共享一组 | 最少容器 |
+
+默认 `scope: "agent"` 且只有一个默认 Agent 时，实际只有 **2 个容器**。
+
+### prune 配置
+
+```json
+"prune": {
+  "idleHours": 0,    // 容器空闲超过 N 小时后清除，0 = 禁用
+  "maxAgeDays": 0    // 容器存活超过 N 天后清除，0 = 禁用
+}
+```
+
+**我们默认设为 `0/0`（禁用自动清理）**，原因：
+- 单 Agent 场景下只有 2 个容器，不会无限增长
+- 容器常驻 = 热启动，避免每次冷启动重建
+- 需要清理时用 `openclaw sandbox recreate` 手动操作
+
+### 什么时候该开启 prune？
+
+如果你在 `agents.list` 中配置了多个 Agent（`scope: "agent"` 模式下每个 Agent 各占一组容器），或使用 `scope: "session"`（每个会话一组容器），废弃的容器可能堆积。此时建议开启：
+
+```json
+"prune": {
+  "idleHours": 168,   // 空闲 7 天后清除
+  "maxAgeDays": 30    // 最多存活 30 天
+}
+```
+
+### 手动管理容器
+
+```bash
+# 查看所有沙箱容器
+openclaw sandbox list
+
+# 重建所有容器（更新镜像/配置后）
+openclaw sandbox recreate --all
+
+# 或直接 Docker 操作
+docker ps -a --filter "name=openclaw-sbx"
+```
+
+> **注意**：更新 Docker 镜像或沙箱配置后，已有容器不会自动更新。经常使用的 Agent 容器可能一直跑旧版本。需要用 `openclaw sandbox recreate` 或 `openclaw-sandbox-rebuild` 强制重建。
 
 ## 故障排查
 
