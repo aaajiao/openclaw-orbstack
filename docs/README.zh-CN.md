@@ -40,9 +40,6 @@ Mac ─┼───────────────────────�
 - ✅ 符合 OpenClaw 官方推荐架构
 - ✅ Gateway 能正常管理沙箱容器
 - ✅ VM 隔离层保护 Mac 安全
-- ✅ PDF 文件分析工具
-- ✅ `openclaw config validate` 配置验证命令
-- ✅ 25+ 渠道支持
 
 ## 前置条件
 
