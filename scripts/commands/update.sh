@@ -82,7 +82,7 @@ echo "$MSG_CMD_UPDATE_PULLING"
 orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git fetch --tags --force"
 LATEST_TAG=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
 echo "  -> $LATEST_TAG"
-orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git checkout '$LATEST_TAG'"
+orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git checkout -- . 2>/dev/null; git checkout '$LATEST_TAG'"
 
 # Ensure pnpm is available (npm/corepack may vanish after apt upgrade)
 orb -m "$OPENCLAW_VM_NAME" bash -lc '
