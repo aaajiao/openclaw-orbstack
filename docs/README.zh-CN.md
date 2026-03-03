@@ -94,9 +94,6 @@ openclaw --help
 openclaw status
 openclaw channels list
 openclaw doctor
-
-# 验证配置文件
-openclaw config validate
 ```
 
 ## Mac 端命令

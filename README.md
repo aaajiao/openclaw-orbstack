@@ -164,6 +164,18 @@ This auto-detects and repairs outdated configurations (e.g. migrating from syste
 | Memory directory error | `mkdir -p ~/.openclaw/memory` |
 | Memory search not working | Add OpenAI/Google key to agent auth-profiles.json |
 
+### Memory Directory Issue
+
+If you see `EISDIR: illegal operation on a directory` error, create the memory index directory manually:
+
+```bash
+openclaw-shell
+mkdir -p ~/.openclaw/memory
+chmod 755 ~/.openclaw/memory
+exit
+openclaw-restart
+```
+
 ## Documentation
 
 | Document | Content |
@@ -172,6 +184,7 @@ This auto-detects and repairs outdated configurations (e.g. migrating from syste
 | [docs/commands.md](docs/commands.md) | CLI command reference |
 | [docs/architecture.md](docs/architecture.md) | Architecture details |
 | [docs/configuration-guide.md](docs/configuration-guide.md) | Configuration guide |
+| [docs/multi-agent.md](docs/multi-agent.md) | Multi-agent setup (routing, multi-bot, sandbox isolation) |
 | [docs/troubleshooting.md](docs/troubleshooting.md) | Troubleshooting guide |
 | [docs/sandbox.md](docs/sandbox.md) | Sandbox security |
 | [docs/skills.md](docs/skills.md) | Skills guide |
