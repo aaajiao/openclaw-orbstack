@@ -19,6 +19,8 @@ Mac ─────────────────────────�
 
 Gateway runs directly on VM. Docker containers are the only isolation protecting Mac files (VM has `/mnt/mac` access).
 
+**IMPORTANT: Claude Code runs on the Mac host, NOT inside the VM.** Never attempt to start, access, or execute commands inside the VM. All file edits, searches, and validations happen on the Mac filesystem in this repo. This project develops *scripts that manage* the VM — it does not run inside it.
+
 ## Project Structure
 
 - `openclaw-orbstack-setup.sh` — Main entry point (8-step installer, ~850 lines)
@@ -45,7 +47,7 @@ This directory contains the developer's **actual runtime configuration** for the
 | `templates/openclaw.json.example` | Reference template with comments | When adding new config options to document |
 | `local/openclaw.json` | Actual working config | When tuning your own setup |
 
-### Sync Workflow
+### Sync Workflow (user-executed, not for Claude)
 
 ```bash
 # Mac → VM: Push config changes
@@ -143,16 +145,18 @@ bash openclaw-orbstack-setup.sh
 # Skip language prompt
 OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh
 
-# Validate
+# Validate (Claude can run these)
 bash -n openclaw-orbstack-setup.sh          # syntax check
 shellcheck openclaw-orbstack-setup.sh       # lint
+
+# Validate (user-executed, requires VM)
 openclaw config validate                    # validate config syntax
 openclaw config validate --json             # JSON output for CI
 
-# Clean reinstall
+# Clean reinstall (user-executed)
 orb delete openclaw-vm && OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh
 
-# Backup / Restore VM
+# Backup / Restore VM (user-executed)
 orb export openclaw-vm ~/Desktop/openclaw-vm-backup.tar.zst
 orb import -n openclaw-vm ~/Desktop/openclaw-vm-backup.tar.zst
 ```
@@ -209,7 +213,7 @@ Three independent scopes — they do NOT inherit from each other:
 
 - `~/.openclaw/.env` stores sensitive values (API keys, bot tokens, Bonjour settings)
 - Generated **automatically** during Step 7 (after `openclaw onboard`) by a Python3 extraction script
-- Config file (`openclaw.json`) references secrets via `${VAR}` syntax (e.g., `"token": "${TG_BOT_TOKEN}"`)
+- Config file (`openclaw.json`) references secrets via SecretRef objects (e.g., `"token": { "$secret": "TG_BOT_TOKEN" }`)
 - Gateway reads `.env` at startup via systemd `EnvironmentFile`
 - `openclaw-update` only creates a minimal `.env` (Bonjour vars) if the file is missing — it does NOT re-extract secrets
 - File permissions: `chmod 600` (owner-only read/write)
@@ -218,6 +222,7 @@ Three independent scopes — they do NOT inherit from each other:
 
 | Topic | URL |
 |-------|-----|
+| OpenClaw GitHub (upstream) | https://github.com/openclaw/openclaw |
 | OpenClaw getting started | https://docs.openclaw.ai/start/getting-started |
 | OpenClaw config | https://docs.openclaw.ai/gateway/configuration |
 | OpenClaw model providers | https://docs.openclaw.ai/concepts/model-providers |
@@ -239,9 +244,10 @@ GitHub Actions runs shellcheck on shell scripts (`.github/workflows/shellcheck.y
 
 ## Release Workflow
 
-1. Implement changes and commit
-2. Let user test locally before proceeding
-3. Only after user confirms: push, tag, and create GitHub release
+1. Use `/sync-upstream` to check for new upstream OpenClaw releases and apply changes
+2. Implement changes and commit
+3. Let user test locally before proceeding
+4. Only after user confirms: push, tag, and create GitHub release
 
 Never push or create releases without explicit user approval after testing.
 
