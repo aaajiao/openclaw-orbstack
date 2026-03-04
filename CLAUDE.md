@@ -234,8 +234,7 @@ Three independent scopes — they do NOT inherit from each other:
 ## Git
 
 ```bash
-# Push with gh token
-git push https://aaajiao:$(gh auth token)@github.com/aaajiao/openclaw-orbstack.git main
+git push origin main
 ```
 
 ## CI
