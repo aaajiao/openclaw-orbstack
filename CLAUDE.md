@@ -179,6 +179,11 @@ No automated test suite. Validation is syntax checks + shellcheck + manual testi
 - `OPENCLAW_LANG` env var selects language (`en` or `zh-CN`)
 - Falls back to English if language file missing
 
+### Execution Style
+- Prefer action over extended planning — when the task is clear, execute directly
+- Don't create sub-teams or toggle plan mode repeatedly for straightforward tasks
+- For config edits: check docs first, then edit, don't guess-and-fix
+
 ## Anti-Patterns (avoid these)
 
 | Don't | Why | Do Instead |
@@ -231,3 +236,25 @@ git push https://aaajiao:$(gh auth token)@github.com/aaajiao/openclaw-orbstack.g
 ## CI
 
 GitHub Actions runs shellcheck on shell scripts (`.github/workflows/shellcheck.yml`).
+
+## Release Workflow
+
+1. Implement changes and commit
+2. Let user test locally before proceeding
+3. Only after user confirms: push, tag, and create GitHub release
+
+Never push or create releases without explicit user approval after testing.
+
+## Config Editing Rules
+
+- Always verify config option names and nesting location against upstream docs before editing `openclaw.json`
+- Never guess at config structure — use WebFetch to check https://docs.openclaw.ai/gateway/configuration first
+- SecretRef objects are required for sensitive values; never use plaintext `${VAR}` strings
+- When unsure about a field's parent key, check the Key Config Sections table above
+
+## Shell Compatibility
+
+This project targets **macOS**. Use POSIX-compatible shell commands:
+- No `grep -P` (use `grep -E` or awk instead)
+- No GNU-only flags (`sed -i` needs `''` on macOS, `date` syntax differs)
+- Test shell scripts with `bash -n` + `shellcheck` before committing
