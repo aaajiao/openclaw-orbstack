@@ -317,26 +317,27 @@ with open(config_path, "r") as f:
     config = json.loads(strip_json5(f.read()))
 
 # --- Path-to-env-var mapping for known sensitive fields ---
+# 3rd element: "secretref" -> SecretRef object, "envvar" -> ${VAR} string
 SENSITIVE_PATHS = [
-    ("channels.telegram.botToken",                         "TG_BOT_TOKEN"),
-    ("channels.discord.token",                             "DISCORD_TOKEN"),
-    ("channels.slack.botToken",                            "SLACK_BOT_TOKEN"),
-    ("channels.slack.appToken",                            "SLACK_APP_TOKEN"),
-    ("channels.whatsapp.authToken",                        "WHATSAPP_AUTH_TOKEN"),
-    ("channels.googlechat.serviceAccountKey",              "GOOGLECHAT_SA_KEY"),
-    ("gateway.auth.token",                                 "GATEWAY_AUTH_TOKEN"),
-    ("agents.defaults.sandbox.docker.env.OPENAI_API_KEY",  "OPENAI_API_KEY"),
-    ("agents.defaults.sandbox.docker.env.GOOGLE_API_KEY",  "GOOGLE_API_KEY"),
-    ("agents.defaults.sandbox.docker.env.ANTHROPIC_API_KEY","ANTHROPIC_API_KEY"),
-    ("agents.defaults.sandbox.docker.env.OPENROUTER_API_KEY","OPENROUTER_API_KEY"),
-    ("agents.defaults.sandbox.docker.env.GROQ_API_KEY",    "GROQ_API_KEY"),
-    ("agents.defaults.sandbox.docker.env.XAI_API_KEY",     "XAI_API_KEY"),
-    ("agents.defaults.sandbox.docker.env.MISTRAL_API_KEY", "MISTRAL_API_KEY"),
-    ("agents.defaults.sandbox.docker.env.CEREBRAS_API_KEY","CEREBRAS_API_KEY"),
-    ("agents.defaults.sandbox.docker.env.DEEPSEEK_API_KEY","DEEPSEEK_API_KEY"),
-    ("agents.defaults.sandbox.docker.env.OPENCODE_API_KEY","OPENCODE_API_KEY"),
-    ("agents.defaults.sandbox.docker.env.ZAI_API_KEY",     "ZAI_API_KEY"),
-    ("agents.defaults.sandbox.docker.env.TG_BOT_TOKEN",   "TG_BOT_TOKEN"),
+    ("channels.telegram.botToken",                         "TG_BOT_TOKEN",      "secretref"),
+    ("channels.discord.token",                             "DISCORD_TOKEN",     "secretref"),
+    ("channels.slack.botToken",                            "SLACK_BOT_TOKEN",   "secretref"),
+    ("channels.slack.appToken",                            "SLACK_APP_TOKEN",   "secretref"),
+    ("channels.whatsapp.authToken",                        "WHATSAPP_AUTH_TOKEN","secretref"),
+    ("channels.googlechat.serviceAccountKey",              "GOOGLECHAT_SA_KEY", "secretref"),
+    ("gateway.auth.token",                                 "GATEWAY_AUTH_TOKEN","envvar"),
+    ("agents.defaults.sandbox.docker.env.OPENAI_API_KEY",  "OPENAI_API_KEY",   "envvar"),
+    ("agents.defaults.sandbox.docker.env.GOOGLE_API_KEY",  "GOOGLE_API_KEY",   "envvar"),
+    ("agents.defaults.sandbox.docker.env.ANTHROPIC_API_KEY","ANTHROPIC_API_KEY","envvar"),
+    ("agents.defaults.sandbox.docker.env.OPENROUTER_API_KEY","OPENROUTER_API_KEY","envvar"),
+    ("agents.defaults.sandbox.docker.env.GROQ_API_KEY",    "GROQ_API_KEY",     "envvar"),
+    ("agents.defaults.sandbox.docker.env.XAI_API_KEY",     "XAI_API_KEY",      "envvar"),
+    ("agents.defaults.sandbox.docker.env.MISTRAL_API_KEY", "MISTRAL_API_KEY",  "envvar"),
+    ("agents.defaults.sandbox.docker.env.CEREBRAS_API_KEY","CEREBRAS_API_KEY",  "envvar"),
+    ("agents.defaults.sandbox.docker.env.DEEPSEEK_API_KEY","DEEPSEEK_API_KEY",  "envvar"),
+    ("agents.defaults.sandbox.docker.env.OPENCODE_API_KEY","OPENCODE_API_KEY",  "envvar"),
+    ("agents.defaults.sandbox.docker.env.ZAI_API_KEY",     "ZAI_API_KEY",      "envvar"),
+    ("agents.defaults.sandbox.docker.env.TG_BOT_TOKEN",   "TG_BOT_TOKEN",     "envvar"),
 ]
 
 def get_nested(obj, path):
@@ -356,13 +357,13 @@ def set_nested(obj, path, value):
     if keys[-1] in obj:
         obj[keys[-1]] = value
 
-is_ref = lambda v: isinstance(v, str) and re.match(r"^\$\{.+\}$", v)
+is_ref = lambda v: (isinstance(v, str) and re.match(r"^\$\{.+\}$", v)) or (isinstance(v, dict) and "source" in v)
 
 # Phase 1: Collect secrets from known paths
 env_vars = {}     # VAR_NAME -> value
 val_to_var = {}   # value -> VAR_NAME (for dedup)
 
-for path, var_name in SENSITIVE_PATHS:
+for path, var_name, _ref_type in SENSITIVE_PATHS:
     val = get_nested(config, path)
     if val and isinstance(val, str) and not is_ref(val):
         if var_name not in env_vars:
@@ -383,6 +384,26 @@ if isinstance(skills, dict):
                     var_name = skill_name.upper().replace("-", "_") + "_API_KEY"
                     env_vars[var_name] = api_key
                     val_to_var[api_key] = var_name
+
+# Phase 2b: Scan auth-profiles.json for plaintext keys/tokens
+ap_path = os.path.expanduser("~/.openclaw/agents/main/agent/auth-profiles.json")
+ap = None
+if os.path.exists(ap_path):
+    with open(ap_path, "r") as f:
+        ap = json.loads(strip_json5(f.read()))
+    if isinstance(ap, dict):
+        for provider, profile in ap.items():
+            if not isinstance(profile, dict):
+                continue
+            for field, suffix in [("key", "_API_KEY"), ("token", "_TOKEN")]:
+                val = profile.get(field)
+                if val and isinstance(val, str) and not is_ref(val):
+                    if val in val_to_var:
+                        pass  # reuse existing var, replacement handled in Phase 5
+                    else:
+                        var_name = provider.upper().replace("-", "_") + suffix
+                        env_vars[var_name] = val
+                        val_to_var[val] = var_name
 
 if not env_vars:
     print("no secrets found, writing minimal .env")
@@ -409,11 +430,14 @@ with open(env_path, "w") as f:
 
 os.chmod(env_path, 0o600)
 
-# Phase 4: Replace inline secrets with ${VAR} references in config
-for path, var_name in SENSITIVE_PATHS:
+# Phase 4: Replace inline secrets with refs in config
+for path, var_name, ref_type in SENSITIVE_PATHS:
     val = get_nested(config, path)
     if val and isinstance(val, str) and not is_ref(val) and var_name in env_vars:
-        set_nested(config, path, "${" + var_name + "}")
+        if ref_type == "secretref":
+            set_nested(config, path, {"source": "env", "provider": "default", "id": var_name})
+        else:
+            set_nested(config, path, "${" + var_name + "}")
 
 if isinstance(skills, dict):
     for skill_name, skill_cfg in skills.items():
@@ -421,12 +445,26 @@ if isinstance(skills, dict):
             api_key = skill_cfg["apiKey"]
             if api_key and isinstance(api_key, str) and not is_ref(api_key):
                 if api_key in val_to_var:
-                    skill_cfg["apiKey"] = "${" + val_to_var[api_key] + "}"
+                    skill_cfg["apiKey"] = {"source": "env", "provider": "default", "id": val_to_var[api_key]}
 
 with open(config_path, "w") as f:
     json.dump(config, f, indent=2)
 
-print(f"extracted {len(env_vars)} secret(s) to .env")
+# Phase 5: Replace plaintext secrets in auth-profiles.json
+ap_count = 0
+if ap and isinstance(ap, dict):
+    for provider, profile in ap.items():
+        if not isinstance(profile, dict):
+            continue
+        for field in ("key", "token"):
+            val = profile.get(field)
+            if val and isinstance(val, str) and not is_ref(val) and val in val_to_var:
+                profile[field] = {"source": "env", "provider": "default", "id": val_to_var[val]}
+                ap_count += 1
+    with open(ap_path, "w") as f:
+        json.dump(ap, f, indent=2)
+
+print(f"extracted {len(env_vars)} secret(s) to .env, {ap_count} auth-profile ref(s) updated")
 PYEOF'
 
 ok "$MSG_OK_ENV_EXTRACTED"
