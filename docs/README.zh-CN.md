@@ -70,8 +70,7 @@ Web 控制台: `http://openclaw-vm.orb.local:18789`
 ## 快速开始
 
 ```bash
-# 添加 ~/bin 到 PATH (bash 用 ~/.bashrc, fish 用 ~/.config/fish/config.fish)
-echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+# PATH 在安装时已自动配置 — 打开新终端窗口即可使用
 
 # 查看服务状态
 openclaw-status

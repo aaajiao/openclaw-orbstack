@@ -70,8 +70,7 @@ Web Console: `http://openclaw-vm.orb.local:18789`
 ## Quick Start
 
 ```bash
-# Add ~/bin to PATH (use ~/.bashrc for bash, ~/.config/fish/config.fish for fish)
-echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+# PATH is auto-configured during install — just open a new terminal window
 
 # Check service status
 openclaw-status
