@@ -713,6 +713,115 @@ v2026.3.2 起 ACP 调度默认启用，允许代理间通过标准协议通信�
 
 如需禁用，设置 `"enabled": false`。
 
+### v2026.3.7 新增配置
+
+#### 压缩质量控制
+
+```json5
+{
+  agents: {
+    defaults: {
+      compaction: {
+        // 压缩后重新注入的 AGENTS.md H2/H3 段落
+        // 默认: ["Session Startup", "Red Lines"]，设为 [] 禁用
+        postCompactionSections: ["Session Startup", "Red Lines"],
+        // 保留最近 N 轮对话不被压缩（质量保护）
+        recentTurnsPreserve: 3
+      }
+    }
+  }
+}
+```
+
+#### Telegram Topic Agent 路由
+
+Forum 群组和 DM 话题可以按 topic 路由到不同 Agent，实现独立会话隔离：
+
+```json5
+{
+  channels: {
+    telegram: {
+      groups: {
+        "-1001234567890": {
+          topics: {
+            "99": {
+              agentId: "code-helper",     // 该 topic 路由到专用 Agent
+              requireMention: false
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+#### ACP 持久化频道绑定
+
+Discord 频道和 Telegram topic 的 ACP 绑定现在持久化存储，重启后不丢失：
+
+```bash
+openclaw agents bind <agentId> --channel discord --target <channelId>
+openclaw agents bind <agentId> --channel telegram --thread here
+openclaw agents bindings   # 查看所有绑定
+openclaw agents unbind     # 移除绑定
+```
+
+#### Slack 处理状态反应
+
+Socket Mode DM 中可显示 reaction 表示正在处理：
+
+```json5
+{
+  channels: {
+    slack: {
+      typingReaction: true  // 默认 false
+    }
+  }
+}
+```
+
+#### TTS 自定义 Endpoint
+
+OpenAI TTS 现在支持自定义 base URL，可接入兼容 API 的自托管服务：
+
+```json5
+{
+  messages: {
+    tts: {
+      openai: {
+        baseUrl: "https://your-tts-server.example.com/v1"
+      }
+    }
+  }
+}
+```
+
+#### Context Engine 插件接口
+
+新增 `ContextEngine` 插件插槽，支持自定义上下文管理策略（如 `lossless-claw` 插件）。无配置 Context Engine 插件时行为不变。
+
+```json5
+{
+  plugins: {
+    entries: {
+      "lossless-claw": {
+        contextEngine: true,
+        hooks: {
+          allowPromptInjection: false  // 是否允许插件修改提示词
+        },
+        prependSystemContext: "...",   // 插件指引前置到 system prompt
+        appendSystemContext: "..."     // 插件指引追加到 system prompt
+      }
+    }
+  }
+}
+```
+
+#### 新增模型
+
+- `google/gemini-3.1-flash-lite-preview` — Gemini 3.1 Flash Lite，低成本快速推理
+
 ### TTS 语音配置
 
 ```json5

@@ -159,6 +159,7 @@
         "anthropic/claude-haiku-4-5": { alias: "Haiku 4.5" },
         "opencode/gemini-3.1-pro": { alias: "Gemini 3.1 Pro" },
         "opencode/gemini-3-flash": { alias: "Gemini 3 Flash" },
+        "google/gemini-3.1-flash-lite-preview": { alias: "Gemini 3.1 Flash Lite" },
         "opencode/kimi-k2.5": { alias: "Kimi K2.5" },
         "opencode/gpt-5.2": { alias: "GPT 5.2" },
         "opencode/gpt-5.3-codex": { alias: "GPT 5.3 Codex" }
@@ -301,6 +302,11 @@
       compaction: {
         mode: "safeguard",      // "off" | "safeguard"
         reserveTokensFloor: 30000,
+        // 压缩后重新注入的 AGENTS.md H2/H3 段落 (v2026.3.7+)
+        // 默认: ["Session Startup", "Red Lines"]，设为 [] 禁用重注入
+        // postCompactionSections: ["Session Startup", "Red Lines"],
+        // 压缩质量保护：保留最近 N 轮对话不被压缩 (v2026.3.7+)
+        // recentTurnsPreserve: 3,
         memoryFlush: {
           enabled: true,
           softThresholdTokens: 15000,
@@ -548,7 +554,8 @@
         //   topics: {
         //     "99": {
         //       requireMention: false,
-        //       skills: ["search"]
+        //       skills: ["search"],
+        //       agentId: "topic-agent"  // 按 topic 路由到不同 Agent (v2026.3.7+)
         //     }
         //   }
         // }
@@ -708,7 +715,10 @@
 
       // 消息流式传输模式: "off" | "native" | "draft"
       // native 使用 Slack 原生单消息流 (chat.startStream/appendStream/stopStream)
-      streamMode: "off"
+      streamMode: "off",
+
+      // Socket Mode DM 中显示处理状态反应 (v2026.3.7+)
+      // typingReaction: false
     },
     
     // ========== Google Chat ==========
@@ -922,7 +932,8 @@
       // OpenAI TTS 配置 (需要 API Key)
       // openai: {
       //   voice: "nova",  // alloy, echo, fable, onyx, nova, shimmer
-      //   model: "tts-1"  // tts-1, tts-1-hd
+      //   model: "tts-1",  // tts-1, tts-1-hd
+      //   baseUrl: "https://api.openai.com/v1"  // 自定义 TTS endpoint (v2026.3.7+)
       // }
       
       // ElevenLabs 配置 (需要 API Key)
@@ -1209,7 +1220,20 @@
   // plugins: {
   //   list: [
   //     { id: "my-plugin", enabled: true }
-  //   ]
+  //   ],
+  //   // 插件级配置 (v2026.3.7+)
+  //   // entries: {
+  //   //   "my-plugin": {
+  //   //     hooks: {
+  //   //       allowPromptInjection: false  // 是否允许插件修改 before_agent_start 提示词
+  //   //     },
+  //   //     prependSystemContext: "Plugin guidance prepended to system prompt",
+  //   //     appendSystemContext: "Plugin guidance appended to system prompt",
+  //   //     // Context Engine 插件插槽 (v2026.3.7+)
+  //   //     // 提供替代上下文管理策略 (如 lossless-claw)
+  //   //     // contextEngine: true
+  //   //   }
+  //   // }
   // },
 
   // 自动更新 (v2026.2.22+, 默认关闭)
