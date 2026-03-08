@@ -611,6 +611,7 @@ vm_exec "rm -f /tmp/sandbox-config.json"
 ok "$MSG_OK_SANDBOX_CONFIG"
 
 # Check PATH and add to shell rc
+_PATH_CHANGED=false
 if ! echo "$PATH" | grep -q "$HOME/bin"; then
     # Detect active shell and its rc file
     _SHELL_NAME=$(basename "${SHELL:-/bin/bash}")
@@ -627,6 +628,7 @@ if ! echo "$PATH" | grep -q "$HOME/bin"; then
             echo '# OpenClaw CLI' >> "$SHELL_RC"
             echo 'set -gx PATH $HOME/bin $PATH' >> "$SHELL_RC"
             info "$(printf "$MSG_INFO_PATH_ADDED" "$SHELL_RC")"
+            _PATH_CHANGED=true
         fi
     else
         if ! grep -q 'export PATH="\$HOME/bin:\$PATH"' "$SHELL_RC" 2>/dev/null; then
@@ -634,6 +636,7 @@ if ! echo "$PATH" | grep -q "$HOME/bin"; then
             echo '# OpenClaw CLI' >> "$SHELL_RC"
             echo 'export PATH="$HOME/bin:$PATH"' >> "$SHELL_RC"
             info "$(printf "$MSG_INFO_PATH_ADDED" "$SHELL_RC")"
+            _PATH_CHANGED=true
         fi
     fi
 fi
@@ -676,5 +679,9 @@ echo -e "  ${GREEN}openclaw dashboard${NC}       $MSG_FINAL_NEXT_DASHBOARD_DESC"
 echo -e "  ${GREEN}openclaw channels list${NC}   $MSG_FINAL_NEXT_CHANNELS_DESC"
 echo ""
 echo "$MSG_FINAL_NEXT_DOCS"
+if [ "$_PATH_CHANGED" = true ]; then
+    echo ""
+    echo -e "  ${YELLOW}>>> $MSG_NOTE_OPEN_NEW_TERMINAL${NC}"
+fi
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

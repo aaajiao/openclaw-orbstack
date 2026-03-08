@@ -212,4 +212,31 @@ echo "$MSG_REFRESH_CMD_DOCTOR"
 echo "$MSG_REFRESH_CMD_TELEGRAM"
 echo "$MSG_REFRESH_CMD_WHATSAPP"
 echo ""
-echo "$MSG_REFRESH_PATH_HINT"
+# Auto-add ~/bin to PATH in shell rc (same logic as setup script)
+if ! echo "$PATH" | grep -q "$HOME/bin"; then
+    _SHELL_NAME=$(basename "${SHELL:-/bin/bash}")
+    case "$_SHELL_NAME" in
+        zsh)  _SHELL_RC="$HOME/.zshrc" ;;
+        fish) _SHELL_RC="$HOME/.config/fish/config.fish" ;;
+        *)    _SHELL_RC="$HOME/.bashrc" ;;
+    esac
+
+    if [ "$_SHELL_NAME" = "fish" ]; then
+        mkdir -p "$(dirname "$_SHELL_RC")"
+        if ! grep -q 'set -gx PATH \$HOME/bin' "$_SHELL_RC" 2>/dev/null; then
+            echo '' >> "$_SHELL_RC"
+            echo '# OpenClaw CLI' >> "$_SHELL_RC"
+            echo 'set -gx PATH $HOME/bin $PATH' >> "$_SHELL_RC"
+            echo "$(printf "$MSG_INFO_PATH_ADDED" "$_SHELL_RC")"
+        fi
+    else
+        if ! grep -q 'export PATH="\$HOME/bin:\$PATH"' "$_SHELL_RC" 2>/dev/null; then
+            echo '' >> "$_SHELL_RC"
+            echo '# OpenClaw CLI' >> "$_SHELL_RC"
+            echo 'export PATH="$HOME/bin:$PATH"' >> "$_SHELL_RC"
+            echo "$(printf "$MSG_INFO_PATH_ADDED" "$_SHELL_RC")"
+        fi
+    fi
+    echo ""
+    echo ">>> $MSG_NOTE_OPEN_NEW_TERMINAL"
+fi

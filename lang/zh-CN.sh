@@ -85,6 +85,7 @@ MSG_OK_COMMANDS_CREATED="便捷命令已创建"
 MSG_INFO_SANDBOX_CONFIG="写入沙箱配置..."
 MSG_OK_SANDBOX_CONFIG="沙箱配置已写入"
 MSG_INFO_PATH_ADDED="已添加 ~/bin 到 PATH (%s)"
+MSG_NOTE_OPEN_NEW_TERMINAL="请打开一个新的终端窗口，openclaw 命令即可使用。"
 
 # --- Mac Command Embedded Text ---
 # openclaw-config
@@ -196,7 +197,6 @@ MSG_REFRESH_CMD_REBUILD="  openclaw-sandbox-rebuild 重建沙箱镜像"
 MSG_REFRESH_CMD_DOCTOR="  openclaw-doctor         运行诊断"
 MSG_REFRESH_CMD_TELEGRAM="  openclaw-telegram       Telegram 管理"
 MSG_REFRESH_CMD_WHATSAPP="  openclaw-whatsapp       WhatsApp 登录"
-MSG_REFRESH_PATH_HINT="确保 ~/bin 在 PATH 中: export PATH=\"\$HOME/bin:\$PATH\""
 
 # --- openclaw-update auto-repair ---
 MSG_UPDATE_AUTO_UPGRADE="🔧 检测到旧版服务配置，正在自动修复..."

@@ -85,6 +85,7 @@ MSG_OK_COMMANDS_CREATED="Convenience commands created"
 MSG_INFO_SANDBOX_CONFIG="Writing sandbox configuration..."
 MSG_OK_SANDBOX_CONFIG="Sandbox configuration written"
 MSG_INFO_PATH_ADDED="Added ~/bin to PATH (%s)"
+MSG_NOTE_OPEN_NEW_TERMINAL="Please open a new terminal window for openclaw commands to work."
 
 # --- Mac Command Embedded Text ---
 # openclaw-config
@@ -195,7 +196,6 @@ MSG_REFRESH_CMD_REBUILD="  openclaw-sandbox-rebuild Rebuild sandbox images"
 MSG_REFRESH_CMD_DOCTOR="  openclaw-doctor         Run diagnostics"
 MSG_REFRESH_CMD_TELEGRAM="  openclaw-telegram       Telegram management"
 MSG_REFRESH_CMD_WHATSAPP="  openclaw-whatsapp       WhatsApp login"
-MSG_REFRESH_PATH_HINT="Make sure ~/bin is in PATH: export PATH=\"\$HOME/bin:\$PATH\""
 
 # --- openclaw-update auto-repair ---
 MSG_UPDATE_AUTO_UPGRADE="🔧 Detected outdated service configuration, auto-repairing..."
