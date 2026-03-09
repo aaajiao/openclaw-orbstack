@@ -59,6 +59,17 @@ if [ -z "$LATEST_TAG" ]; then
 fi
 echo "  -> $LATEST_TAG"
 
+# --- Migrate old single hash → per-image hashes (no rebuild) ---
+orb -m "$OPENCLAW_VM_NAME" bash -lc '
+    if [ -f ~/.openclaw/.sandbox-build-hash ] && [ ! -f ~/.openclaw/.sandbox-hash-base ]; then
+        cd ~/openclaw
+        cat Dockerfile.sandbox scripts/sandbox-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-base
+        cat Dockerfile.sandbox-common scripts/sandbox-common-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-common
+        cat Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-browser
+        rm -f ~/.openclaw/.sandbox-build-hash
+    fi
+' 2>/dev/null || true
+
 # Check if already on the latest tag
 CURRENT_HEAD=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git rev-parse HEAD 2>/dev/null")
 TAG_COMMIT=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git rev-parse '$LATEST_TAG^{commit}' 2>/dev/null")
@@ -102,17 +113,6 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && pnpm ui:build"
 
 echo "$MSG_CMD_UPDATE_REINSTALL"
 orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sudo npm install -g ."
-
-# --- Migrate old single hash → per-image hashes (no rebuild) ---
-orb -m "$OPENCLAW_VM_NAME" bash -lc '
-    if [ -f ~/.openclaw/.sandbox-build-hash ] && [ ! -f ~/.openclaw/.sandbox-hash-base ]; then
-        cd ~/openclaw
-        cat Dockerfile.sandbox scripts/sandbox-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-base
-        cat Dockerfile.sandbox-common scripts/sandbox-common-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-common
-        cat Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-browser
-        rm -f ~/.openclaw/.sandbox-build-hash
-    fi
-' 2>/dev/null || true
 
 # --- Per-image sandbox hash detection ---
 BUILD_BASE=false
