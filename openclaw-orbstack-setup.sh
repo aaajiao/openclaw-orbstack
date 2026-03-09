@@ -296,8 +296,11 @@ else
     warn "$MSG_WARN_SANDBOX_BROWSER_FAIL"
 fi
 
-# Save sandbox build hash for staleness detection during updates
-vm_exec "cd ~/openclaw && cat Dockerfile.sandbox Dockerfile.sandbox-browser scripts/sandbox-setup.sh scripts/sandbox-common-setup.sh scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -d' ' -f1 > ~/.openclaw/.sandbox-build-hash"
+# Save per-image sandbox build hashes for staleness detection during updates
+vm_exec "cd ~/openclaw && \
+  cat Dockerfile.sandbox scripts/sandbox-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-base && \
+  cat Dockerfile.sandbox-common scripts/sandbox-common-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-common && \
+  cat Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-browser"
 
 # ============================================================================
 # Step 7/8

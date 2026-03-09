@@ -38,6 +38,13 @@ if [ -f "$HOME/bin/.openclaw-lang" ]; then
     source "$HOME/bin/.openclaw-lang"
     _OPENCLAW_LANG="${OPENCLAW_LANG:-en}"
 fi
+# Save per-image sandbox build hash on VM
+# Usage: save_sandbox_hash <image_name> <file1> [file2 ...]
+save_sandbox_hash() {
+    local name="$1"; shift
+    orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && cat $* 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-$name"
+}
+
 _LANG_FILE="$OPENCLAW_REPO_DIR/lang/${_OPENCLAW_LANG}.sh"
 if [ -f "$_LANG_FILE" ]; then
     # shellcheck disable=SC1090
