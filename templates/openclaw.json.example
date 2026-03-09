@@ -764,10 +764,14 @@
     // Web 搜索工具
     web: {
       search: {
-        provider: "perplexity",   // "perplexity" | "tavily" | "exa" | "google"
+        provider: "perplexity",   // "brave" | "exa" | "google" | "perplexity" | "tavily"
         perplexity: {
           model: "sonar-pro"
-        }
+        },
+        // Brave Search (需要 BRAVE_API_KEY)
+        // brave: {
+        //   mode: "llm-context"  // "llm-context" = Brave LLM Context endpoint，返回提取的 grounding 片段 (v2026.3.8+)
+        // }
       }
     },
 
@@ -1253,11 +1257,19 @@
   //   }
   // },
 
+  // Talk Mode 语音对话 (v2026.3.8+)
+  // talk: {
+  //   silenceTimeoutMs: 1500  // 静默多久后自动发送当前转录（毫秒）
+  //                           // 未设置时使用各平台默认值
+  // },
+
   // Agent Communication Protocol (ACP)
   // "acp": {
   //   "dispatch": {
   //     "enabled": true  // Default: true since v2026.3.2
-  //   }
+  //   },
+  //   // ACP 来源追踪 (v2026.3.8+)
+  //   // CLI: openclaw acp --provenance off|meta|meta+receipt
   // },
 
   // --------------------------------------------------------------------------

@@ -419,6 +419,17 @@ openclaw secrets reload            # 重新加载 secrets (不重启)
 
 > v2026.3.2: SecretRef 扩展至 64 个目标位置，覆盖更多配置字段。
 
+### 备份管理 (v2026.3.8+)
+
+```bash
+openclaw backup create                     # 创建本地状态备份
+openclaw backup create --only-config       # 仅备份配置
+openclaw backup create --no-include-workspace  # 排除工作区
+openclaw backup verify <archive>           # 验证备份完整性
+```
+
+> 备份包含 manifest 和 payload 验证。在破坏性操作（如 `reset`、`uninstall`）时会提供备份建议。
+
 ### 其他
 
 ```bash
@@ -443,7 +454,7 @@ openclaw --help                    # 帮助
 
 以下命令主要用于开发和系统集成，一般用户无需使用：
 
-`acp`, `approvals`, `daemon`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `secrets`, `security`, `tui`, `talk`, `voicecall`
+`acp`, `approvals`, `backup`, `daemon`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `secrets`, `security`, `tui`, `talk`, `voicecall`
 
 运行 `openclaw <command> --help` 查看详情。
 

@@ -822,6 +822,69 @@ OpenAI TTS 现在支持自定义 base URL，可接入兼容 API 的自托管服�
 
 - `google/gemini-3.1-flash-lite-preview` — Gemini 3.1 Flash Lite，低成本快速推理
 
+### v2026.3.8 新增配置
+
+#### Talk Mode 静默超时
+
+新增顶层 `talk.silenceTimeoutMs` 配置，控制 Talk 模式在用户停止说话后多久自动发送转录：
+
+```json5
+{
+  talk: {
+    silenceTimeoutMs: 1500  // 毫秒，未设置时使用各平台默认值
+  }
+}
+```
+
+#### Brave Web Search LLM Context
+
+Brave 搜索新增 `llm-context` 模式，调用 Brave LLM Context endpoint 返回提取的 grounding 片段及来源元数据：
+
+```json5
+{
+  tools: {
+    web: {
+      search: {
+        provider: "brave",
+        brave: {
+          mode: "llm-context"  // 默认为标准搜索
+        }
+      }
+    }
+  }
+}
+```
+
+> Web search provider 列表现已按字母排序。多 API key 自动检测优先级调整：Grok 在 Kimi 之前。
+
+#### ACP 来源追踪 (Provenance)
+
+新增可选的 ACP 入口来源元数据和可见回执注入：
+
+```bash
+openclaw acp --provenance off        # 关闭（默认）
+openclaw acp --provenance meta       # 保留来源元数据
+openclaw acp --provenance meta+receipt  # 元数据 + 可见回执
+```
+
+#### 本地备份命令
+
+新增 `openclaw backup create` 和 `openclaw backup verify`，支持本地状态归档：
+
+```bash
+openclaw backup create                     # 创建完整备份
+openclaw backup create --only-config       # 仅配置
+openclaw backup create --no-include-workspace  # 排除工作区
+openclaw backup verify <archive>           # 验证备份
+```
+
+#### 重要修复
+
+- **Telegram DM 去重**: 修复同一 DM 在 agent 级别（而非 session key 级别）去重，避免重复回复
+- **Gateway 重启超时恢复**: 重启超时时正确退出非零状态，让 systemd 重新拉起进程
+- **Gateway 配置验证**: 启动/重启前验证配置，防止无效配置导致的重启循环
+- **Cron 重启追赶限流**: 限制启动时错过任务的立即重放数量，避免重启风暴
+
 ### TTS 语音配置
 
 ```json5

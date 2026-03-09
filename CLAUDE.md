@@ -1,7 +1,7 @@
 # CLAUDE.md - Project Guide for Claude Code
 
 **Project:** OpenClaw OrbStack — one-click OpenClaw AI chatbot deployment on macOS via OrbStack VM.
-**Version:** v2026.3.7 | **License:** MIT
+**Version:** v2026.3.8 | **License:** MIT
 
 ## Architecture
 
@@ -80,7 +80,8 @@ openclaw gateway restart
 | `session` | DM scope (per-peer, per-channel-peer, etc.), auto-reset |
 | `hooks.internal` | Built-in hooks (boot-md, command-logger, session-memory) |
 | `hooks` (external) | External event triggers (e.g., GitHub webhook → AI action) |
-| `tools.web.search` | Web search provider (perplexity, tavily, exa, google) |
+| `talk` | Talk mode settings; `silenceTimeoutMs` for auto-send pause (v2026.3.8+) |
+| `tools.web.search` | Web search provider (brave, exa, google, perplexity, tavily) |
 | `cron` | Scheduled tasks (enabled, maxConcurrentRuns, sessionRetention) |
 | `gateway` | Port, auth, Tailscale, reload mode settings |
 | `env` | Static vars + shellEnv (login shell import) |
