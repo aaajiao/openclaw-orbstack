@@ -54,6 +54,7 @@ MSG_OK_BUILD_DONE="OpenClaw 构建完成 (CLI: openclaw)"
 MSG_ERR_NO_VERSION="未找到稳定发布标签，请检查网络或上游仓库。"
 
 # --- Step 6: Sandbox ---
+MSG_BUILD_PATIENCE="    ⏳ 这可能需要几分钟，请耐心等待"
 MSG_INFO_SANDBOX_BASE="构建基础沙箱镜像 (sandbox-common 的构建依赖)..."
 MSG_OK_SANDBOX_BASE="sandbox 基础镜像构建完成"
 MSG_OK_SANDBOX_BASE_DF="sandbox 基础镜像构建完成 (Dockerfile)"

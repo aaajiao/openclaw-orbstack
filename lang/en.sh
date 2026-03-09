@@ -54,6 +54,7 @@ MSG_OK_BUILD_DONE="OpenClaw build complete (CLI: openclaw)"
 MSG_ERR_NO_VERSION="No stable release tag found. Check network or upstream repository."
 
 # --- Step 6: Sandbox ---
+MSG_BUILD_PATIENCE="    ⏳ This may take a few minutes, please wait"
 MSG_INFO_SANDBOX_BASE="Building base sandbox image (required by sandbox-common)..."
 MSG_OK_SANDBOX_BASE="sandbox base image built"
 MSG_OK_SANDBOX_BASE_DF="sandbox base image built (Dockerfile)"

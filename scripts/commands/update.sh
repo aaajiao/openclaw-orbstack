@@ -115,19 +115,28 @@ if [ "$SANDBOX" = true ]; then
     echo "$MSG_CMD_UPDATE_SANDBOX_REBUILD"
     SANDBOX_OK=true
     echo "$MSG_CMD_UPDATE_SANDBOX_BASE"
+    echo "$MSG_BUILD_PATIENCE"
+    start_progress
     if ! orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
         SANDBOX_OK=false
     fi
+    stop_progress
     echo "$MSG_CMD_UPDATE_SANDBOX_COMMON"
+    echo "$MSG_BUILD_PATIENCE"
+    start_progress
     if ! orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
         echo "$MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL"
         SANDBOX_OK=false
     fi
+    stop_progress
     echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER"
+    echo "$MSG_BUILD_PATIENCE"
+    start_progress
     if ! orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
         echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL"
         SANDBOX_OK=false
     fi
+    stop_progress
     echo "$MSG_CMD_UPDATE_SANDBOX_NOTE"
     # Save new sandbox build hash only if all builds succeeded
     if [ "$SANDBOX_OK" = true ]; then

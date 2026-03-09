@@ -5,6 +5,21 @@
 
 set -e
 
+# Progress ticker for long-running commands (prints a dot every 10s)
+_progress_pid=""
+start_progress() {
+    (while true; do sleep 10; printf "."; done) &
+    _progress_pid=$!
+}
+stop_progress() {
+    if [ -n "$_progress_pid" ]; then
+        kill "$_progress_pid" 2>/dev/null || true
+        wait "$_progress_pid" 2>/dev/null || true
+        _progress_pid=""
+        printf "\n"
+    fi
+}
+
 # Resolve repo root (scripts/commands/ -> repo root)
 OPENCLAW_REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 

@@ -102,6 +102,21 @@ vm_exec() {
     orb -m "$VM_NAME" bash -lc "$1"
 }
 
+# --- Progress indicator for long-running commands ---
+_progress_pid=""
+start_progress() {
+    (while true; do sleep 10; printf "."; done) &
+    _progress_pid=$!
+}
+stop_progress() {
+    if [ -n "$_progress_pid" ]; then
+        kill "$_progress_pid" 2>/dev/null || true
+        wait "$_progress_pid" 2>/dev/null || true
+        _progress_pid=""
+        printf "\n"
+    fi
+}
+
 # ============================================================================
 # Step 1/8
 # ============================================================================
@@ -243,27 +258,41 @@ ok "$MSG_OK_BUILD_DONE"
 step 6 "$MSG_STEP_6"
 
 info "$MSG_INFO_SANDBOX_BASE"
+echo "$MSG_BUILD_PATIENCE"
+start_progress
 if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
+    stop_progress
     ok "$MSG_OK_SANDBOX_BASE"
 elif vm_exec "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
+    stop_progress
     ok "$MSG_OK_SANDBOX_BASE_DF"
 else
+    stop_progress
     warn "$MSG_WARN_SANDBOX_BASE_FAIL"
 fi
 
 info "$MSG_INFO_SANDBOX_COMMON"
+echo "$MSG_BUILD_PATIENCE"
+start_progress
 if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
+    stop_progress
     ok "$MSG_OK_SANDBOX_COMMON"
 else
+    stop_progress
     warn "$MSG_WARN_SANDBOX_COMMON_FAIL"
 fi
 
 info "$MSG_INFO_SANDBOX_BROWSER"
+echo "$MSG_BUILD_PATIENCE"
+start_progress
 if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
+    stop_progress
     ok "$MSG_OK_SANDBOX_BROWSER"
 elif vm_exec "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
+    stop_progress
     ok "$MSG_OK_SANDBOX_BROWSER_DF"
 else
+    stop_progress
     warn "$MSG_WARN_SANDBOX_BROWSER_FAIL"
 fi
 

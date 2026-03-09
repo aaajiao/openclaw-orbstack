@@ -9,29 +9,43 @@ echo "$MSG_CMD_REBUILD_START"
 REBUILD_OK=true
 
 echo "$MSG_CMD_REBUILD_BASE"
+echo "$MSG_BUILD_PATIENCE"
+start_progress
 if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
+    stop_progress
     echo "$MSG_CMD_REBUILD_BASE_OK"
 elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
+    stop_progress
     echo "$MSG_CMD_REBUILD_BASE_OK_DF"
 else
+    stop_progress
     REBUILD_OK=false
     echo "$MSG_CMD_REBUILD_BASE_FAIL"
 fi
 
 echo "$MSG_CMD_REBUILD_COMMON"
+echo "$MSG_BUILD_PATIENCE"
+start_progress
 if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
+    stop_progress
     echo "$MSG_CMD_REBUILD_COMMON_OK"
 else
+    stop_progress
     REBUILD_OK=false
     echo "$MSG_CMD_REBUILD_COMMON_FAIL"
 fi
 
 echo "$MSG_CMD_REBUILD_BROWSER"
+echo "$MSG_BUILD_PATIENCE"
+start_progress
 if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
+    stop_progress
     echo "$MSG_CMD_REBUILD_BROWSER_OK"
 elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
+    stop_progress
     echo "$MSG_CMD_REBUILD_BROWSER_OK_DF"
 else
+    stop_progress
     REBUILD_OK=false
     echo "$MSG_CMD_REBUILD_BROWSER_FAIL"
 fi
