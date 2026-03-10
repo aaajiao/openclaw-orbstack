@@ -55,7 +55,7 @@ openclaw-whatsapp                      # 扫码登录
 | 命令 | 功能 |
 |------|------|
 | `openclaw-status` | 查看 Gateway 服务状态 (openclaw gateway status) |
-| `openclaw-logs` | 实时日志 (journalctl -f) |
+| `openclaw-logs` | 实时日志 (openclaw logs --follow) |
 | `openclaw-restart` | 重启服务 |
 | `openclaw-stop` | 停止服务 |
 | `openclaw-start` | 启动服务 |
@@ -104,32 +104,38 @@ openclaw status                    # 频道健康 + 会话摘要
 openclaw status --all              # 完整诊断 (可粘贴)
 openclaw status --deep             # 探测所有频道
 openclaw status --usage            # 模型使用量/配额
+openclaw status --json             # JSON 格式输出
 
 openclaw doctor                    # 健康检查 + 快速修复
-openclaw doctor --repair           # 自动修复
-openclaw doctor --force            # 强制修复
-openclaw doctor --deep             # 扫描系统服务
+openclaw doctor --repair           # 自动修复 (备份到 .bak 后清理未知字段)
+openclaw doctor --fix              # --repair 的别名
+openclaw doctor --deep             # 深度扫描系统服务
+openclaw doctor --non-interactive  # 无人值守模式 (跳过 OAuth 等交互提示)
 
 openclaw health                    # Gateway 健康状态
+openclaw health --json             # JSON 格式输出
 openclaw logs                      # Gateway 日志
 openclaw logs --follow             # 实时日志
-openclaw logs --lines 100          # 指定行数
+openclaw logs --limit 100          # 指定行数
+openclaw logs --json               # JSON 格式输出
+openclaw logs --local-time         # 本地时区显示
 ```
 
 ### Gateway 管理
 
 ```bash
 openclaw gateway status                    # Gateway 状态
-openclaw gateway status --deep             # 深度扫描
+openclaw gateway status --deep             # 深度扫描系统服务
 openclaw gateway health                    # 健康检查
 openclaw gateway probe                     # 完整可达性探测
 openclaw gateway discover                  # Bonjour 发现
-openclaw gateway usage-cost                # 使用成本摘要
 
 # 生命周期管理 (OrbStack 环境下一般用 openclaw-start/stop/restart 快捷命令)
 openclaw gateway run                       # 前台运行 Gateway
-openclaw gateway run --auth none           # 无认证模式运行 (v2026.2.26+)
-openclaw gateway run --auth trusted-proxy  # 信任代理模式运行 (v2026.2.26+)
+openclaw gateway run --port 18789          # 指定端口
+openclaw gateway run --auth token          # Token 认证模式
+openclaw gateway run --auth password       # 密码认证模式
+openclaw gateway run --verbose             # 详细日志
 openclaw gateway install                   # 安装 Gateway 服务
 openclaw gateway uninstall                 # 卸载 Gateway 服务
 openclaw gateway start                     # 启动 Gateway 服务
@@ -144,8 +150,9 @@ openclaw gateway call <method>             # 调用 Gateway RPC 方法
 # 列出与状态
 openclaw channels list             # 列出所有频道
 openclaw channels status           # 频道状态
-openclaw channels status --probe   # 探测凭据
+openclaw channels status --deep    # 深度探测
 openclaw channels capabilities     # 提供商能力
+openclaw channels resolve          # 频道/用户名 → ID 解析
 openclaw channels logs             # 频道日志
 
 # 添加频道
@@ -237,12 +244,10 @@ openclaw models image-fallbacks clear
 # 认证
 openclaw models auth add                   # 交互式添加认证
 openclaw models auth login                 # 提供商登录流程
-openclaw models auth login-github-copilot  # GitHub Copilot 登录
+openclaw models auth login --provider <id> # 指定提供商登录
 openclaw models auth setup-token           # 设置 token
 openclaw models auth paste-token           # 粘贴 token
-openclaw models auth order get             # 查看认证优先级
-openclaw models auth order set             # 设置认证优先级
-openclaw models auth order clear           # 清除认证优先级
+openclaw models auth order                 # 管理认证优先级
 ```
 
 ### Agent 管理
@@ -293,6 +298,7 @@ openclaw onboard --skip-channels
 openclaw onboard --skip-skills
 
 openclaw configure                 # 配置向导
+openclaw config file               # 显示当前配置文件路径
 openclaw config get <path>         # 获取配置值
 openclaw config set <path> <value> # 设置配置值
 openclaw config unset <path>       # 删除配置值
@@ -310,16 +316,38 @@ openclaw config validate --json    # JSON 格式输出，适用于 CI/CD 集成
 ### 浏览器控制
 
 ```bash
+# 管理
 openclaw browser status            # 浏览器状态
 openclaw browser start             # 启动浏览器
 openclaw browser stop              # 停止浏览器
+openclaw browser reset-profile     # 重置浏览器配置
+
+# 标签页
 openclaw browser tabs              # 列出标签页
+openclaw browser open <url>        # 新标签打开 URL
+openclaw browser close             # 关闭标签页
+openclaw browser focus             # 激活标签页
+
+# 检查
 openclaw browser screenshot        # 截图
+openclaw browser snapshot          # 捕获 DOM 状态
+
+# 交互
 openclaw browser navigate <url>    # 导航到 URL
 openclaw browser click             # 点击元素
 openclaw browser type              # 输入文本
-openclaw browser cookies           # 管理 cookies
-openclaw browser storage           # 管理存储
+openclaw browser press             # 按键
+openclaw browser hover             # 悬停
+openclaw browser select            # 选择
+openclaw browser upload            # 上传文件
+openclaw browser fill              # 填充表单
+openclaw browser evaluate          # 执行 JavaScript
+openclaw browser pdf               # 导出 PDF
+
+# 配置文件
+openclaw browser profiles          # 列出配置文件
+openclaw browser create-profile    # 创建配置文件
+openclaw browser delete-profile    # 删除配置文件
 ```
 
 ### 定时任务
@@ -328,26 +356,44 @@ openclaw browser storage           # 管理存储
 openclaw cron status               # 定时任务状态
 openclaw cron list                 # 列出任务
 openclaw cron add                  # 添加任务
+openclaw cron edit <id>            # 编辑任务
 openclaw cron enable <id>          # 启用任务
 openclaw cron disable <id>         # 禁用任务
-openclaw cron delete <id>          # 删除任务
+openclaw cron rm <id>              # 删除任务 (也可能是 cron delete，待实测确认)
 openclaw cron runs                 # 查看运行记录
-openclaw cron edit <id>            # 编辑任务
+openclaw cron run <id>             # 手动触发任务
 ```
 
 ### 消息发送
 
 ```bash
+# 基础
 openclaw message send --target <dest> --message "内容"
-openclaw message send --media <file>
 openclaw message broadcast         # 群发
 openclaw message poll              # 创建投票
 openclaw message react             # 添加反应
+openclaw message reactions         # 查看反应
 openclaw message read              # 读取消息
 openclaw message edit              # 编辑消息
 openclaw message delete            # 删除消息
-openclaw message pin               # 置顶消息
 openclaw message search            # 搜索消息
+
+# 置顶
+openclaw message pin               # 置顶消息
+openclaw message unpin             # 取消置顶
+openclaw message pins              # 列出置顶消息
+
+# 话题
+openclaw message thread create     # 创建话题
+openclaw message thread list       # 列出话题
+openclaw message thread reply      # 回复话题
+
+# 服务器管理 (Discord/Slack)
+openclaw message role info         # 角色信息
+openclaw message channel list      # 频道列表
+openclaw message member info       # 成员信息
+openclaw message event list        # 事件列表
+openclaw message event create      # 创建事件
 ```
 
 ### 内存/记忆
@@ -355,22 +401,26 @@ openclaw message search            # 搜索消息
 ```bash
 openclaw memory status             # 内存索引状态
 openclaw memory status --deep      # 探测 embedding
+openclaw memory status --index     # 包含索引统计
 openclaw memory index              # 重建索引
 openclaw memory index --force      # 强制重建
 openclaw memory search <query>     # 搜索记忆 (位置参数)
-openclaw memory search --query <text>  # 搜索记忆 (v2026.2.24+ 命名参数)
+openclaw memory search --query <text>  # 搜索记忆 (命名参数)
+openclaw memory search --max-results 10  # 限制结果数量
 ```
 
 ### 插件
 
 ```bash
 openclaw plugins list              # 列出插件
-openclaw plugins list --enabled    # 只显示启用的
 openclaw plugins info <id>         # 插件详情
 openclaw plugins install <source>  # 安装插件
+openclaw plugins install <npm> --pin  # 从 npm 安装并锁定版本
 openclaw plugins enable <id>       # 启用插件
 openclaw plugins disable <id>      # 禁用插件
-openclaw plugins update            # 更新插件
+openclaw plugins uninstall <id>    # 卸载插件
+openclaw plugins update <id>       # 更新单个插件
+openclaw plugins update --all      # 更新所有插件
 openclaw plugins doctor            # 插件诊断
 ```
 
@@ -398,26 +448,48 @@ openclaw sandbox explain --agent <id>      # 指定 Agent
 
 ```bash
 openclaw completion                        # 生成 zsh 补全脚本 (默认)
-openclaw completion --shell bash           # 生成 bash 补全脚本
+openclaw completion --shell bash           # 生成 bash 补全脚本 (短形式: -s)
 openclaw completion --shell fish           # 生成 fish 补全脚本
 openclaw completion --shell powershell     # 生成 PowerShell 补全脚本
 
-openclaw completion --install              # 安装补全脚本到 shell 配置
-openclaw completion --install --yes        # 跳过确认直接安装
+openclaw completion --install              # 安装补全脚本到 shell 配置 (短形式: -i)
+openclaw completion --install --yes        # 跳过确认直接安装 (短形式: -y)
 ```
 
 ### Secrets 管理 (v2026.2.26+)
 
 ```bash
-openclaw secrets audit             # 审计当前 secrets 状态
-openclaw secrets configure         # 配置外部 secrets 源
-openclaw secrets apply             # 应用 secrets 快照到运行时
-openclaw secrets reload            # 重新加载 secrets (不重启)
+openclaw secrets audit             # 审计 secrets (明文检测、未解析 ref 等)
+openclaw secrets audit --check     # 有发现时退出非零 (CI 适用)
+openclaw secrets configure         # 交互式 secrets 提供商配置
+openclaw secrets apply             # 执行保存的计划并清除明文残留
+openclaw secrets apply --dry-run   # 预览操作
+openclaw secrets reload            # 重新解析 SecretRef 并热替换运行时快照
 ```
 
 > 外部 Secrets 管理允许从外部源（如 Vault、AWS Secrets Manager 等）拉取密钥，通过快照机制激活到 Gateway 运行时。详见 [configuration-guide.md](configuration-guide.md#外部-secrets-管理-v2026226)。
 
 > v2026.3.2: SecretRef 扩展至 64 个目标位置，覆盖更多配置字段。
+
+### 安全审计
+
+```bash
+openclaw security audit            # 安全审计
+openclaw security audit --deep     # 深度扫描
+openclaw security audit --fix      # 自动修复
+```
+
+### Hooks 管理
+
+```bash
+openclaw hooks list                # 列出 hooks
+openclaw hooks info <name>         # Hook 详情
+openclaw hooks check               # 检查 hooks 状态
+openclaw hooks enable <name>       # 启用 hook
+openclaw hooks disable <name>      # 禁用 hook
+openclaw hooks install <source>    # 安装 hook
+openclaw hooks update <name>       # 更新 hook
+```
 
 ### 备份管理 (v2026.3.8+)
 
@@ -435,26 +507,42 @@ openclaw backup verify <archive>           # 验证备份完整性
 ```bash
 openclaw sessions                  # 会话列表
 openclaw sessions --active 60      # 最近 60 分钟活跃的
-openclaw sessions cleanup --fix-missing  # 清理缺失/损坏的会话文件 (v2026.2.26+)
+openclaw sessions --json           # JSON 格式输出
+openclaw sessions cleanup          # 会话维护
+openclaw sessions cleanup --dry-run    # 预览清理操作
+openclaw sessions cleanup --enforce    # 强制执行清理
 
 openclaw dashboard                 # 打开控制面板
 openclaw dashboard --no-open       # 只打印 URL
 
 openclaw reset                     # 重置配置/状态
+openclaw reset --dry-run           # 预览重置操作
 openclaw uninstall                 # 卸载
+openclaw uninstall --all --yes     # 卸载全部 (跳过确认)
 
 openclaw update                    # 更新 CLI
-openclaw update --check            # 检查更新
 
 openclaw --version                 # 版本
 openclaw --help                    # 帮助
 ```
 
+### 全局 Flags
+
+所有命令均支持以下全局 flags：
+
+| Flag | 功能 |
+|------|------|
+| `--dev` | 使用隔离的开发环境状态 |
+| `--profile <name>` | 使用命名配置 |
+| `--no-color` | 禁用 ANSI 颜色 |
+| `--json` | 机器可读的 JSON 输出 |
+| `-V, --version` | 打印版本 |
+
 ### 高级命令
 
 以下命令主要用于开发和系统集成，一般用户无需使用：
 
-`acp`, `approvals`, `backup`, `daemon`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `secrets`, `security`, `tui`, `talk`, `voicecall`
+`acp`, `approvals`, `clawbot`, `daemon`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tui`, `voicecall`
 
 运行 `openclaw <command> --help` 查看详情。
 
