@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "case \"$CLAUDE_FILE_PATH\" in *.sh) shellcheck \"$CLAUDE_FILE_PATH\" 2>&1 | head -20 || true ;; */openclaw.json) python3 -m json.tool \"$CLAUDE_FILE_PATH\" > /dev/null 2>&1 && echo '✓ Valid JSON' || echo '✗ INVALID JSON — fix before continuing' ;; esac"
+          }
+        ]
+      }
+    ]
+  }
+}

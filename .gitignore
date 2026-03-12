@@ -6,7 +6,10 @@ local/
 # AI tool configs (personal, not project-level)
 .sisyphus/
 .opencode/
-.claude/
 .mcp.json.example.claude
+
+# Claude Code: track shared config, ignore personal files
+.claude/settings.local.json
+.claude/.DS_Store
 opencode.json.example
 docs/local-config.md

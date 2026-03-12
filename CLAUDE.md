@@ -19,7 +19,12 @@ Mac ─────────────────────────�
 
 Gateway runs directly on VM. Docker containers are the only isolation protecting Mac files (VM has `/mnt/mac` access).
 
-**IMPORTANT: Claude Code runs on the Mac host, NOT inside the VM.** Never attempt to start, access, or execute commands inside the VM. All file edits, searches, and validations happen on the Mac filesystem in this repo. This project develops *scripts that manage* the VM — it does not run inside it.
+**IMPORTANT: Claude Code runs on the Mac host, NOT inside the VM.**
+- NEVER run commands inside the VM, access VM files, or diagnose VM processes
+- NEVER use `orb`, `ssh`, or any tool to execute inside `openclaw-vm` unless user explicitly instructs
+- When VM state is needed (logs, service status, sandbox output), ask the user to provide it
+- All file edits, searches, and validations happen on the Mac filesystem in this repo
+- This project develops *scripts that manage* the VM — it does not run inside it
 
 ## Project Structure
 
@@ -89,43 +94,7 @@ openclaw gateway restart
 | `plugins` | Plugin system (requires restart); Context Engine slot, `allowPromptInjection`, system context placement (v2026.3.7+) |
 | `$include` | Multi-file config support (single file or array, nested up to 10 levels) |
 
-### memorySearch Config
-
-Memory search creates a SQLite vector index (`~/.openclaw/memory/<agentId>.sqlite`) for semantic search over memory files and session history.
-
-```json
-"memorySearch": {
-  "enabled": true,
-  "fallback": "openai",                    // Fallback if primary fails
-  "sources": ["memory", "sessions"],       // What to index
-  "experimental": { "sessionMemory": true }, // Index session transcripts
-  "sync": {
-    "watch": true,                         // Watch for file changes
-    "sessions": {
-      "deltaBytes": 50000,                 // Sync after 50KB changes
-      "deltaMessages": 30                  // Or after 30 messages
-    }
-  },
-  "cache": { "enabled": true, "maxEntries": 50000 },
-  "query": {
-    "hybrid": {                            // BM25 + vector search
-      "enabled": true,
-      "vectorWeight": 0.7,
-      "textWeight": 0.3
-    }
-  },
-  "remote": {
-    "batch": { "enabled": true, "concurrency": 2 }  // Cheaper batch API
-  },
-  "extraPaths": ["docs"]                             // Index additional directories
-}
-```
-
-**Multimodal indexing** (v2026.3.11+): `extraPaths` directories now support opt-in image and audio indexing. Requires `provider: "gemini"` with `model: "gemini-embedding-2-preview"`. Enable via `multimodal: { enabled: true, modalities: ["image", "audio"] }`. When multimodal is enabled, `fallback` must be `"none"`.
-
-**Provider selection** (when `provider` is omitted): OpenClaw auto-selects `local` → `openai` → `gemini` based on available API keys. Valid explicit values: `"auto"` | `"openai"` | `"gemini"` | `"local"` | `"ollama"`.
-
-**Full documentation**: See [docs/configuration-guide.md](docs/configuration-guide.md) for complete configuration guide.
+For detailed config examples (memorySearch, contextPruning, compaction, etc.), see [docs/configuration-guide.md](docs/configuration-guide.md).
 
 ## Key Facts
 
@@ -167,20 +136,22 @@ orb import -n openclaw-vm ~/Desktop/openclaw-vm-backup.tar.zst
 
 No automated test suite. Validation is syntax checks + shellcheck + manual testing.
 
+## Verification Checklist
+
+Before declaring a task done, verify all applicable items:
+
+| Task Type | Verification |
+|-----------|-------------|
+| Edit `.sh` files | `bash -n <file>` + `shellcheck <file>` pass |
+| Edit JSON/JSON5 config | Valid syntax (visual check for JSON5, `jq .` for strict JSON) |
+| Edit `templates/openclaw.json.example` | New options match upstream docs structure |
+| Add/change `$MSG_*` strings | Both `lang/en.sh` and `lang/zh-CN.sh` updated |
+| Upstream sync | `VERSION` + `CLAUDE.md` version header both updated |
+| Any commit | `bash -n openclaw-orbstack-setup.sh` passes |
+
 ## Coding Conventions
 
-### Bash
-- Always `set -e` at top of scripts
-- Constants: `UPPER_SNAKE_CASE`
-- Functions: `lowercase` for utils, `snake_case` for complex logic
-- Quoted heredoc delimiters (`'EOF'`) to prevent expansion; unquoted for expansion
-- User-facing text: use `$MSG_*` variables from `lang/*.sh`, never hardcode
-- Code comments: English
-
-### JSON Configuration
-- Format: JSON5 (comments and trailing commas allowed)
-- Indentation: 2 spaces
-- Dynamic edits: use `jq`, never sed for JSON/YAML
+Language-specific rules are in `.claude/rules/` (auto-applied by file type).
 
 ### i18n
 - All user-facing text goes through `lang/*.sh` message strings
@@ -261,9 +232,8 @@ Never push or create releases without explicit user approval after testing.
 - SecretRef objects are required for sensitive values; never use plaintext `${VAR}` strings
 - When unsure about a field's parent key, check the Key Config Sections table above
 
-## Shell Compatibility
+## Removal / Deletion Rules
 
-This project targets **macOS**. Use POSIX-compatible shell commands:
-- No `grep -P` (use `grep -E` or awk instead)
-- No GNU-only flags (`sed -i` needs `''` on macOS, `date` syntax differs)
-- Test shell scripts with `bash -n` + `shellcheck` before committing
+- Before claiming a CLI command, config option, or feature doesn't exist, verify against at least two sources (official docs + code/community search)
+- Never remove functionality based on a single source — ask user to test if you can't verify yourself
+- When editing docs that reference upstream features, WebFetch the upstream docs first
