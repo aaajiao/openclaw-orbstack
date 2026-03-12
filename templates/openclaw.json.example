@@ -247,6 +247,8 @@
           path: "~/.openclaw/memory/{agentId}.sqlite",
           vector: {
             enabled: true
+            // dimensions: 768  // Embedding 输出维度 (v2026.3.11+, 用于 gemini-embedding-2-preview)
+                                // 修改维度会自动触发 reindex
           }
         },
         sync: {
@@ -273,7 +275,10 @@
             enabled: true,      // Batch API 便宜 50% 但较慢
             concurrency: 2
           }
-        }
+        },
+        // 额外索引目录 (v2026.3.11+: 支持多模态图片/音频索引)
+        // 需要多模态 embedding 模型 (如 gemini-embedding-2-preview)
+        // extraPaths: ["docs", "assets/diagrams"],
       },
 
       // ========== 上下文修剪配置 ==========
@@ -627,6 +632,9 @@
         groupChannels: []
       },
       
+      // 自动建线程的归档时间 (v2026.3.11+)
+      // autoArchiveDuration: "1 day",  // "1 hour" | "1 day" | "3 days" | "1 week"
+
       // 服务器设置
       guilds: {
         // "123456789012345678": {
@@ -1183,6 +1191,8 @@
     maxConcurrentRuns: 2
     // 单任务 Webhook 投递 (可选)
     // delivery: { mode: "webhook", url: "https://example.com/hook" },
+    // ⚠️ v2026.3.11 breaking: cron 不再支持 ad hoc agent send 或 fallback main-session 通知
+    // 升级后运行 openclaw doctor --fix 迁移旧 cron 存储和投递元数据
   },
 
   // --------------------------------------------------------------------------
@@ -1270,6 +1280,7 @@
   //   },
   //   // ACP 来源追踪 (v2026.3.8+)
   //   // CLI: openclaw acp --provenance off|meta|meta+receipt
+  //   // resumeSessionId: "session-uuid"  // 恢复已有 ACP 会话 (v2026.3.11+)
   // },
 
   // --------------------------------------------------------------------------

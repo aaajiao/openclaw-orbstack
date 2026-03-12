@@ -1,7 +1,7 @@
 # CLAUDE.md - Project Guide for Claude Code
 
 **Project:** OpenClaw OrbStack — one-click OpenClaw AI chatbot deployment on macOS via OrbStack VM.
-**Version:** v2026.3.8 | **License:** MIT
+**Version:** v2026.3.11 | **License:** MIT
 
 ## Architecture
 
@@ -69,20 +69,20 @@ openclaw gateway restart
 | `auth.profiles` | Provider auth metadata (actual keys in `auth-profiles.json` on VM) |
 | `agents.defaults.model` | Primary/fallback models for main agent |
 | `agents.defaults.models` | Model catalog/allowlist, custom providers via `models.providers` |
-| `agents.defaults.memorySearch` | Vector memory index settings (SQLite, embedding provider, hybrid search) |
+| `agents.defaults.memorySearch` | Vector memory index settings (SQLite, embedding provider, hybrid search); multimodal `extraPaths` indexing (v2026.3.11+) |
 | `agents.defaults.contextPruning` | Context pruning strategy (cache-ttl, soft/hard trim) |
 | `agents.defaults.compaction` | Compaction / memory flush before context eviction; `postCompactionSections`, `recentTurnsPreserve` (v2026.3.7+) |
 | `agents.defaults.subagents` | Sub-agent config (model, concurrency, archive timeout) |
 | `agents.defaults.sandbox` | Docker sandbox config (image, limits, env vars) |
 | `agents.defaults.pdfModel` | PDF analysis model (`{ primary, fallbacks }`, same level as `model`) |
-| `acp` | Agent Communication Protocol dispatch (default: true since v2026.3.2); persistent channel bindings (v2026.3.7+) |
+| `acp` | Agent Communication Protocol dispatch (default: true since v2026.3.2); persistent channel bindings (v2026.3.7+); `resumeSessionId` for spawned sessions (v2026.3.11+) |
 | `channels.telegram` | Telegram bot settings (token, groups, policies); per-topic `agentId` routing (v2026.3.7+) |
 | `session` | DM scope (per-peer, per-channel-peer, etc.), auto-reset |
 | `hooks.internal` | Built-in hooks (boot-md, command-logger, session-memory) |
 | `hooks` (external) | External event triggers (e.g., GitHub webhook → AI action) |
 | `talk` | Talk mode settings; `silenceTimeoutMs` for auto-send pause (v2026.3.8+) |
 | `tools.web.search` | Web search provider (brave, exa, google, perplexity, tavily) |
-| `cron` | Scheduled tasks (enabled, maxConcurrentRuns, sessionRetention) |
+| `cron` | Scheduled tasks (enabled, maxConcurrentRuns, sessionRetention); delivery tightened in v2026.3.11 (no ad hoc agent sends) |
 | `gateway` | Port, auth, Tailscale, reload mode settings |
 | `env` | Static vars + shellEnv (login shell import) |
 | `skills.entries` | Skill-specific API keys |
@@ -116,9 +116,12 @@ Memory search creates a SQLite vector index (`~/.openclaw/memory/<agentId>.sqlit
   },
   "remote": {
     "batch": { "enabled": true, "concurrency": 2 }  // Cheaper batch API
-  }
+  },
+  "extraPaths": ["docs"]                             // Index additional directories
 }
 ```
+
+**Multimodal indexing** (v2026.3.11+): `extraPaths` directories now support opt-in image and audio indexing. Requires a multimodal embedding model (e.g., Gemini `gemini-embedding-2-preview`). Configure `store.vector.dimensions` to set output dimensions; changing dimensions triggers automatic reindexing.
 
 **Provider selection** (when `provider` is omitted): OpenClaw auto-selects `local` → `openai` → `gemini` based on available API keys. Valid explicit values: `"auto"` | `"openai"` | `"gemini"` | `"local"` | `"ollama"`.
 
