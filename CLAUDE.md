@@ -121,7 +121,7 @@ Memory search creates a SQLite vector index (`~/.openclaw/memory/<agentId>.sqlit
 }
 ```
 
-**Multimodal indexing** (v2026.3.11+): `extraPaths` directories now support opt-in image and audio indexing. Requires a multimodal embedding model (e.g., Gemini `gemini-embedding-2-preview`). Configure `store.vector.dimensions` to set output dimensions; changing dimensions triggers automatic reindexing.
+**Multimodal indexing** (v2026.3.11+): `extraPaths` directories now support opt-in image and audio indexing. Requires `provider: "gemini"` with `model: "gemini-embedding-2-preview"`. Enable via `multimodal: { enabled: true, modalities: ["image", "audio"] }`. When multimodal is enabled, `fallback` must be `"none"`.
 
 **Provider selection** (when `provider` is omitted): OpenClaw auto-selects `local` → `openai` → `gemini` based on available API keys. Valid explicit values: `"auto"` | `"openai"` | `"gemini"` | `"local"` | `"ollama"`.
 
