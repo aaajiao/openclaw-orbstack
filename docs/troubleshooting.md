@@ -45,9 +45,8 @@ openclaw-shell
 # 编辑 .env 文件（Gateway 启动时会读取）
 nano ~/.openclaw/.env
 
-# 添加以下两行：
+# 添加以下内容：
 # OPENCLAW_DISABLE_BONJOUR=1
-# CLAWDBOT_DISABLE_BONJOUR=1
 
 # 重启 Gateway
 openclaw gateway restart
@@ -69,7 +68,6 @@ env | grep -i BONJOUR
 应该看到：
 ```
 OPENCLAW_DISABLE_BONJOUR=1
-CLAWDBOT_DISABLE_BONJOUR=1
 ```
 
 #### 影响

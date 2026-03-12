@@ -579,7 +579,6 @@ orb import -n openclaw-vm backup.tar.zst # 从快照恢复 VM
 | 变量 | 用途 | 默认值 |
 |------|------|--------|
 | `OPENCLAW_DISABLE_BONJOUR` | 禁用 Bonjour/mDNS 广播 | `1` (已启用) |
-| `CLAWDBOT_DISABLE_BONJOUR` | 禁用 Bonjour (兼容旧版) | `1` (已启用) |
 | `NODE_ENV` | Node.js 环境 | `production` |
 
 ### OpenClaw 路径环境变量

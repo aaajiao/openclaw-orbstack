@@ -169,7 +169,6 @@ Gateway 还支持以下扩展能力：
   - Environment:
     - NODE_ENV=production
     - OPENCLAW_DISABLE_BONJOUR=1    # 禁用 Bonjour 避免冲突
-    - CLAWDBOT_DISABLE_BONJOUR=1    # 兼容旧版
 ```
 
 **关于 Bonjour**：OrbStack 环境下，macOS 的 mDNSResponder 会与 Gateway 的 Bonjour 服务冲突，

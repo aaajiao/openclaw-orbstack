@@ -452,7 +452,6 @@ if os.path.exists(env_path):
 
 existing.update(env_vars)
 existing["OPENCLAW_DISABLE_BONJOUR"] = "1"
-existing["CLAWDBOT_DISABLE_BONJOUR"] = "1"
 
 with open(env_path, "w") as f:
     f.write("# OpenClaw Environment Variables (auto-generated)\n")
