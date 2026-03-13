@@ -16,3 +16,9 @@ globs: "*.json,*.json5,*.example"
 2. Read the current file to understand context
 3. Edit
 4. Validate JSON syntax: `jq . <file> > /dev/null` (for strict JSON) or visual check (for JSON5)
+
+## openclaw.json Specifics
+
+- Always verify config option names and nesting against upstream docs before editing
+- Never guess at config structure — WebFetch the upstream docs first
+- When unsure about a field's parent key, check CLAUDE.md Key Config Sections table

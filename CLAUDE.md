@@ -149,6 +149,16 @@ Before declaring a task done, verify all applicable items:
 | Upstream sync | `VERSION` + `CLAUDE.md` version header both updated |
 | Any commit | `bash -n openclaw-orbstack-setup.sh` passes |
 
+## Quick Reference
+
+| Task | Steps |
+|------|-------|
+| Edit shell script | Edit file → hook auto-runs `bash -n` + `shellcheck` |
+| Edit JSON config | Check upstream docs → Edit → hook auto-runs `jq .` (strict JSON) |
+| Sync upstream | `/sync-upstream` → review → approve → commit → user tests → push |
+| Add i18n string | Add `$MSG_*` to both `lang/en.sh` and `lang/zh-CN.sh` (hook reminds) |
+| Need VM state | Ask user to provide it — never access VM directly |
+
 ## Coding Conventions
 
 Language-specific rules are in `.claude/rules/` (auto-applied by file type).
@@ -161,7 +171,6 @@ Language-specific rules are in `.claude/rules/` (auto-applied by file type).
 ### Execution Style
 - Prefer action over extended planning — when the task is clear, execute directly
 - Don't create sub-teams or toggle plan mode repeatedly for straightforward tasks
-- For config edits: check docs first, then edit, don't guess-and-fix
 
 ## Anti-Patterns (avoid these)
 
@@ -227,10 +236,8 @@ Never push or create releases without explicit user approval after testing.
 
 ## Config Editing Rules
 
-- Always verify config option names and nesting location against upstream docs before editing `openclaw.json`
-- Never guess at config structure — use WebFetch to check https://docs.openclaw.ai/gateway/configuration first
-- SecretRef objects are required for sensitive values; never use plaintext `${VAR}` strings
-- When unsure about a field's parent key, check the Key Config Sections table above
+Detailed rules in `.claude/rules/json-config.md` (auto-applied for JSON/JSON5 files).
+When unsure about a field's parent key, check the Key Config Sections table above.
 
 ## Removal / Deletion Rules
 
