@@ -341,7 +341,7 @@ OpenClaw 使用 **JSON5** 格式，支持：
 | 提供商 | 模型示例 | 认证环境变量 |
 |--------|----------|-------------|
 | `anthropic` | `anthropic/claude-opus-4-6`, `anthropic/claude-sonnet-4-6` | `ANTHROPIC_API_KEY` |
-| `openai` | `openai/gpt-5.1-codex` | `OPENAI_API_KEY` |
+| `openai` | `openai/gpt-5.1-codex`, `openai/gpt-5.4` | `OPENAI_API_KEY` |
 | `openai-codex` | `openai-codex/gpt-5.3-codex` | OAuth (ChatGPT) |
 | `opencode` | `opencode/claude-opus-4-6` | `OPENCODE_API_KEY` |
 | `google` | `google/gemini-3-pro-preview`, `google/gemini-3.1-pro-preview` | `GEMINI_API_KEY` |

@@ -162,8 +162,21 @@
         "google/gemini-3.1-flash-lite-preview": { alias: "Gemini 3.1 Flash Lite" },
         "opencode/kimi-k2.5": { alias: "Kimi K2.5" },
         "opencode/gpt-5.2": { alias: "GPT 5.2" },
-        "opencode/gpt-5.3-codex": { alias: "GPT 5.3 Codex" }
+        "opencode/gpt-5.3-codex": { alias: "GPT 5.3 Codex" },
+        "opencode/gpt-5.4": { alias: "GPT 5.4" }
       },
+
+      // ========== Fast Mode (v2026.3.12+) ==========
+      // 会话级 fast toggle，跨 /fast、TUI、Control UI、ACP 生效
+      // 支持 OpenAI (Codex request shaping) 和 Anthropic (service_tier)
+      // fastMode: {
+      //   default: false,           // 默认是否启用 fast mode
+      //   // 按模型配置 fast mode 默认值
+      //   // byModel: {
+      //   //   "openai/gpt-5.4": true,
+      //   //   "anthropic/claude-sonnet-4-6": false,
+      //   // }
+      // },
       
       // 默认思考级别: "off" | "low" | "high"
       thinkingDefault: "low",
@@ -253,7 +266,9 @@
           watch: true,          // 监控文件变化
           sessions: {
             deltaBytes: 50000,  // 每 50KB 变化同步一次
-            deltaMessages: 30   // 或每 30 条消息同步一次
+            deltaMessages: 30,  // 或每 30 条消息同步一次
+            // 压缩后强制同步会话记忆 (v2026.3.12+)
+            // postCompactionForce: false,  // 默认不强制，避免同步开销
           }
         },
         query: {
@@ -317,6 +332,8 @@
         // postCompactionSections: ["Session Startup", "Red Lines"],
         // 压缩质量保护：保留最近 N 轮对话不被压缩 (v2026.3.7+)
         // recentTurnsPreserve: 3,
+        // 压缩后重新索引记忆 (v2026.3.12+)
+        // postIndexSync: true,   // 压缩完成后立即同步记忆索引
         memoryFlush: {
           enabled: true,
           softThresholdTokens: 15000,
@@ -731,7 +748,10 @@
       streamMode: "off",
 
       // Socket Mode DM 中显示处理状态反应 (v2026.3.7+)
-      // typingReaction: false
+      // typingReaction: false,
+
+      // v2026.3.12: 频道路由默认使用稳定 ID，可变名称匹配需显式启用
+      // dangerouslyAllowNameMatching: false,
     },
     
     // ========== Google Chat ==========
@@ -794,7 +814,7 @@
         // 允许的工具组:
         //   group:runtime  = exec, bash, process
         //   group:fs       = read, write, edit, apply_patch
-        //   group:sessions = sessions_list, sessions_history, sessions_send, sessions_spawn, session_status
+        //   group:sessions = sessions_list, sessions_history, sessions_send, sessions_spawn, sessions_yield, session_status
         //   group:ui       = browser, canvas
         allow: [
           "group:runtime",
@@ -1144,6 +1164,13 @@
       //     }
       //   ]
       // },
+      // Ollama / vLLM / SGLang (v2026.3.12: 迁移到 provider-plugin 架构)
+      // 安装: openclaw plugins install ollama
+      // 支持 provider-owned onboarding、模型发现和 model-picker setup
+      // "ollama": {
+      //   baseUrl: "http://localhost:11434",
+      //   models: [{ id: "llama3.3", name: "Llama 3.3" }]
+      // },
       // Kilo Gateway (多模型网关)
       // "kilo": {
       //   baseUrl: "https://api.kilo.ai/v1",
@@ -1236,6 +1263,8 @@
   // --------------------------------------------------------------------------
   // 十六(b)、插件配置 (可选, 需要重启)
   // --------------------------------------------------------------------------
+  // ⚠️ v2026.3.12 安全变更: 工作区插件不再自动加载
+  // 克隆的仓库中的插件代码需要显式信任才能执行 (GHSA-99qw-6mr3-36qr)
   // plugins: {
   //   list: [
   //     { id: "my-plugin", enabled: true }
