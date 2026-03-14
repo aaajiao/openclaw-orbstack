@@ -92,8 +92,23 @@ fi' EXIT
 
 orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git checkout -- . 2>/dev/null; git checkout '$LATEST_TAG'"
 
-# Ensure pnpm is available (npm/corepack may vanish after apt upgrade)
-orb -m "$OPENCLAW_VM_NAME" bash -lc '
+# Derive npm package version from git tag (v2026.3.13 -> 2026.3.13)
+NPM_VERSION="${LATEST_TAG#v}"
+
+# Clear build marker so a failed build won't be skipped next time
+orb -m "$OPENCLAW_VM_NAME" bash -lc "rm -f ~/.openclaw/.build-version" 2>/dev/null || true
+
+# shellcheck disable=SC2059
+printf "$MSG_PKG_INSTALL_VERSION\n" "$NPM_VERSION"
+
+# Try prebuilt npm package; fall back to source build on failure
+if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo npm install -g openclaw@$NPM_VERSION"; then
+    echo "$MSG_PKG_INSTALL_OK"
+else
+    echo "$MSG_PKG_INSTALL_FAIL"
+    echo "$MSG_BUILD_FALLBACK"
+    # Ensure pnpm is available for source build
+    orb -m "$OPENCLAW_VM_NAME" bash -lc '
 if ! command -v pnpm &>/dev/null; then
     if ! command -v npm &>/dev/null; then
         echo "  '"$MSG_CMD_UPDATE_NPM_REINSTALL"'"
@@ -102,25 +117,7 @@ if ! command -v pnpm &>/dev/null; then
     sudo corepack enable 2>/dev/null || sudo npm install -g pnpm
 fi
 '
-
-# Derive npm package version from git tag (v2026.3.13 -> 2026.3.13)
-NPM_VERSION="${LATEST_TAG#v}"
-
-# Clear build marker so a failed build won't be skipped next time
-orb -m "$OPENCLAW_VM_NAME" bash -lc "rm -f ~/.openclaw/.build-version" 2>/dev/null || true
-
-echo "$MSG_CMD_UPDATE_INSTALLING"
-echo "$MSG_CMD_UPDATE_BUILDING"
-
-# Try source build; fall back to prebuilt npm package on failure
-if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && pnpm install && pnpm build && pnpm ui:build && sudo npm install -g ."; then
-    echo "$MSG_BUILD_SOURCE_OK"
-else
-    echo "$MSG_BUILD_FAILED"
-    echo "$MSG_BUILD_FALLBACK"
-    # shellcheck disable=SC2059
-    printf "$MSG_BUILD_FALLBACK_VERSION\n" "$NPM_VERSION"
-    if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo npm install -g openclaw@$NPM_VERSION"; then
+    if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && pnpm install && pnpm build && pnpm ui:build && sudo npm install -g ."; then
         echo "$MSG_BUILD_FALLBACK_OK"
     else
         echo "$MSG_BUILD_FALLBACK_FAIL"

@@ -241,18 +241,16 @@ vm_exec "cd ~/openclaw && git checkout '$OPENCLAW_VERSION'"
 # Derive npm package version from git tag (v2026.3.13 -> 2026.3.13)
 NPM_VERSION="${OPENCLAW_VERSION#v}"
 
-info "$MSG_INFO_NPM_INSTALL"
-info "$MSG_INFO_NPM_BUILD"
+# shellcheck disable=SC2059
+info "$(printf "$MSG_PKG_INSTALL_VERSION" "$NPM_VERSION")"
 
-# Try source build; fall back to prebuilt npm package on failure
-if vm_exec "cd ~/openclaw && pnpm install && pnpm build && pnpm ui:build && sudo npm install -g ."; then
-    ok "$MSG_BUILD_SOURCE_OK"
+# Try prebuilt npm package; fall back to source build on failure
+if vm_exec "sudo npm install -g openclaw@$NPM_VERSION"; then
+    ok "$MSG_PKG_INSTALL_OK"
 else
-    warn "$MSG_BUILD_FAILED"
+    warn "$MSG_PKG_INSTALL_FAIL"
     info "$MSG_BUILD_FALLBACK"
-    # shellcheck disable=SC2059
-    info "$(printf "$MSG_BUILD_FALLBACK_VERSION" "$NPM_VERSION")"
-    if vm_exec "sudo npm install -g openclaw@$NPM_VERSION"; then
+    if vm_exec "cd ~/openclaw && pnpm install && pnpm build && pnpm ui:build && sudo npm install -g ."; then
         ok "$MSG_BUILD_FALLBACK_OK"
     else
         err "$MSG_BUILD_FALLBACK_FAIL"

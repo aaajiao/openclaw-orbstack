@@ -53,13 +53,13 @@ MSG_INFO_CHECKOUT_RELEASE="Checking out latest release: %s ..."
 MSG_OK_BUILD_DONE="OpenClaw build complete (CLI: openclaw)"
 MSG_ERR_NO_VERSION="No stable release tag found. Check network or upstream repository."
 
-# --- Build fallback (prebuilt npm package) ---
-MSG_BUILD_FAILED="  ⚠ Source build failed"
-MSG_BUILD_FALLBACK="  Falling back to prebuilt npm package..."
-MSG_BUILD_FALLBACK_VERSION="  Installing prebuilt openclaw@%s..."
-MSG_BUILD_FALLBACK_OK="  ✓ Prebuilt package installed successfully"
-MSG_BUILD_FALLBACK_FAIL="  ✗ Prebuilt package install also failed"
-MSG_BUILD_SOURCE_OK="  ✓ Source build succeeded"
+# --- Install with source build fallback ---
+MSG_PKG_INSTALL_VERSION="Installing openclaw@%s..."
+MSG_PKG_INSTALL_OK="Package installed successfully"
+MSG_PKG_INSTALL_FAIL="  ⚠ Package install failed"
+MSG_BUILD_FALLBACK="  Falling back to source build..."
+MSG_BUILD_FALLBACK_OK="  ✓ Source build succeeded"
+MSG_BUILD_FALLBACK_FAIL="  ✗ Source build also failed"
 
 # --- Step 6: Sandbox ---
 MSG_BUILD_PATIENCE="    ⏳ This may take a few minutes, please wait"
