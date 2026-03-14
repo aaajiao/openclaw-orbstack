@@ -145,15 +145,6 @@ openclaw-update
 
 This auto-detects and repairs outdated configurations (e.g. migrating from system-level to user-level service).
 
-> **For users upgrading from before v2026.3.1:**
-> Run this **one last time** to switch to the new auto-updating wrapper system:
->
-> ```bash
-> cd openclaw-orbstack && git pull && bash scripts/refresh-mac-commands.sh
-> ```
->
-> After this, `openclaw-update` will automatically pull the latest orchestrator scripts before each update — **no more manual `git pull && refresh` needed**.
-
 ### Common Issues
 
 | Issue | Solution |

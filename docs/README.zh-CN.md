@@ -145,15 +145,6 @@ openclaw-update
 
 会自动检测并修复旧版配置（如从系统级服务迁移到用户级服务）。
 
-> **v2026.3.1 之前的老用户请注意：**
-> 需要手动执行**最后一次**刷新，切换到新的自动更新机制：
->
-> ```bash
-> cd openclaw-orbstack && git pull && bash scripts/refresh-mac-commands.sh
-> ```
->
-> 执行后，`openclaw-update` 会在每次更新前自动拉取最新的编排脚本——**以后不再需要手动 `git pull && refresh`**。
-
 ### 常见问题速查
 
 | 问题 | 解决方案 |
