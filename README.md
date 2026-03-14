@@ -8,7 +8,7 @@ One-click [OpenClaw](https://github.com/openclaw/openclaw) deployment on macOS v
 
 [OpenClaw](https://github.com/openclaw/openclaw) is an open-source personal AI assistant you run on your own devices.
 
-This project (**openclaw-orbstack**) is a **deployment tool** — it automates the from-source build and OrbStack VM setup on macOS. The architecture below (Gateway process + Docker sandboxes) is [OpenClaw's official design](https://docs.openclaw.ai/install), not something we invented. We simply package it into a one-click installer with Mac convenience commands.
+This project (**openclaw-orbstack**) is a **deployment tool** — it automates OpenClaw installation and OrbStack VM setup on macOS. It uses the prebuilt npm package by default (with source build as fallback). The architecture below (Gateway process + Docker sandboxes) is [OpenClaw's official design](https://docs.openclaw.ai/install), not something we invented. We simply package it into a one-click installer with Mac convenience commands.
 
 ## Architecture
 
@@ -54,7 +54,7 @@ cd openclaw-orbstack
 bash openclaw-orbstack-setup.sh
 ```
 
-The script starts with a language selection prompt (English / 中文), then automatically: Creates VM → Installs Docker/Node.js → Builds OpenClaw → Runs setup wizard → Starts service
+The script starts with a language selection prompt (English / 中文), then automatically: Creates VM → Installs Docker & Node.js → Installs OpenClaw (via npm) → Builds sandbox images → Runs setup wizard → Starts service
 
 To skip the prompt, set the language via environment variable:
 
@@ -197,6 +197,7 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for details.
 | [docs/sandbox.md](docs/sandbox.md) | Sandbox security |
 | [docs/skills.md](docs/skills.md) | Skills guide |
 | [docs/voice-tts.md](docs/voice-tts.md) | Voice features |
+| [docs/development.md](docs/development.md) | Development guide |
 
 ## License
 

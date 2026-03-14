@@ -8,7 +8,7 @@
 
 [OpenClaw](https://github.com/openclaw/openclaw) 是一个开源的个人 AI 助手，运行在你自己的设备上。
 
-本项目（**openclaw-orbstack**）是一个**部署工具**——自动化 macOS 上的源码构建和 OrbStack VM 配置。下方的架构（Gateway 进程 + Docker 沙箱）是 [OpenClaw 官方设计](https://docs.openclaw.ai/install)，不是我们发明的。我们只是把它打包成一键安装器，并提供 Mac 端便捷命令。
+本项目（**openclaw-orbstack**）是一个**部署工具**——自动化 macOS 上的 OpenClaw 安装和 OrbStack VM 配置。默认使用预编译 npm 包安装（源码编译作为后备方案）。下方的架构（Gateway 进程 + Docker 沙箱）是 [OpenClaw 官方设计](https://docs.openclaw.ai/install)，不是我们发明的。我们只是把它打包成一键安装器，并提供 Mac 端便捷命令。
 
 ## 架构
 
@@ -54,7 +54,7 @@ cd openclaw-orbstack
 bash openclaw-orbstack-setup.sh
 ```
 
-脚本启动后会先让你选择语言（English / 中文），然后自动完成：创建 VM → 安装 Docker/Node.js → 构建 OpenClaw → 配置向导 → 启动服务
+脚本启动后会先让你选择语言（English / 中文），然后自动完成：创建 VM → 安装 Docker 和 Node.js → 安装 OpenClaw（通过 npm）→ 构建沙箱镜像 → 配置向导 → 启动服务
 
 跳过语言选择提示，直接指定语言：
 
@@ -195,6 +195,7 @@ orb import -n openclaw-vm ~/Desktop/backup.tar.zst # 从快照恢复
 | [skills.md](skills.md) | Skills 使用指南 |
 | [sandbox.md](sandbox.md) | 沙箱安全模型 |
 | [voice-tts.md](voice-tts.md) | 语音功能 |
+| [development.md](development.md) | 开发指南 |
 | [troubleshooting.md](troubleshooting.md) | 故障排查指南 |
 
 ## License
