@@ -102,17 +102,27 @@ if ! command -v pnpm &>/dev/null; then
 fi
 '
 
+# Derive npm package version from git tag (v2026.3.13 -> 2026.3.13)
+NPM_VERSION="${LATEST_TAG#v}"
+
 echo "$MSG_CMD_UPDATE_INSTALLING"
-orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && pnpm install"
-
 echo "$MSG_CMD_UPDATE_BUILDING"
-orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && pnpm build"
 
-echo "$MSG_CMD_UPDATE_UI"
-orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && pnpm ui:build"
-
-echo "$MSG_CMD_UPDATE_REINSTALL"
-orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sudo npm install -g ."
+# Try source build; fall back to prebuilt npm package on failure
+if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && pnpm install && pnpm build && pnpm ui:build && sudo npm install -g ."; then
+    echo "$MSG_BUILD_SOURCE_OK"
+else
+    echo "$MSG_BUILD_FAILED"
+    echo "$MSG_BUILD_FALLBACK"
+    # shellcheck disable=SC2059
+    printf "$MSG_BUILD_FALLBACK_VERSION\n" "$NPM_VERSION"
+    if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo npm install -g openclaw@$NPM_VERSION"; then
+        echo "$MSG_BUILD_FALLBACK_OK"
+    else
+        echo "$MSG_BUILD_FALLBACK_FAIL"
+        exit 1
+    fi
+fi
 
 # --- Per-image sandbox hash detection ---
 BUILD_BASE=false

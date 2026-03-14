@@ -53,6 +53,14 @@ MSG_INFO_CHECKOUT_RELEASE="切换到最新发布版本: %s ..."
 MSG_OK_BUILD_DONE="OpenClaw 构建完成 (CLI: openclaw)"
 MSG_ERR_NO_VERSION="未找到稳定发布标签，请检查网络或上游仓库。"
 
+# --- Build fallback (prebuilt npm package) ---
+MSG_BUILD_FAILED="  ⚠ 源码构建失败"
+MSG_BUILD_FALLBACK="  回退到预编译 npm 包..."
+MSG_BUILD_FALLBACK_VERSION="  安装预编译 openclaw@%s..."
+MSG_BUILD_FALLBACK_OK="  ✓ 预编译包安装成功"
+MSG_BUILD_FALLBACK_FAIL="  ✗ 预编译包安装也失败了"
+MSG_BUILD_SOURCE_OK="  ✓ 源码构建成功"
+
 # --- Step 6: Sandbox ---
 MSG_BUILD_PATIENCE="    ⏳ 这可能需要几分钟，请耐心等待"
 MSG_INFO_SANDBOX_BASE="构建基础沙箱镜像 (sandbox-common 的构建依赖)..."
