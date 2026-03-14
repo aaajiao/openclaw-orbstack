@@ -70,10 +70,11 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc '
     fi
 ' 2>/dev/null || true
 
-# Check if already on the latest tag
+# Check if already on the latest tag AND build succeeded previously
 CURRENT_HEAD=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git rev-parse HEAD 2>/dev/null")
 TAG_COMMIT=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git rev-parse '$LATEST_TAG^{commit}' 2>/dev/null")
-if [ "$CURRENT_HEAD" = "$TAG_COMMIT" ] && [ "$FORCE" = false ] && [ "$SANDBOX" = false ]; then
+BUILT_VERSION=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cat ~/.openclaw/.build-version 2>/dev/null" || echo "")
+if [ "$CURRENT_HEAD" = "$TAG_COMMIT" ] && [ "$BUILT_VERSION" = "$LATEST_TAG" ] && [ "$FORCE" = false ] && [ "$SANDBOX" = false ]; then
     echo -e "$MSG_CMD_UPDATE_ALREADY_CURRENT"
     # Still refresh Mac commands in case openclaw-orbstack repo changed
     OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
@@ -105,6 +106,9 @@ fi
 # Derive npm package version from git tag (v2026.3.13 -> 2026.3.13)
 NPM_VERSION="${LATEST_TAG#v}"
 
+# Clear build marker so a failed build won't be skipped next time
+orb -m "$OPENCLAW_VM_NAME" bash -lc "rm -f ~/.openclaw/.build-version" 2>/dev/null || true
+
 echo "$MSG_CMD_UPDATE_INSTALLING"
 echo "$MSG_CMD_UPDATE_BUILDING"
 
@@ -123,6 +127,9 @@ else
         exit 1
     fi
 fi
+
+# Mark build as successful
+orb -m "$OPENCLAW_VM_NAME" bash -lc "echo '$LATEST_TAG' > ~/.openclaw/.build-version"
 
 # --- Per-image sandbox hash detection ---
 BUILD_BASE=false
