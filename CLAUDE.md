@@ -137,6 +137,17 @@ orb import -n openclaw-vm ~/Desktop/openclaw-vm-backup.tar.zst
 
 No automated test suite. Validation is syntax checks + shellcheck + manual testing.
 
+### Install Strategy
+
+Both the installer and updater use the same two-tier approach:
+
+1. **Primary**: `npm install -g openclaw@<version>` (prebuilt npm package — fast, reliable)
+2. **Fallback**: `pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .` (source build — only if npm registry fails)
+
+The git checkout (`~/openclaw`) is always kept at the target tag regardless of install method, because sandbox Docker images are built from the repo's Dockerfiles.
+
+A `.build-version` marker (`~/.openclaw/.build-version`) tracks successful installs. `openclaw-update` checks this marker to avoid skipping a version whose previous install attempt failed.
+
 ## Verification Checklist
 
 Before declaring a task done, verify all applicable items:
