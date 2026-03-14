@@ -1,7 +1,7 @@
 # CLAUDE.md - Project Guide for Claude Code
 
 **Project:** OpenClaw OrbStack — one-click OpenClaw AI chatbot deployment on macOS via OrbStack VM.
-**Version:** v2026.3.12 | **License:** MIT
+**Version:** v2026.3.13 | **License:** MIT
 
 ## Architecture
 
@@ -76,7 +76,7 @@ openclaw gateway restart
 | `agents.defaults.models` | Model catalog/allowlist, custom providers via `models.providers` |
 | `agents.defaults.memorySearch` | Vector memory index settings (SQLite, embedding provider, hybrid search); multimodal `extraPaths` indexing (v2026.3.11+); post-compaction sync (v2026.3.12+) |
 | `agents.defaults.contextPruning` | Context pruning strategy (cache-ttl, soft/hard trim) |
-| `agents.defaults.compaction` | Compaction / memory flush before context eviction; `postCompactionSections`, `recentTurnsPreserve` (v2026.3.7+); `postIndexSync` (v2026.3.12+) |
+| `agents.defaults.compaction` | Compaction / memory flush before context eviction; `postCompactionSections`, `recentTurnsPreserve` (v2026.3.7+); `postIndexSync` (v2026.3.12+); `customInstructions` for language/persona continuity (v2026.3.13+) |
 | `agents.defaults.subagents` | Sub-agent config (model, concurrency, archive timeout) |
 | `agents.defaults.sandbox` | Docker sandbox config (image, limits, env vars) |
 | `agents.defaults.pdfModel` | PDF analysis model (`{ primary, fallbacks }`, same level as `model`) |
@@ -91,6 +91,7 @@ openclaw gateway restart
 | `gateway` | Port, auth, Tailscale, reload mode settings |
 | `env` | Static vars + shellEnv (login shell import) |
 | `skills.entries` | Skill-specific API keys |
+| `browser` | Browser tool settings; `profiles` for Chrome DevTools MCP attach / extension relay (v2026.3.13+); `defaultProfile` |
 | `plugins` | Plugin system (requires restart); Context Engine slot, `allowPromptInjection`, system context placement (v2026.3.7+); implicit workspace auto-load disabled (v2026.3.12+) |
 | `$include` | Multi-file config support (single file or array, nested up to 10 levels) |
 

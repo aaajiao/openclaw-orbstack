@@ -334,6 +334,11 @@
         // recentTurnsPreserve: 3,
         // 压缩后重新索引记忆 (v2026.3.12+)
         // postIndexSync: true,   // 压缩完成后立即同步记忆索引
+        // 压缩摘要自定义指令 (v2026.3.13+)
+        // 用于保持压缩后的语言/人格一致性（防止非英语会话被压缩成英语）
+        // 不设置时使用内置默认指令（自动检测会话语言并保持）
+        // 最大 800 字符
+        // customInstructions: "用中文撰写压缩摘要，保持事实准确",
         memoryFlush: {
           enabled: true,
           softThresholdTokens: 15000,
@@ -479,6 +484,12 @@
       //   name: "公共助手",
       //   workspace: "~/.openclaw/workspace-public",
       //   model: { primary: "anthropic/claude-haiku-4-5" },
+      //   // 每个 Agent 的运行时参数 (v2026.3.13+ config validate 支持)
+      //   // params: {
+      //   //   temperature: 0.7,
+      //   //   maxTokens: 4096,
+      //   //   cacheRetention: "1h"
+      //   // },
       //   sandbox: {
       //     mode: "all",
       //     scope: "session",
@@ -765,6 +776,15 @@
       enabled: false
       // 手机号 (E.164 格式)
       // number: "+8613800138000"
+      // 群组设置 (v2026.3.13+ config validate 支持)
+      // groups: {
+      //   "*": { requireMention: true },
+      //   // "<group-id>": {
+      //   //   requireMention: false,
+      //   //   tools: ["web_search"],
+      //   //   toolsBySender: { "+8613800138000": ["exec"] }
+      //   // }
+      // }
     },
 
     // ========== BlueBubbles (推荐替代 iMessage legacy) ==========
@@ -842,6 +862,19 @@
       }
     },
     
+    // Web Fetch 配置 (v2026.3.13+ config validate 支持)
+    // web: {
+    //   fetch: {
+    //     readability: true,      // Readability 主内容提取 (默认开启)
+    //     firecrawl: {            // Firecrawl 备选提取 (需要 API Key)
+    //       enabled: false,
+    //       apiKey: { "$secret": "FIRECRAWL_API_KEY" },
+    //       onlyMainContent: true,
+    //       timeoutSeconds: 60,
+    //     },
+    //   },
+    // },
+
     // Web 工具 URL 白名单 (可选)
     // webSearch: { allowedUrls: ["*.example.com"] },
     // webFetch: { allowedUrls: ["*.example.com"] },
@@ -1325,5 +1358,21 @@
     // Chrome 自定义启动参数 (可选)
     // extraArgs: ["--disable-gpu", "--no-sandbox"],
     // 更多选项见官方文档: https://docs.openclaw.ai/tools/browser
+
+    // 浏览器配置文件 (v2026.3.13+)
+    // defaultProfile: "openclaw",  // 默认使用的 profile: "openclaw" | "user" | "chrome-relay"
+    // profiles: {
+    //   // Chrome DevTools MCP 附着模式 — 使用已登录的 Chrome 会话
+    //   // 需要 Chrome 144+, 启用 chrome://inspect/#remote-debugging
+    //   // user: {
+    //   //   driver: "existing-session",
+    //   //   attachOnly: true,      // 不启动新浏览器，仅附着到已运行的
+    //   // },
+    //   // Chrome 扩展中继模式
+    //   // "chrome-relay": {
+    //   //   driver: "extension",
+    //   //   cdpUrl: "http://127.0.0.1:18792",  // Gateway 端口 + 1
+    //   // },
+    // }
   }
 }
