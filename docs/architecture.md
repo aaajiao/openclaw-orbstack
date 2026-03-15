@@ -114,7 +114,7 @@ Gateway 还支持以下扩展能力：
     │   (仅供沙箱容器使用)
     ▼
 步骤 4: 安装 Node.js
-    │   Node.js 22.x LTS + build-essential
+    │   Node.js 24.x LTS + build-essential
     ▼
 步骤 5: 克隆并构建 OpenClaw
     │   git clone + npm install + npm run build

@@ -36,9 +36,9 @@ MSG_OK_DOCKER_STARTED="Docker 服务已启动"
 
 # --- Step 4: Node.js ---
 MSG_OK_NODE_INSTALLED="Node.js 已安装"
-MSG_INFO_NODE_UPGRADE="Node.js %s 版本过低，升级到 22.x..."
+MSG_INFO_NODE_UPGRADE="Node.js %s 版本过低，升级到 24.x..."
 MSG_OK_NODE_UPGRADED="Node.js 已升级"
-MSG_INFO_INSTALLING_NODE="安装 Node.js 22.x..."
+MSG_INFO_INSTALLING_NODE="安装 Node.js 24.x..."
 MSG_OK_PNPM_INSTALLED="pnpm 已安装"
 MSG_INFO_INSTALLING_PNPM="安装 pnpm..."
 
@@ -215,3 +215,10 @@ MSG_REFRESH_CMD_WHATSAPP="  openclaw-whatsapp       WhatsApp 登录"
 MSG_UPDATE_AUTO_UPGRADE="🔧 检测到旧版服务配置，正在自动修复..."
 MSG_UPDATE_AUTO_UPGRADE_DONE="✓ 服务配置已修复，继续更新..."
 MSG_UPDATE_ENV_CREATED="✓ 已创建 ~/.openclaw/.env（Bonjour 配置）"
+
+# --- openclaw-update Node.js 升级 ---
+MSG_UPDATE_NODE_CHECK="  检查 Node.js 版本..."
+MSG_UPDATE_NODE_UPGRADING="  ⬆ Node.js %s 低于 24.x，正在升级..."
+MSG_UPDATE_NODE_UPGRADED="  ✓ Node.js 已升级到 %s"
+MSG_UPDATE_NODE_OK="  ✓ Node.js %s 满足要求"
+MSG_UPDATE_NODE_FAIL="  ⚠ Node.js 升级失败，继续使用当前版本"

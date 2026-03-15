@@ -59,6 +59,26 @@ if [ -z "$LATEST_TAG" ]; then
 fi
 echo "  -> $LATEST_TAG"
 
+# --- Ensure Node.js >= 24 (upstream recommends 24.x LTS) ---
+echo "$MSG_UPDATE_NODE_CHECK"
+NODE_VERSION=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'node --version 2>/dev/null' || echo "")
+NODE_MAJOR=$(echo "$NODE_VERSION" | sed 's/v\([0-9]*\).*/\1/')
+if [ -n "$NODE_MAJOR" ] && [ "$NODE_MAJOR" -ge 24 ] 2>/dev/null; then
+    # shellcheck disable=SC2059
+    printf "$MSG_UPDATE_NODE_OK\n" "$NODE_VERSION"
+else
+    # shellcheck disable=SC2059
+    printf "$MSG_UPDATE_NODE_UPGRADING\n" "$NODE_VERSION"
+    # Unhold first in case a previous version was pinned, then install + re-hold at 24
+    if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo apt-mark unhold nodejs 2>/dev/null; curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo apt-mark hold nodejs"; then
+        NEW_NODE=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'node --version')
+        # shellcheck disable=SC2059
+        printf "$MSG_UPDATE_NODE_UPGRADED\n" "$NEW_NODE"
+    else
+        echo "$MSG_UPDATE_NODE_FAIL"
+    fi
+fi
+
 # --- Migrate old single hash → per-image hashes (no rebuild) ---
 orb -m "$OPENCLAW_VM_NAME" bash -lc '
     if [ -f ~/.openclaw/.sandbox-build-hash ] && [ ! -f ~/.openclaw/.sandbox-hash-base ]; then

@@ -28,7 +28,7 @@
 #   1. Check OrbStack
 #   2. Create Ubuntu VM
 #   3. Install Docker Engine (for sandboxes)
-#   4. Install Node.js 22.x LTS
+#   4. Install Node.js 24.x LTS
 #   5. Clone & build OpenClaw
 #   6. Build sandbox images
 #   7. Run configuration wizard
@@ -180,7 +180,7 @@ ok "$MSG_OK_DOCKER_STARTED"
 # ============================================================================
 step 4 "$MSG_STEP_4"
 
-REQUIRED_NODE_MAJOR=22
+REQUIRED_NODE_MAJOR=24
 
 if vm_exec "command -v node &> /dev/null"; then
     NODE_VERSION=$(vm_exec 'node --version' 2>/dev/null)
@@ -189,14 +189,14 @@ if vm_exec "command -v node &> /dev/null"; then
         ok "$MSG_OK_NODE_INSTALLED: $NODE_VERSION"
     else
         info "$(printf "$MSG_INFO_NODE_UPGRADE" "$NODE_VERSION")"
-        vm_exec "curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -"
-        vm_exec "sudo apt-get install -y nodejs"
+        vm_exec "sudo apt-mark unhold nodejs 2>/dev/null; curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -"
+        vm_exec "sudo apt-get install -y nodejs && sudo apt-mark hold nodejs"
         ok "$MSG_OK_NODE_UPGRADED: $(vm_exec 'node --version')"
     fi
 else
     info "$MSG_INFO_INSTALLING_NODE"
-    vm_exec "curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -"
-    vm_exec "sudo apt-get install -y nodejs"
+    vm_exec "curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -"
+    vm_exec "sudo apt-get install -y nodejs && sudo apt-mark hold nodejs"
     ok "$MSG_OK_NODE_INSTALLED: $(vm_exec 'node --version')"
 fi
 

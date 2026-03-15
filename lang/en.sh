@@ -36,9 +36,9 @@ MSG_OK_DOCKER_STARTED="Docker service started"
 
 # --- Step 4: Node.js ---
 MSG_OK_NODE_INSTALLED="Node.js installed"
-MSG_INFO_NODE_UPGRADE="Node.js %s is outdated, upgrading to 22.x..."
+MSG_INFO_NODE_UPGRADE="Node.js %s is outdated, upgrading to 24.x..."
 MSG_OK_NODE_UPGRADED="Node.js upgraded"
-MSG_INFO_INSTALLING_NODE="Installing Node.js 22.x..."
+MSG_INFO_INSTALLING_NODE="Installing Node.js 24.x..."
 MSG_OK_PNPM_INSTALLED="pnpm installed"
 MSG_INFO_INSTALLING_PNPM="Installing pnpm..."
 
@@ -214,3 +214,10 @@ MSG_REFRESH_CMD_WHATSAPP="  openclaw-whatsapp       WhatsApp login"
 MSG_UPDATE_AUTO_UPGRADE="🔧 Detected outdated service configuration, auto-repairing..."
 MSG_UPDATE_AUTO_UPGRADE_DONE="✓ Service configuration repaired. Continuing update..."
 MSG_UPDATE_ENV_CREATED="✓ Created ~/.openclaw/.env with Bonjour settings"
+
+# --- openclaw-update Node.js upgrade ---
+MSG_UPDATE_NODE_CHECK="  Checking Node.js version..."
+MSG_UPDATE_NODE_UPGRADING="  ⬆ Node.js %s is below 24.x, upgrading..."
+MSG_UPDATE_NODE_UPGRADED="  ✓ Node.js upgraded to %s"
+MSG_UPDATE_NODE_OK="  ✓ Node.js %s meets requirements"
+MSG_UPDATE_NODE_FAIL="  ⚠ Node.js upgrade failed, continuing with current version"

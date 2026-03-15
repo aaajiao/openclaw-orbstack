@@ -67,7 +67,7 @@ Architecture decisions, config structure, feature status, and operational knowle
 | Web console | `http://openclaw-vm.orb.local:18789` |
 | Config (in VM) | `~/.openclaw/openclaw.json` |
 | Secrets (in VM) | `~/.openclaw/.env` |
-| Node.js | 22.x LTS |
+| Node.js | 24.x LTS |
 | Service | `systemctl --user` (`openclaw-gateway.service`) |
 | Gateway cmd | `node dist/entry.js gateway --port 18789` |
 
