@@ -332,8 +332,8 @@
         // postCompactionSections: ["Session Startup", "Red Lines"],
         // 压缩质量保护：保留最近 N 轮对话不被压缩 (v2026.3.7+)
         // recentTurnsPreserve: 3,
-        // 压缩后重新索引记忆 (v2026.3.12+)
-        // postIndexSync: true,   // 压缩完成后立即同步记忆索引
+        // 压缩后重新索引记忆 (v2026.3.12+, v2026.3.13 改为枚举)
+        // postIndexSync: "await",   // "off" | "async" | "await" — 压缩完成后同步记忆索引
         // 压缩摘要自定义指令 (v2026.3.13+)
         // 用于保持压缩后的语言/人格一致性（防止非英语会话被压缩成英语）
         // 不设置时使用内置默认指令（自动检测会话语言并保持）

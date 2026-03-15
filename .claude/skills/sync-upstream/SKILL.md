@@ -1,6 +1,7 @@
 ---
 name: sync-upstream
 description: Sync with latest upstream OpenClaw stable release.
+disable-model-invocation: true
 ---
 
 # Upstream Sync

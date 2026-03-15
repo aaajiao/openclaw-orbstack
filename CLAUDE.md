@@ -52,50 +52,11 @@ This directory contains the developer's **actual runtime configuration** for the
 | `templates/openclaw.json.example` | Reference template with comments | When adding new config options to document |
 | `local/openclaw.json` | Actual working config | When tuning your own setup |
 
-### Sync Workflow (user-executed, not for Claude)
+Config section reference is in `memory/config.md`. Detailed examples in [docs/configuration-guide.md](docs/configuration-guide.md).
 
-```bash
-# Mac → VM: Push config changes
-cat local/openclaw.json | orb -m openclaw-vm tee ~/.openclaw/openclaw.json > /dev/null
-cat local/.env | orb -m openclaw-vm tee ~/.openclaw/.env > /dev/null
+## Persistent Knowledge
 
-# VM → Mac: Pull config changes (after openclaw configure or manual edits)
-orb -m openclaw-vm cat ~/.openclaw/openclaw.json > local/openclaw.json
-orb -m openclaw-vm cat ~/.openclaw/.env > local/.env
-
-# Apply changes
-openclaw gateway restart
-```
-
-### Key Config Sections in local/openclaw.json
-
-| Section | Purpose |
-|---------|---------|
-| `auth.profiles` | Provider auth metadata (actual keys in `auth-profiles.json` on VM) |
-| `agents.defaults.model` | Primary/fallback models for main agent |
-| `agents.defaults.models` | Model catalog/allowlist, custom providers via `models.providers` |
-| `agents.defaults.memorySearch` | Vector memory index settings (SQLite, embedding provider, hybrid search); multimodal `extraPaths` indexing (v2026.3.11+); post-compaction sync (v2026.3.12+) |
-| `agents.defaults.contextPruning` | Context pruning strategy (cache-ttl, soft/hard trim) |
-| `agents.defaults.compaction` | Compaction / memory flush before context eviction; `postCompactionSections`, `recentTurnsPreserve` (v2026.3.7+); `postIndexSync` (v2026.3.12+); `customInstructions` for language/persona continuity (v2026.3.13+) |
-| `agents.defaults.subagents` | Sub-agent config (model, concurrency, archive timeout) |
-| `agents.defaults.sandbox` | Docker sandbox config (image, limits, env vars) |
-| `agents.defaults.pdfModel` | PDF analysis model (`{ primary, fallbacks }`, same level as `model`) |
-| `acp` | Agent Communication Protocol dispatch (default: true since v2026.3.2); persistent channel bindings (v2026.3.7+); `resumeSessionId` for spawned sessions (v2026.3.11+) |
-| `channels.telegram` | Telegram bot settings (token, groups, policies); per-topic `agentId` routing (v2026.3.7+) |
-| `session` | DM scope (per-peer, per-channel-peer, etc.), auto-reset |
-| `hooks.internal` | Built-in hooks (boot-md, command-logger, session-memory) |
-| `hooks` (external) | External event triggers (e.g., GitHub webhook → AI action) |
-| `talk` | Talk mode settings; `silenceTimeoutMs` for auto-send pause (v2026.3.8+) |
-| `tools.web.search` | Web search provider (brave, exa, google, perplexity, tavily) |
-| `cron` | Scheduled tasks (enabled, maxConcurrentRuns, sessionRetention); delivery tightened in v2026.3.11 (no ad hoc agent sends) |
-| `gateway` | Port, auth, Tailscale, reload mode settings |
-| `env` | Static vars + shellEnv (login shell import) |
-| `skills.entries` | Skill-specific API keys |
-| `browser` | Browser tool settings; `profiles` for Chrome DevTools MCP attach / extension relay (v2026.3.13+); `defaultProfile` |
-| `plugins` | Plugin system (requires restart); Context Engine slot, `allowPromptInjection`, system context placement (v2026.3.7+); implicit workspace auto-load disabled (v2026.3.12+) |
-| `$include` | Multi-file config support (single file or array, nested up to 10 levels) |
-
-For detailed config examples (memorySearch, contextPruning, compaction, etc.), see [docs/configuration-guide.md](docs/configuration-guide.md).
+Architecture decisions, config structure, feature status, and operational knowledge are tracked in `memory/MEMORY.md`. Check it when you need context beyond what's in this file.
 
 ## Key Facts
 
@@ -122,17 +83,6 @@ OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh
 # Validate (Claude can run these)
 bash -n openclaw-orbstack-setup.sh          # syntax check
 shellcheck openclaw-orbstack-setup.sh       # lint
-
-# Validate (user-executed, requires VM)
-openclaw config validate                    # validate config syntax
-openclaw config validate --json             # JSON output for CI
-
-# Clean reinstall (user-executed)
-orb delete openclaw-vm && OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh
-
-# Backup / Restore VM (user-executed)
-orb export openclaw-vm ~/Desktop/openclaw-vm-backup.tar.zst
-orb import -n openclaw-vm ~/Desktop/openclaw-vm-backup.tar.zst
 ```
 
 No automated test suite. Validation is syntax checks + shellcheck + manual testing.
@@ -195,25 +145,6 @@ Language-specific rules are in `.claude/rules/` (auto-applied by file type).
 | Missing `set -e` | Errors silently continue | Always `set -e` |
 | sed for YAML/JSON edits | Silently fails on complex structures | Use `jq` or Python |
 
-## Environment Variable Scopes
-
-Three independent scopes — they do NOT inherit from each other:
-
-| Scope | Config Location | Reaches |
-|-------|----------------|---------|
-| Gateway | Top-level `env: {}` | Gateway process only |
-| Code sandbox | `sandbox.docker.env` | Code execution container |
-| Browser sandbox | `sandbox.browser.env` | Browser container |
-
-## Secrets Management (.env)
-
-- `~/.openclaw/.env` stores sensitive values (API keys, bot tokens, Bonjour settings)
-- Generated **automatically** during Step 7 (after `openclaw onboard`) by a Python3 extraction script
-- Config file (`openclaw.json`) references secrets via SecretRef objects (e.g., `"token": { "$secret": "TG_BOT_TOKEN" }`)
-- Gateway reads `.env` at startup via systemd `EnvironmentFile`
-- `openclaw-update` only creates a minimal `.env` (Bonjour vars) if the file is missing — it does NOT re-extract secrets
-- File permissions: `chmod 600` (owner-only read/write)
-
 ## Reference Docs
 
 | Topic | URL |
@@ -249,7 +180,7 @@ Never push or create releases without explicit user approval after testing.
 ## Config Editing Rules
 
 Detailed rules in `.claude/rules/json-config.md` (auto-applied for JSON/JSON5 files).
-When unsure about a field's parent key, check the Key Config Sections table above.
+When unsure about a field's parent key, check `memory/config.md`.
 
 ## Removal / Deletion Rules
 
