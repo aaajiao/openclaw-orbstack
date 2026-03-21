@@ -468,7 +468,7 @@ with open(env_path, "w") as f:
     f.write("# OpenClaw Environment Variables (auto-generated)\n")
     f.write("# Do not commit this file to version control\n\n")
     for k, v in existing.items():
-        f.write('{}="{}"\n'.format(k, v))
+        f.write("{}=\"{}\"\n".format(k, v))
 
 os.chmod(env_path, 0o600)
 
