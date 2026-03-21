@@ -259,7 +259,7 @@ else
 fi
 
 # Mark build as successful (used by openclaw-update to detect incomplete builds)
-vm_exec "echo '$OPENCLAW_VERSION' > ~/.openclaw/.build-version"
+vm_exec "mkdir -p ~/.openclaw && echo '$OPENCLAW_VERSION' > ~/.openclaw/.build-version"
 
 ok "$MSG_OK_BUILD_DONE"
 
