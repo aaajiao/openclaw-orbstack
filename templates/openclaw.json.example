@@ -148,6 +148,12 @@
       },
       pdfMaxBytesMb: 30,   // 单个 PDF 最大 MB，默认 10
 
+      // 图片生成模型 (v2026.3.22+)
+      // 替代已移除的 nano-banana-pro skill wrapper
+      // imageGenerationModel: {
+      //   primary: "google/gemini-3-pro-image-preview"
+      // },
+
       // 模型目录 / 别名
       // Anthropic 1M 上下文 Beta: params: { context1m: true }
       //   仅 API Key 模式支持，token/OAuth 不支持；>200K 按 premium 计费
@@ -163,7 +169,9 @@
         "opencode/kimi-k2.5": { alias: "Kimi K2.5" },
         "opencode/gpt-5.2": { alias: "GPT 5.2" },
         "opencode/gpt-5.3-codex": { alias: "GPT 5.3 Codex" },
-        "opencode/gpt-5.4": { alias: "GPT 5.4" }
+        "opencode/gpt-5.4": { alias: "GPT 5.4" },
+        "openai/gpt-5.4-mini": { alias: "GPT 5.4 Mini" },
+        "openai/gpt-5.4-nano": { alias: "GPT 5.4 Nano" }
       },
 
       // ========== Fast Mode (v2026.3.12+) ==========
@@ -637,6 +645,15 @@
       // Webhook 模式 (可选)
       // webhookUrl: "https://example.com/telegram-webhook",
       // webhookSecret: "secret"
+
+      // 自定义 Bot API 端点 (v2026.3.22+, 自建 Bot API 服务器)
+      // apiBaseUrl: "https://my-bot-api.example.com",
+
+      // DM 论坛话题自动重命名 (v2026.3.22+, LLM 生成标题)
+      // autoTopicLabel: true,
+
+      // 错误回复静音发送 (v2026.3.22+, 默认 false)
+      // silentErrorReplies: false,
     },
     
     // ========== Discord ==========
@@ -1368,10 +1385,10 @@
     //   //   driver: "existing-session",
     //   //   attachOnly: true,      // 不启动新浏览器，仅附着到已运行的
     //   // },
-    //   // Chrome 扩展中继模式
-    //   // "chrome-relay": {
-    //   //   driver: "extension",
-    //   //   cdpUrl: "http://127.0.0.1:18792",  // Gateway 端口 + 1
+    //   // 自定义 userDataDir (Brave/Edge 等 Chromium 浏览器, v2026.3.22+)
+    //   // "brave": {
+    //   //   driver: "existing-session",
+    //   //   userDataDir: "/path/to/BraveSoftware/Brave-Browser/User Data"
     //   // },
     // }
   }

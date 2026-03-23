@@ -329,7 +329,7 @@ OpenClaw 使用 **JSON5** 格式，支持：
 | 配置项 | 说明 | 示例 |
 |--------|------|------|
 | `model.primary` | 主模型 | `"anthropic/claude-opus-4-6"` |
-| `model.fallbacks` | 备用模型列表 | `["anthropic/claude-sonnet-4-5", "openai/gpt-5.1-codex"]` |
+| `model.fallbacks` | 备用模型列表 | `["anthropic/claude-sonnet-4-6", "openai/gpt-5.4"]` |
 | `models` | 模型别名/目录 | `{ "anthropic/claude-opus-4-6": { alias: "opus" } }` |
 | `imageModel` | 图像处理模型 | `{ primary: "openai/gpt-4o" }` |
 | `pdfModel` | PDF 分析模型配置 | `{ provider: "anthropic", model: "claude-sonnet-4-6" }` |
@@ -341,7 +341,7 @@ OpenClaw 使用 **JSON5** 格式，支持：
 | 提供商 | 模型示例 | 认证环境变量 |
 |--------|----------|-------------|
 | `anthropic` | `anthropic/claude-opus-4-6`, `anthropic/claude-sonnet-4-6` | `ANTHROPIC_API_KEY` |
-| `openai` | `openai/gpt-5.1-codex`, `openai/gpt-5.4` | `OPENAI_API_KEY` |
+| `openai` | `openai/gpt-5.4`, `openai/gpt-5.4-mini`, `openai/gpt-5.4-nano` | `OPENAI_API_KEY` |
 | `openai-codex` | `openai-codex/gpt-5.3-codex` | OAuth (ChatGPT) |
 | `opencode` | `opencode/claude-opus-4-6` | `OPENCODE_API_KEY` |
 | `google` | `google/gemini-3-pro-preview`, `google/gemini-3.1-pro-preview` | `GEMINI_API_KEY` |
@@ -354,6 +354,11 @@ OpenClaw 使用 **JSON5** 格式，支持：
 | `mistral` | Mistral 模型 | `MISTRAL_API_KEY` |
 | `github-copilot` | GitHub Copilot 模型 | `COPILOT_GITHUB_TOKEN` |
 | `huggingface` | Hugging Face 模型 | `HUGGINGFACE_HUB_TOKEN` |
+| `anthropic-vertex` | Claude via Google Vertex AI | GCP 认证 |
+| `chutes` | Chutes 模型 | OAuth / API Key |
+| `exa` | `exa` (web search) | `EXA_API_KEY` |
+| `tavily` | `tavily_search`, `tavily_extract` | `TAVILY_API_KEY` |
+| `firecrawl` | `firecrawl_search`, `firecrawl_scrape` | `FIRECRAWL_API_KEY` |
 | `kilo-gateway` | `kilo-router` (multi-model gateway) | `KILO_API_KEY` |
 | `moonshot` | `moonshot-v1-128k` | `MOONSHOT_API_KEY` |
 
@@ -364,7 +369,7 @@ OpenClaw 使用 **JSON5** 格式，支持：
 | Moonshot AI (Kimi) | OpenAI 兼容 | 自定义 endpoint |
 | Kimi Coding | Anthropic 兼容 | 自定义 endpoint |
 | Qwen OAuth | 设备码流程 | 免费 tier |
-| MiniMax | 自定义 endpoint | M2.5-highspeed (一等模型) |
+| MiniMax | 自定义 endpoint | M2.7-highspeed (一等模型) |
 | Ollama | OpenAI 兼容 | 本地运行 |
 | vLLM | OpenAI 兼容 | 自托管 |
 | LM Studio / LiteLLM | OpenAI 兼容 | 本地代理 |
