@@ -122,10 +122,22 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "rm -f ~/.openclaw/.build-version" 2>/dev/nu
 printf "$MSG_PKG_INSTALL_VERSION\n" "$NPM_VERSION"
 
 # Try prebuilt npm package; fall back to source build on failure
+NPM_OK=false
 if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo npm install -g openclaw@$NPM_VERSION"; then
-    echo "$MSG_PKG_INSTALL_OK"
+    # Verify package completeness (e.g. npm tarball may ship without dist/control-ui/)
+    # $(npm root -g) must expand inside the VM, not on Mac
+    # shellcheck disable=SC2016
+    if orb -m "$OPENCLAW_VM_NAME" bash -lc 'test -f $(npm root -g)/openclaw/dist/entry.js && test -d $(npm root -g)/openclaw/dist/control-ui && test -d $(npm root -g)/openclaw/dist/extensions'; then
+        NPM_OK=true
+        echo "$MSG_PKG_INSTALL_OK"
+    else
+        echo "$MSG_PKG_INSTALL_INCOMPLETE"
+    fi
 else
     echo "$MSG_PKG_INSTALL_FAIL"
+fi
+
+if [ "$NPM_OK" = false ]; then
     echo "$MSG_BUILD_FALLBACK"
     # Ensure pnpm is available for source build
     orb -m "$OPENCLAW_VM_NAME" bash -lc '

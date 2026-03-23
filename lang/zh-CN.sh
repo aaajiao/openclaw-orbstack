@@ -56,6 +56,7 @@ MSG_ERR_NO_VERSION="未找到稳定发布标签，请检查网络或上游仓库
 # --- Install with source build fallback ---
 MSG_PKG_INSTALL_VERSION="安装 openclaw@%s..."
 MSG_PKG_INSTALL_OK="安装成功"
+MSG_PKG_INSTALL_INCOMPLETE="  ⚠ 安装包不完整（缺少关键文件）"
 MSG_PKG_INSTALL_FAIL="  ⚠ 预编译包安装失败"
 MSG_BUILD_FALLBACK="  回退到源码编译..."
 MSG_BUILD_FALLBACK_OK="  ✓ 源码编译成功"

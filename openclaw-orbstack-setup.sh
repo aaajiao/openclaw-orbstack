@@ -245,10 +245,20 @@ NPM_VERSION="${OPENCLAW_VERSION#v}"
 info "$(printf "$MSG_PKG_INSTALL_VERSION" "$NPM_VERSION")"
 
 # Try prebuilt npm package; fall back to source build on failure
+NPM_OK=false
 if vm_exec "sudo npm install -g openclaw@$NPM_VERSION"; then
-    ok "$MSG_PKG_INSTALL_OK"
+    # Verify package completeness (e.g. npm tarball may ship without dist/control-ui/)
+    if vm_exec "test -f \$(npm root -g)/openclaw/dist/entry.js && test -d \$(npm root -g)/openclaw/dist/control-ui && test -d \$(npm root -g)/openclaw/dist/extensions"; then
+        NPM_OK=true
+        ok "$MSG_PKG_INSTALL_OK"
+    else
+        warn "$MSG_PKG_INSTALL_INCOMPLETE"
+    fi
 else
     warn "$MSG_PKG_INSTALL_FAIL"
+fi
+
+if [ "$NPM_OK" = false ]; then
     info "$MSG_BUILD_FALLBACK"
     if vm_exec "cd ~/openclaw && pnpm install && pnpm build && pnpm ui:build && sudo npm install -g ."; then
         ok "$MSG_BUILD_FALLBACK_OK"

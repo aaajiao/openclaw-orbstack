@@ -56,6 +56,7 @@ MSG_ERR_NO_VERSION="No stable release tag found. Check network or upstream repos
 # --- Install with source build fallback ---
 MSG_PKG_INSTALL_VERSION="Installing openclaw@%s..."
 MSG_PKG_INSTALL_OK="Package installed successfully"
+MSG_PKG_INSTALL_INCOMPLETE="  ⚠ Package incomplete (missing critical files)"
 MSG_PKG_INSTALL_FAIL="  ⚠ Package install failed"
 MSG_BUILD_FALLBACK="  Falling back to source build..."
 MSG_BUILD_FALLBACK_OK="  ✓ Source build succeeded"
