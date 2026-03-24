@@ -368,7 +368,7 @@ OpenClaw 使用 **JSON5** 格式，支持：
 |--------|----------|------|
 | Moonshot AI (Kimi) | OpenAI 兼容 | 自定义 endpoint |
 | Kimi Coding | Anthropic 兼容 | 自定义 endpoint |
-| Qwen OAuth | 设备码流程 | 免费 tier |
+| Qwen (Alibaba Cloud Model Studio) | 设备码流程 + 标准 DashScope 端点 | 免费 tier / 按量付费 |
 | MiniMax | 自定义 endpoint | M2.7-highspeed (一等模型) |
 | Ollama | OpenAI 兼容 | 本地运行 |
 | vLLM | OpenAI 兼容 | 自托管 |
