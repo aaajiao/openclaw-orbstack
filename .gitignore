@@ -13,4 +13,3 @@ supacode.json
 .claude/settings.local.json
 .claude/.DS_Store
 opencode.json.example
-docs/local-config.md
