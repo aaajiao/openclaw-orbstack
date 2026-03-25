@@ -29,7 +29,7 @@ err()   { echo -e "${RED}  ✗ $1${NC}"; }
 
 # Complex functions: snake_case
 vm_exec() {
-    orb -m "$VM_NAME" bash -c "$1"
+    orb -m "$VM_NAME" bash -lc "$1"
 }
 ```
 
@@ -90,13 +90,18 @@ shellcheck openclaw-orbstack-setup.sh
 
 # Execute deployment (skip language prompt with OPENCLAW_LANG)
 OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh
-
-# With custom options
-OPENCLAW_LANG=en \
-OPENCLAW_EXTRA_MOUNTS="$HOME/.ssh:/home/node/.ssh:ro" \
-OPENCLAW_DOCKER_APT_PACKAGES="ffmpeg" \
-bash openclaw-orbstack-setup.sh
 ```
+
+## Install Strategy
+
+Both the installer (`openclaw-orbstack-setup.sh`) and updater (`scripts/commands/update.sh`) use a two-tier approach:
+
+1. **Primary**: `npm install -g openclaw@<version>` — prebuilt npm package (fast, reliable)
+2. **Fallback**: `pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .` — source build (only if npm registry fails or package is incomplete)
+
+The git checkout (`~/openclaw`) is always kept at the target tag regardless of install method, because sandbox Docker images are built from the repo's Dockerfiles.
+
+After install, the updater runs `openclaw doctor --fix` to ensure the systemd service entrypoint matches the current install path (npm global vs source build).
 
 ## Testing Changes
 

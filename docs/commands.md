@@ -76,13 +76,14 @@ openclaw-update --sandbox  # 同时重建沙箱 Docker 镜像
 
 有新版本时的更新流程：
 1. 获取最新 release tag
-2. 停止 Gateway 服务
-3. 切换到新版本
-4. 安装依赖 (`pnpm install`)
-5. 编译项目 (`pnpm build`)
-6. 构建 Control UI (`pnpm ui:build`)
-7. 重新安装 CLI (`npm install -g .`)
-8. 启动服务
+2. 检查 Node.js 版本 (需 >= 24)
+3. 停止 Gateway 服务
+4. 切换到新版本
+5. 安装 — 主路径: `npm install -g openclaw@<version>` (预编译包)
+6. 若主路径失败 — 兜底: `pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .` (源码构建)
+7. 检测沙箱镜像变化 (per-image hash 对比)
+8. 修复 service 配置 (`openclaw doctor --fix`)
+9. 启动服务
 
 或单独重建沙箱镜像：
 ```bash

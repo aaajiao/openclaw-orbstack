@@ -28,7 +28,7 @@ Gateway runs directly on VM. Docker containers are the only isolation protecting
 
 ## Project Structure
 
-- `openclaw-orbstack-setup.sh` — Main entry point (8-step installer, ~850 lines)
+- `openclaw-orbstack-setup.sh` — Main entry point (8-step installer, ~750 lines)
 - `lang/en.sh`, `lang/zh-CN.sh` — i18n message strings (`$MSG_*` variables)
 - `templates/openclaw.json.example` — Full JSON5 config template (reference only)
 - `scripts/refresh-mac-commands.sh` — Regenerate `~/bin/openclaw-*` wrappers

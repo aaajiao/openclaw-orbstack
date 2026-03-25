@@ -116,8 +116,8 @@ Gateway 还支持以下扩展能力：
 步骤 4: 安装 Node.js
     │   Node.js 24.x LTS + build-essential
     ▼
-步骤 5: 克隆并构建 OpenClaw
-    │   git clone + npm install + npm run build
+步骤 5: 克隆并安装 OpenClaw
+    │   git clone + npm install -g (预编译包优先，pnpm 源码构建兜底)
     ▼
 步骤 6: 构建沙箱镜像
     │   ├── openclaw-sandbox:bookworm-slim        (基础镜像，构建依赖)
@@ -125,7 +125,7 @@ Gateway 还支持以下扩展能力：
     │   └── openclaw-sandbox-browser:bookworm-slim (独立构建，Chromium)
     ▼
 步骤 7: 运行配置向导
-    │   ./openclaw setup (交互式)
+    │   openclaw onboard (交互式)
     │   - 配置 AI 提供商 API Key
     │   - 配置聊天频道
     │   - 自动提取敏感信息到 ~/.openclaw/.env
@@ -189,7 +189,9 @@ Gateway 还支持以下扩展能力：
   ├── openclaw-shell         # 进入 VM
   ├── openclaw-doctor        # 运行诊断
   ├── openclaw-update        # 更新版本 (--sandbox 重建镜像，--force 强制重建)
-  └── openclaw-sandbox-rebuild # 重建沙箱镜像
+  ├── openclaw-sandbox-rebuild # 重建沙箱镜像
+  ├── openclaw-telegram      # Telegram 频道配置
+  └── openclaw-whatsapp      # WhatsApp 登录
 ```
 
 ## Gateway 与沙箱的通信
