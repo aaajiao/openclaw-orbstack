@@ -36,6 +36,11 @@
 #
 # ============================================================================
 
+# SC1091: Dynamic lang file sourcing (can't follow without -x)
+# SC2059: $MSG_* variables are printf format strings by design (i18n)
+# SC2016: Intentional single-quoted literals ($HOME, $PATH, Python code)
+# shellcheck disable=SC1091,SC2059,SC2016
+
 set -e
 
 # --- Language Selection ---
@@ -184,7 +189,8 @@ REQUIRED_NODE_MAJOR=24
 
 if vm_exec "command -v node &> /dev/null"; then
     NODE_VERSION=$(vm_exec 'node --version' 2>/dev/null)
-    NODE_MAJOR=$(echo "$NODE_VERSION" | sed 's/v\([0-9]*\).*/\1/')
+    NODE_MAJOR="${NODE_VERSION#v}"
+    NODE_MAJOR="${NODE_MAJOR%%.*}"
     if [ "$NODE_MAJOR" -ge "$REQUIRED_NODE_MAJOR" ]; then
         ok "$MSG_OK_NODE_INSTALLED: $NODE_VERSION"
     else
@@ -676,17 +682,21 @@ if ! echo "$PATH" | grep -q "$HOME/bin"; then
     if [ "$_SHELL_NAME" = "fish" ]; then
         mkdir -p "$(dirname "$SHELL_RC")"
         if ! grep -q 'set -gx PATH \$HOME/bin' "$SHELL_RC" 2>/dev/null; then
-            echo '' >> "$SHELL_RC"
-            echo '# OpenClaw CLI' >> "$SHELL_RC"
-            echo 'set -gx PATH $HOME/bin $PATH' >> "$SHELL_RC"
+            {
+                echo ''
+                echo '# OpenClaw CLI'
+                echo 'set -gx PATH $HOME/bin $PATH'
+            } >> "$SHELL_RC"
             info "$(printf "$MSG_INFO_PATH_ADDED" "$SHELL_RC")"
             _PATH_CHANGED=true
         fi
     else
         if ! grep -q 'export PATH="\$HOME/bin:\$PATH"' "$SHELL_RC" 2>/dev/null; then
-            echo '' >> "$SHELL_RC"
-            echo '# OpenClaw CLI' >> "$SHELL_RC"
-            echo 'export PATH="$HOME/bin:$PATH"' >> "$SHELL_RC"
+            {
+                echo ''
+                echo '# OpenClaw CLI'
+                echo 'export PATH="$HOME/bin:$PATH"'
+            } >> "$SHELL_RC"
             info "$(printf "$MSG_INFO_PATH_ADDED" "$SHELL_RC")"
             _PATH_CHANGED=true
         fi
