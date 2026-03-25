@@ -685,6 +685,10 @@
       // 自动建线程的归档时间 (v2026.3.11+)
       // autoArchiveDuration: "1 day",  // "1 hour" | "1 day" | "3 days" | "1 week"
 
+      // 自动线程命名 (v2026.3.24+)
+      // 设为 "generated" 时用 LLM 自动生成简短线程标题，默认使用消息内容命名
+      // autoThreadName: "generated",
+
       // 服务器设置
       guilds: {
         // "123456789012345678": {
