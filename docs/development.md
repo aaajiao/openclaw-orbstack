@@ -1,33 +1,33 @@
-# Development Guide
+# 开发指南
 
-## Code Style
+## 代码风格
 
-### Bash Scripts
+### Bash 脚本
 
-**Shebang & Safety**
+**Shebang 和安全设置**
 ```bash
 #!/bin/bash
-set -e  # Exit on error (REQUIRED)
+set -e  # 遇错即停 (必须)
 ```
 
-**Variable Naming**
+**变量命名**
 ```bash
-# Constants: UPPER_SNAKE_CASE
+# 常量: UPPER_SNAKE_CASE
 VM_NAME="openclaw-vm"
 TOTAL_STEPS=8
 
-# Local variables: lower_snake_case
+# 局部变量: lower_snake_case
 local config_path="$HOME/.openclaw/openclaw.json"
 ```
 
-**Function Naming**
+**函数命名**
 ```bash
-# Short utility functions: lowercase
+# 简短工具函数: lowercase
 step()  { echo -e "\n${CYAN}[$1/$TOTAL_STEPS] $2${NC}"; }
 ok()    { echo -e "${GREEN}  ✓ $1${NC}"; }
 err()   { echo -e "${RED}  ✗ $1${NC}"; }
 
-# Complex functions: snake_case
+# 复杂函数: snake_case
 vm_exec() {
     orb -m "$VM_NAME" bash -lc "$1"
 }
@@ -35,111 +35,111 @@ vm_exec() {
 
 **Heredocs**
 ```bash
-# Variables NOT expanded (single-quoted delimiter)
+# 不展开变量 (单引号分隔符)
 cat > openclaw.json << 'EOFCONFIG'
 {
   "key": "value"
 }
 EOFCONFIG
 
-# Variables expanded (unquoted delimiter)
+# 展开变量 (无引号分隔符)
 cat > script.sh << EOF
 echo "VM is $VM_NAME"
 EOF
 ```
 
-### JSON Configuration
+### JSON 配置
 
-- 2-space indentation
-- JSON5 format (comments and trailing commas allowed)
-- Use `jq` for dynamic modifications
+- 2 空格缩进
+- JSON5 格式 (允许注释和尾逗号)
+- 动态修改用 `jq`，不用 sed
 
-### Documentation
+### 文档和国际化
 
-- README.md: English
-- docs/README.zh-CN.md: Chinese
-- Code comments: English
-- User-facing script text: Internationalized via `lang/zh-CN.sh` and `lang/en.sh` (use `$MSG_*` variables, never hardcode)
+- README.md: 英文
+- docs/README.zh-CN.md: 中文
+- 代码注释: 英文
+- 用户可见文本: 通过 `lang/en.sh` 和 `lang/zh-CN.sh` 国际化 (使用 `$MSG_*` 变量，禁止硬编码)
 
-## Error Handling
+## 错误处理
 
 ```bash
-# Check command exists (use $MSG_* variables for user-facing text)
+# 检查命令是否存在 (用户可见文本必须用 $MSG_*)
 if ! command -v orb &> /dev/null; then
     err "$MSG_ERR_NO_ORBSTACK"
     exit 1
 fi
 
-# Conditional execution with fallback
-vm_exec "some_command" || true  # Don't fail if command fails
+# 允许失败的执行
+vm_exec "some_command" || true
 
-# Check file/directory exists
+# 检查文件/目录是否存在
 if vm_exec "test -d ~/openclaw"; then
-    # directory exists
+    # 目录存在
 fi
 ```
 
-## Development Commands
+## 安装策略
+
+安装脚本 (`openclaw-orbstack-setup.sh`) 和更新脚本 (`scripts/commands/update.sh`) 采用相同的两级策略：
+
+1. **主路径**: `npm install -g openclaw@<version>` — 预编译 npm 包 (快速、可靠)
+2. **兜底**: `pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .` — 源码构建 (仅在 npm registry 不可用或包不完整时)
+
+无论安装方式如何，git checkout (`~/openclaw`) 始终保留在目标 tag，因为沙箱 Docker 镜像从 repo 的 Dockerfile 构建。
+
+更新完成后会运行 `openclaw doctor --fix`，确保 systemd service 入口路径与当前安装方式一致。
+
+## 开发命令
 
 ```bash
-# Validate bash syntax
+# 语法检查
 bash -n openclaw-orbstack-setup.sh
 
-# Run shellcheck (if installed)
+# Lint 检查
 shellcheck openclaw-orbstack-setup.sh
 
-# Execute deployment (skip language prompt with OPENCLAW_LANG)
+# 执行部署 (跳过语言选择)
 OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh
 ```
 
-## Install Strategy
-
-Both the installer (`openclaw-orbstack-setup.sh`) and updater (`scripts/commands/update.sh`) use a two-tier approach:
-
-1. **Primary**: `npm install -g openclaw@<version>` — prebuilt npm package (fast, reliable)
-2. **Fallback**: `pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .` — source build (only if npm registry fails or package is incomplete)
-
-The git checkout (`~/openclaw`) is always kept at the target tag regardless of install method, because sandbox Docker images are built from the repo's Dockerfiles.
-
-After install, the updater runs `openclaw doctor --fix` to ensure the systemd service entrypoint matches the current install path (npm global vs source build).
-
-## Testing Changes
+## 测试变更
 
 ```bash
-# Dry run - syntax only
+# 仅语法检查
 bash -n openclaw-orbstack-setup.sh
 
-# Full test (creates real VM, use OPENCLAW_LANG to skip language prompt)
+# 完整测试 (会创建真实 VM)
 OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh
 
-# Clean slate test
-orb delete openclaw-vm  # Remove VM
-OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh  # Fresh install
+# 全新测试
+orb delete openclaw-vm
+OPENCLAW_LANG=en bash openclaw-orbstack-setup.sh
 ```
 
-## Troubleshooting
+## 故障排查
 
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| `orb: command not found` | OrbStack not installed | Install from orbstack.dev |
-| Docker permission denied | User not in docker group | `sudo usermod -aG docker $USER` |
-| EBUSY on rename | Bind mount conflict | Script sets `OPENCLAW_STATE_DIR` |
-| Container won't start | Config merge failed | Check `openclaw-logs` |
-| Sandbox tools fail | Wrong image | Verify `common` image is used |
-| Browser tool fails | Browser sandbox not built | Run `openclaw-sandbox-rebuild` or `sandbox-browser-setup.sh` |
+| 症状 | 原因 | 修复 |
+|------|------|------|
+| `orb: command not found` | 未安装 OrbStack | 从 orbstack.dev 安装 |
+| Docker permission denied | 用户不在 docker 组 | `sudo usermod -aG docker $USER` |
+| EBUSY on rename | 绑定挂载冲突 | 脚本会设置 `OPENCLAW_STATE_DIR` |
+| 容器无法启动 | 配置合并失败 | 检查 `openclaw-logs` |
+| 沙箱工具失败 | 镜像错误 | 确认使用 `common` 镜像 |
+| 浏览器工具失败 | 浏览器沙箱未构建 | 运行 `openclaw-sandbox-rebuild` |
 
-### Debug Mode
+### 调试模式
 
 ```bash
-# Verbose execution
+# 详细执行
 OPENCLAW_LANG=en bash -x openclaw-orbstack-setup.sh
 
-# Check Gateway status
-orb -m openclaw-vm bash -c "openclaw gateway status"
+# 检查 Gateway 状态
+orb -m openclaw-vm bash -lc "openclaw gateway status"
 
-# Check sandbox containers
-orb -m openclaw-vm bash -c "docker ps -a | grep openclaw-sbx"
+# 检查沙箱容器
+orb -m openclaw-vm bash -lc "docker ps -a | grep openclaw-sbx"
 
-# View sandbox config
-orb -m openclaw-vm bash -c "cat ~/.openclaw/openclaw.json | jq .agents.defaults.sandbox"
+# 查看沙箱配置
+orb -m openclaw-vm bash -lc "cat ~/.openclaw/openclaw.json | jq .agents.defaults.sandbox"
 ```
