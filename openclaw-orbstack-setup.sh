@@ -176,7 +176,7 @@ else
 fi
 
 if ! vm_exec "sudo systemctl enable docker && sudo systemctl start docker"; then
-    warn "Docker service setup had issues, attempting to continue..."
+    warn "$MSG_WARN_DOCKER_SERVICE"
 fi
 ok "$MSG_OK_DOCKER_STARTED"
 
@@ -219,7 +219,7 @@ ok "$MSG_OK_PNPM_INSTALLED: $(vm_exec 'pnpm --version')"
 # --- Pre-flight: disk space check (need ~5GB for clone + build + Docker images) ---
 AVAIL_MB=$(vm_exec "df -m /home 2>/dev/null | awk 'NR==2{print \$4}'" 2>/dev/null || echo "0")
 if [ "$AVAIL_MB" -lt 5000 ] 2>/dev/null; then
-    warn "Low disk space in VM: ${AVAIL_MB}MB available, recommend at least 5000MB"
+    warn "$(printf "$MSG_WARN_LOW_DISK" "$AVAIL_MB")"
 fi
 
 # ============================================================================
@@ -378,12 +378,12 @@ with open(config_path, "r") as f:
 # --- Path-to-env-var mapping for known sensitive fields ---
 # 3rd element: "secretref" -> SecretRef object, "envvar" -> ${VAR} string
 SENSITIVE_PATHS = [
-    ("channels.telegram.botToken",                         "TG_BOT_TOKEN",      "secretref"),
-    ("channels.discord.token",                             "DISCORD_TOKEN",     "secretref"),
-    ("channels.slack.botToken",                            "SLACK_BOT_TOKEN",   "secretref"),
-    ("channels.slack.appToken",                            "SLACK_APP_TOKEN",   "secretref"),
-    ("channels.whatsapp.authToken",                        "WHATSAPP_AUTH_TOKEN","secretref"),
-    ("channels.googlechat.serviceAccountKey",              "GOOGLECHAT_SA_KEY", "secretref"),
+    ("channels.telegram.botToken",                         "TG_BOT_TOKEN",      "envvar"),
+    ("channels.discord.token",                             "DISCORD_TOKEN",     "envvar"),
+    ("channels.slack.botToken",                            "SLACK_BOT_TOKEN",   "envvar"),
+    ("channels.slack.appToken",                            "SLACK_APP_TOKEN",   "envvar"),
+    ("channels.whatsapp.authToken",                        "WHATSAPP_AUTH_TOKEN","envvar"),
+    ("channels.googlechat.serviceAccountKey",              "GOOGLECHAT_SA_KEY", "envvar"),
     ("gateway.auth.token",                                 "GATEWAY_AUTH_TOKEN","envvar"),
     ("agents.defaults.sandbox.docker.env.OPENAI_API_KEY",  "OPENAI_API_KEY",   "envvar"),
     ("agents.defaults.sandbox.docker.env.GOOGLE_API_KEY",  "GOOGLE_API_KEY",   "envvar"),

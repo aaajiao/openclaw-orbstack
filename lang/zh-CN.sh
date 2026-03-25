@@ -33,6 +33,7 @@ MSG_OK_VM_READY="虚拟机已就绪"
 MSG_OK_DOCKER_INSTALLED="Docker 已安装"
 MSG_INFO_INSTALLING_DOCKER="安装 Docker Engine..."
 MSG_OK_DOCKER_STARTED="Docker 服务已启动"
+MSG_WARN_DOCKER_SERVICE="Docker 服务配置出现问题，尝试继续..."
 
 # --- Step 4: Node.js ---
 MSG_OK_NODE_INSTALLED="Node.js 已安装"
@@ -41,6 +42,7 @@ MSG_OK_NODE_UPGRADED="Node.js 已升级"
 MSG_INFO_INSTALLING_NODE="安装 Node.js 24.x..."
 MSG_OK_PNPM_INSTALLED="pnpm 已安装"
 MSG_INFO_INSTALLING_PNPM="安装 pnpm..."
+MSG_WARN_LOW_DISK="VM 磁盘空间不足: 可用 %sMB，建议至少 5000MB"
 
 # --- Step 5: Build ---
 MSG_INFO_REPO_EXISTS="仓库已存在，拉取最新代码..."

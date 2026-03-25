@@ -33,6 +33,7 @@ MSG_OK_VM_READY="VM is ready"
 MSG_OK_DOCKER_INSTALLED="Docker installed"
 MSG_INFO_INSTALLING_DOCKER="Installing Docker Engine..."
 MSG_OK_DOCKER_STARTED="Docker service started"
+MSG_WARN_DOCKER_SERVICE="Docker service setup had issues, attempting to continue..."
 
 # --- Step 4: Node.js ---
 MSG_OK_NODE_INSTALLED="Node.js installed"
@@ -41,6 +42,7 @@ MSG_OK_NODE_UPGRADED="Node.js upgraded"
 MSG_INFO_INSTALLING_NODE="Installing Node.js 24.x..."
 MSG_OK_PNPM_INSTALLED="pnpm installed"
 MSG_INFO_INSTALLING_PNPM="Installing pnpm..."
+MSG_WARN_LOW_DISK="Low disk space in VM: %sMB available, recommend at least 5000MB"
 
 # --- Step 5: Build ---
 MSG_INFO_REPO_EXISTS="Repository exists, pulling latest code..."
