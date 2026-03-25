@@ -2,7 +2,8 @@
 # openclaw-update: Update OpenClaw to the latest version
 # Called via thin wrapper: ~/bin/openclaw-update -> this script
 
-# shellcheck source=_common.sh
+# SC1091: Dynamic source of _common.sh
+# shellcheck disable=SC1091
 source "$(dirname "$0")/_common.sh"
 
 SANDBOX=false
@@ -62,7 +63,8 @@ echo "  -> $LATEST_TAG"
 # --- Ensure Node.js >= 24 (upstream recommends 24.x LTS) ---
 echo "$MSG_UPDATE_NODE_CHECK"
 NODE_VERSION=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'node --version 2>/dev/null' || echo "")
-NODE_MAJOR=$(echo "$NODE_VERSION" | sed 's/v\([0-9]*\).*/\1/')
+NODE_MAJOR="${NODE_VERSION#v}"
+NODE_MAJOR="${NODE_MAJOR%%.*}"
 if [ -n "$NODE_MAJOR" ] && [ "$NODE_MAJOR" -ge 24 ] 2>/dev/null; then
     # shellcheck disable=SC2059
     printf "$MSG_UPDATE_NODE_OK\n" "$NODE_VERSION"
@@ -256,6 +258,10 @@ fi
 
 GATEWAY_STOPPED=false
 trap - EXIT
+
+# Ensure systemd service matches current install path (npm vs source build)
+echo "$MSG_CMD_UPDATE_DOCTOR"
+orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw doctor --fix" > /dev/null 2>&1 || true
 
 echo "$MSG_CMD_UPDATE_STARTING"
 orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start"
