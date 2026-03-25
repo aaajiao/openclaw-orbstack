@@ -124,7 +124,7 @@ openclaw-config show     # 查看
 openclaw-config backup   # 备份
 ```
 
-详细配置说明见 [configuration-guide.md](configuration-guide.md)
+详细配置说明见 https://docs.openclaw.ai/gateway/configuration
 
 ## 故障排查
 
@@ -181,13 +181,8 @@ orb import -n openclaw-vm ~/Desktop/backup.tar.zst # 从快照恢复
 |------|------|
 | [commands.md](commands.md) | CLI 命令完整参考 |
 | [architecture.md](architecture.md) | 系统架构说明 |
-| [configuration-guide.md](configuration-guide.md) | 配置指南 |
-| [multi-agent.md](multi-agent.md) | 多 Agent 配置（路由、多 Bot、沙箱隔离） |
-| [skills.md](skills.md) | Skills 使用指南 |
-| [sandbox.md](sandbox.md) | 沙箱安全模型 |
-| [voice-tts.md](voice-tts.md) | 语音功能 |
+| [troubleshooting.md](troubleshooting.md) | 故障排查 (OrbStack 特有) |
 | [development.md](development.md) | 开发指南 |
-| [troubleshooting.md](troubleshooting.md) | 故障排查指南 |
 
 ## License
 

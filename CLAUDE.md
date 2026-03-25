@@ -52,7 +52,7 @@ This directory contains the developer's **actual runtime configuration** for the
 | `templates/openclaw.json.example` | Reference template with comments | When adding new config options to document |
 | `local/openclaw.json` | Actual working config | When tuning your own setup |
 
-Config section reference is in `memory/config.md`. Detailed examples in [docs/configuration-guide.md](docs/configuration-guide.md).
+Config section reference is in `memory/config.md`. Detailed config docs: https://docs.openclaw.ai/gateway/configuration
 
 ## Persistent Knowledge
 

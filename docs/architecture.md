@@ -255,4 +255,4 @@ Gateway (VM 进程)
 
 **重要**: Docker 容器是保护 Mac 文件的唯一隔离层。VM 通过 `/mnt/mac` 可访问 Mac 文件。
 
-> 多 Agent 场景下容器隔离策略详见 [multi-agent.md](multi-agent.md#沙箱与-docker-容器)，沙箱完整安全模型详见 [sandbox.md](sandbox.md)。
+> 多 Agent 场景和沙箱安全模型详见 [官方文档](https://docs.openclaw.ai/gateway/configuration)。

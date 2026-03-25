@@ -274,7 +274,7 @@ openclaw agent -m "think" --thinking high
 openclaw agent -m "local" --local  # 本地运行
 ```
 
-> 多 Agent 路由配置、多 Bot 绑定详见 [multi-agent.md](multi-agent.md)。
+> 多 Agent 路由配置详见 [官方文档](https://docs.openclaw.ai/gateway/configuration)。
 
 ### Skills 管理
 
@@ -468,7 +468,7 @@ openclaw secrets apply --dry-run   # 预览操作
 openclaw secrets reload            # 重新解析 SecretRef 并热替换运行时快照
 ```
 
-> 外部 Secrets 管理允许从外部源（如 Vault、AWS Secrets Manager 等）拉取密钥，通过快照机制激活到 Gateway 运行时。详见 [configuration-guide.md](configuration-guide.md#外部-secrets-管理-v2026226)。
+> 外部 Secrets 管理详见 [官方文档](https://docs.openclaw.ai/gateway/configuration)。
 
 > v2026.3.2: SecretRef 扩展至 64 个目标位置，覆盖更多配置字段。
 

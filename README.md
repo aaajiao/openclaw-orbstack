@@ -124,7 +124,7 @@ openclaw-config show     # View
 openclaw-config backup   # Backup
 ```
 
-Detailed configuration guide: [docs/configuration-guide.md](docs/configuration-guide.md)
+Detailed configuration guide: https://docs.openclaw.ai/gateway/configuration
 
 ## Troubleshooting
 
@@ -182,12 +182,7 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for details.
 | [docs/README.zh-CN.md](docs/README.zh-CN.md) | Chinese documentation |
 | [docs/commands.md](docs/commands.md) | CLI command reference |
 | [docs/architecture.md](docs/architecture.md) | Architecture details |
-| [docs/configuration-guide.md](docs/configuration-guide.md) | Configuration guide |
-| [docs/multi-agent.md](docs/multi-agent.md) | Multi-agent setup (routing, multi-bot, sandbox isolation) |
-| [docs/troubleshooting.md](docs/troubleshooting.md) | Troubleshooting guide |
-| [docs/sandbox.md](docs/sandbox.md) | Sandbox security |
-| [docs/skills.md](docs/skills.md) | Skills guide |
-| [docs/voice-tts.md](docs/voice-tts.md) | Voice features |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | Troubleshooting (OrbStack-specific) |
 | [docs/development.md](docs/development.md) | Development guide |
 
 ## License
