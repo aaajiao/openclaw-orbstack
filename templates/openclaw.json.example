@@ -347,13 +347,11 @@
         // 不设置时使用内置默认指令（自动检测会话语言并保持）
         // 最大 800 字符
         // customInstructions: "用中文撰写压缩摘要，保持事实准确",
-        // v2026.3.28: memoryFlush is now managed by the memory-core plugin;
-        // these settings still work but the plugin owns flush prompts and target-path policy
+        // v2026.3.28: flush prompts 由 memory-core 插件管理，不再需要手动配置
+        // prompt/systemPrompt 已移除，插件使用内置默认策略
         memoryFlush: {
           enabled: true,
-          softThresholdTokens: 15000,
-          prompt: "Pre-compaction memory flush. Store durable memories now (use memory/YYYY-MM-DD.md; create memory/ if needed). If nothing to store, reply with NO_REPLY.",
-          systemPrompt: "CRITICAL: Session nearing compaction. Save all important context to memory NOW or it will be lost."
+          softThresholdTokens: 15000
         }
       },
       
