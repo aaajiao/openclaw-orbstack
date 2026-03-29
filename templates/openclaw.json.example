@@ -838,10 +838,8 @@
     // Web 搜索工具
     web: {
       search: {
+        // v2026.3.28: provider 细节配置迁移到 plugins.entries.<provider>.config
         provider: "perplexity",   // "brave" | "exa" | "google" | "perplexity" | "tavily"
-        perplexity: {
-          model: "sonar-pro"
-        },
         // Brave Search (需要 BRAVE_API_KEY)
         // brave: {
         //   mode: "llm-context"  // "llm-context" = Brave LLM Context endpoint，返回提取的 grounding 片段 (v2026.3.8+)
@@ -998,40 +996,44 @@
     },
     
     // ========== TTS 语音合成 ==========
+    // v2026.3.28: provider 配置从 tts.<provider> 迁移到 tts.providers.<provider>
     tts: {
       // TTS 模式:
       //   "off"     - 关闭语音回复
       //   "always"  - 所有回复都转语音
       //   "inbound" - 收到语音消息时才回语音 (推荐)
       auto: "off",
-      
+
       // TTS 提供商: "edge" | "openai" | "elevenlabs"
       provider: "edge",
-      
-      // Edge TTS 配置 (免费)
-      edge: {
-        // 中文语音:
-        //   zh-CN-XiaoxiaoNeural (女声)
-        //   zh-CN-YunxiNeural (男声)
-        //   zh-CN-YunyangNeural (男声)
-        // 英文语音:
-        //   en-US-JennyNeural (女声)
-        //   en-US-GuyNeural (男声)
-        voice: "zh-CN-XiaoxiaoNeural"
+
+      // 各提供商配置 (v2026.3.28+ 新结构)
+      providers: {
+        // Edge TTS (免费)
+        edge: {
+          // 中文语音:
+          //   zh-CN-XiaoxiaoNeural (女声)
+          //   zh-CN-YunxiNeural (男声)
+          //   zh-CN-YunyangNeural (男声)
+          // 英文语音:
+          //   en-US-JennyNeural (女声)
+          //   en-US-GuyNeural (男声)
+          voice: "zh-CN-XiaoxiaoNeural"
+        }
+
+        // OpenAI TTS (需要 API Key)
+        // openai: {
+        //   voice: "nova",  // alloy, echo, fable, onyx, nova, shimmer
+        //   model: "gpt-4o-mini-tts",  // gpt-4o-mini-tts, tts-1, tts-1-hd
+        //   baseUrl: "https://api.openai.com/v1"  // 自定义 TTS endpoint
+        // }
+
+        // ElevenLabs (需要 API Key)
+        // elevenlabs: {
+        //   voiceId: "...",
+        //   model: "eleven_multilingual_v2"
+        // }
       }
-      
-      // OpenAI TTS 配置 (需要 API Key)
-      // openai: {
-      //   voice: "nova",  // alloy, echo, fable, onyx, nova, shimmer
-      //   model: "tts-1",  // tts-1, tts-1-hd
-      //   baseUrl: "https://api.openai.com/v1"  // 自定义 TTS endpoint (v2026.3.7+)
-      // }
-      
-      // ElevenLabs 配置 (需要 API Key)
-      // elevenlabs: {
-      //   voiceId: "...",
-      //   model: "eleven_multilingual_v2"
-      // }
     },
     
     // STT 语音转文字
@@ -1335,6 +1337,13 @@
   //   //     // Context Engine 插件插槽 (v2026.3.7+)
   //   //     // 提供替代上下文管理策略 (如 lossless-claw)
   //   //     // contextEngine: true
+  //   //   },
+  //   //   // v2026.3.28: 搜索 provider 配置迁移到插件
+  //   //   "perplexity": {
+  //   //     enabled: true,
+  //   //     config: {
+  //   //       webSearch: { model: "sonar-pro" }
+  //   //     }
   //   //   }
   //   // }
   // },
