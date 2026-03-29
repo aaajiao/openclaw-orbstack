@@ -347,6 +347,8 @@
         // 不设置时使用内置默认指令（自动检测会话语言并保持）
         // 最大 800 字符
         // customInstructions: "用中文撰写压缩摘要，保持事实准确",
+        // v2026.3.28: memoryFlush is now managed by the memory-core plugin;
+        // these settings still work but the plugin owns flush prompts and target-path policy
         memoryFlush: {
           enabled: true,
           softThresholdTokens: 15000,
@@ -1239,12 +1241,12 @@
       //   api: "openai",
       //   models: [{ id: "moonshot-v1-128k", name: "Moonshot v1 128K" }]
       // },
-      // MiniMax (v2026.3.2+)
+      // MiniMax (v2026.3.2+, v2026.3.28: only M2.7 retained, image-01 added)
       // "minimax": {
       //   baseUrl: "https://api.minimaxi.chat/v1",
       //   apiKey: "${MINIMAX_API_KEY}",
       //   api: "openai",
-      //   models: ["MiniMax-M2.5-highspeed"]
+      //   models: ["MiniMax-M2.7", "image-01"]
       // },
     }
   },
@@ -1327,7 +1329,8 @@
   //   // entries: {
   //   //   "my-plugin": {
   //   //     hooks: {
-  //   //       allowPromptInjection: false  // 是否允许插件修改 before_agent_start 提示词
+  //   //       allowPromptInjection: false,  // 是否允许插件修改 before_agent_start 提示词
+  //   //       // requireApproval: true  // v2026.3.28: before_tool_call 审批 (Telegram/Discord/CLI)
   //   //     },
   //   //     prependSystemContext: "Plugin guidance prepended to system prompt",
   //   //     appendSystemContext: "Plugin guidance appended to system prompt",
