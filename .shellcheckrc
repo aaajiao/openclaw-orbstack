@@ -1,0 +1,3 @@
+# Enable external source following (resolves SC1091)
+external-sources=true
+source-path=SCRIPTDIR
