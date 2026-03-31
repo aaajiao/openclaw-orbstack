@@ -17,7 +17,7 @@ if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts
     stop_progress
     BASE_OK=true
     echo "$MSG_CMD_REBUILD_BASE_OK"
-elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
+elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
     stop_progress
     BASE_OK=true
     echo "$MSG_CMD_REBUILD_BASE_OK_DF"
@@ -60,7 +60,7 @@ if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts
     stop_progress
     BROWSER_OK=true
     echo "$MSG_CMD_REBUILD_BROWSER_OK"
-elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
+elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
     stop_progress
     BROWSER_OK=true
     echo "$MSG_CMD_REBUILD_BROWSER_OK_DF"
