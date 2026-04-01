@@ -638,9 +638,9 @@
       // 链接预览
       linkPreview: true,
       
-      // 流式传输模式: "off" | "partial" | "block"
-      // v2026.3.2: streamMode default changed from "off" to "partial"
-      streamMode: "partial",
+      // 流式传输模式: "off" | "partial" | "block" | "progress"
+      // v2026.3.2 起默认 "partial" (旧名 streamMode 仍可用，自动映射)
+      streaming: "partial",
 
       // 内联按钮样式: "primary" | "success" | "danger" (可选)
       // buttonStyle: "primary",
