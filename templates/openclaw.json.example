@@ -114,7 +114,8 @@
     // 同 provider 过载时的重试策略 (v2026.3.31+)
     // cooldowns: {
     //   retries: 1,       // 重试次数 (默认 1)
-    //   retryDelayMs: 0   // 重试延迟毫秒 (默认 0)
+    //   retryDelayMs: 0,  // 重试延迟毫秒 (默认 0)
+    //   rateLimitedProfileRotations: 2  // 同 provider 内 auth profile 轮转上限 (v2026.4.1+)
     // }
   },
 
@@ -198,6 +199,12 @@
       // 默认详细模式: "off" | "on"
       verboseDefault: "off",
       
+      // 全局默认 provider 参数 (v2026.4.1+)
+      // 应用于所有模型，可被 agents.list[].params 或 models 目录中的 per-model params 覆盖
+      // params: {
+      //   cacheRetention: "long"
+      // },
+
       // 默认提权模式: "off" | "on"
       elevatedDefault: "on",
       
@@ -561,6 +568,9 @@
         // }
       },
       
+      // Agent 反应级别 (v2026.4.1+)
+      // reactionLevel: "default",  // agent 对用户消息的 emoji 反应策略
+
       // 是否发送已读回执 (蓝勾)
       sendReadReceipts: true,
       
@@ -602,6 +612,7 @@
       groupAllowFrom: [],
       
       // 群组设置
+      // ⚠️ v2026.4.1: groupMentionsOnly 已移除，迁移到 groups["*"].requireMention
       groups: {
         "*": { requireMention: true }
         // "-1001234567890": {
@@ -665,6 +676,11 @@
 
       // 错误回复静音发送 (v2026.3.22+, 默认 false)
       // silentErrorReplies: false,
+
+      // 投递错误抑制策略 (v2026.4.1+)
+      // 按 account/chat/topic 抑制重复投递错误
+      // errorPolicy: "suppress",    // "suppress" | "propagate"
+      // errorCooldownMs: 60000,     // 抑制冷却时间 (毫秒)
     },
     
     // ========== Discord ==========
@@ -851,7 +867,7 @@
     web: {
       search: {
         // v2026.3.28: provider 细节配置迁移到 plugins.entries.<provider>.config
-        provider: "perplexity",   // "brave" | "exa" | "google" | "perplexity" | "tavily"
+        provider: "perplexity",   // "brave" | "exa" | "google" | "perplexity" | "searxng" | "tavily"
         // Brave Search (需要 BRAVE_API_KEY)
         // brave: {
         //   mode: "llm-context"  // "llm-context" = Brave LLM Context endpoint，返回提取的 grounding 片段 (v2026.3.8+)
@@ -1126,6 +1142,11 @@
     //   token: "remote-token"
     // },
     
+    // WebChat 配置 (v2026.4.1+)
+    // webchat: {
+    //   chatHistoryMaxChars: 50000  // 聊天历史文本截断字符数 (也可通过 per-request maxChars 覆盖)
+    // },
+
     // 配置热重载
     reload: {
       mode: "hybrid",     // "hybrid" | "hot" | "restart" | "off"
@@ -1381,8 +1402,9 @@
 
   // Talk Mode 语音对话 (v2026.3.8+)
   // talk: {
-  //   silenceTimeoutMs: 1500  // 静默多久后自动发送当前转录（毫秒）
-  //                           // 未设置时使用各平台默认值
+  //   silenceTimeoutMs: 1500,  // 静默多久后自动发送当前转录（毫秒）
+  //                            // 未设置时使用各平台默认值
+  //   voiceWake: false          // macOS Voice Wake — 语音唤醒触发 Talk Mode (v2026.4.1+)
   // },
 
   // Agent Communication Protocol (ACP)
