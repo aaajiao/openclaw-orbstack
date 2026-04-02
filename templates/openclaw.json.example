@@ -365,6 +365,9 @@
         // 不设置时使用内置默认指令（自动检测会话语言并保持）
         // 最大 800 字符
         // customInstructions: "用中文撰写压缩摘要，保持事实准确",
+        // 压缩开始通知 (v2026.4.2+)
+        // 设为 true 时显示 "🧹 Compacting context..." 提示 (默认不显示)
+        // notifyUser: false,
         // v2026.3.28: flush prompts 由 memory-core 插件管理，不再需要手动配置
         // prompt/systemPrompt 已移除，插件使用内置默认策略
         memoryFlush: {
@@ -909,16 +912,14 @@
       }
     },
     
-    // Web Fetch 配置 (v2026.3.13+ config validate 支持)
+    // Web Fetch 配置
+    // ⚠️ v2026.4.2 Breaking: Firecrawl 已迁移到 plugins.entries.firecrawl.config.webFetch
+    // ⚠️ v2026.4.2 Breaking: xAI x_search 已迁移到 plugins.entries.xai.config.xSearch
+    // 旧路径 (tools.web.fetch.firecrawl / tools.web.x_search) 不再生效
+    // 运行 `openclaw doctor --fix` 自动迁移
     // web: {
     //   fetch: {
     //     readability: true,      // Readability 主内容提取 (默认开启)
-    //     firecrawl: {            // Firecrawl 备选提取 (需要 API Key)
-    //       enabled: false,
-    //       apiKey: { "$secret": "FIRECRAWL_API_KEY" },
-    //       onlyMainContent: true,
-    //       timeoutSeconds: 60,
-    //     },
     //   },
     // },
 
@@ -1365,7 +1366,8 @@
   //   //   "my-plugin": {
   //   //     hooks: {
   //   //       allowPromptInjection: false,  // 是否允许插件修改 before_agent_start 提示词
-  //   //       // requireApproval: true  // v2026.3.28: before_tool_call 审批 (Telegram/Discord/CLI)
+  //   //       // requireApproval: true    // v2026.3.28: before_tool_call 审批 (Telegram/Discord/CLI)
+  //   //       // before_agent_reply: true // v2026.4.2: inline action 后合成回复短路 LLM
   //   //     },
   //   //     prependSystemContext: "Plugin guidance prepended to system prompt",
   //   //     appendSystemContext: "Plugin guidance appended to system prompt",
@@ -1378,6 +1380,24 @@
   //   //     enabled: true,
   //   //     config: {
   //   //       webSearch: { model: "sonar-pro" }
+  //   //     }
+  //   //   },
+  //   //   // v2026.4.2: Firecrawl web_fetch 从 tools.web.fetch.firecrawl 迁移到此处
+  //   //   "firecrawl": {
+  //   //     config: {
+  //   //       webFetch: {
+  //   //         enabled: false,
+  //   //         apiKey: { "$secret": "FIRECRAWL_API_KEY" },
+  //   //         onlyMainContent: true,
+  //   //         timeoutSeconds: 60,
+  //   //       }
+  //   //     }
+  //   //   },
+  //   //   // v2026.4.2: xAI x_search 从 tools.web.x_search 迁移到此处
+  //   //   "xai": {
+  //   //     config: {
+  //   //       xSearch: { /* x_search 设置 */ },
+  //   //       webSearch: { apiKey: { "$secret": "XAI_API_KEY" } }
   //   //     }
   //   //   }
   //   // }
