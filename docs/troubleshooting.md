@@ -65,6 +65,14 @@ Gateway failed to start: gateway already running (pid XXX); lock timeout after 5
 
 #### 解决方案
 
+**v2026.4.5+**：Gateway 会自动检测 PID recycling 和 stale lock 文件，大多数情况下重启即可恢复：
+
+```bash
+openclaw-restart
+```
+
+如果自动恢复失败，手动清理：
+
 ```bash
 # 检查什么占用了端口
 orb -m openclaw-vm bash -c 'ss -tlnp | grep 18789'
