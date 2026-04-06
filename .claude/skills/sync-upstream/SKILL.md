@@ -50,12 +50,19 @@ Step 3 — it tells you which of our files to inspect:
 
 | Category | Files likely affected in our project |
 |----------|--------------------------------------|
-| New config options | `templates/openclaw.json.example`, `CLAUDE.md` Key Config Sections table |
+| New config options | `templates/openclaw.json.example`, `CLAUDE.md` |
 | Breaking config changes | `templates/openclaw.json.example`, possibly `local/openclaw.json` (user decides) |
-| New CLI commands | `scripts/commands/`, `scripts/refresh-mac-commands.sh` |
+| New CLI commands / flags | `docs/commands.md`, `scripts/commands/`, `scripts/refresh-mac-commands.sh` |
+| New built-in tools | `templates/openclaw.json.example` (sandbox allow list + model config), `docs/commands.md` |
+| New chat commands | `docs/commands.md` (e.g., `/dreaming`, `/tasks`) |
+| Removed features / commands | `docs/commands.md`, `templates/openclaw.json.example`, Docs Snapshot in memory |
 | New install dependencies | `openclaw-orbstack-setup.sh` (dependency install steps) |
-| New channels or providers | `docs/`, `CLAUDE.md` Docs Snapshot / Reference Docs |
+| New channels or providers | `docs/`, Docs Snapshot in memory |
+| New experimental features | `templates/openclaw.json.example` (config), `docs/commands.md` (commands) |
 | Bug fixes only | Usually just a version bump — no structural changes needed |
+
+**Docs Snapshot location**: The Docs Snapshot lives in auto-memory (`memory/MEMORY.md`),
+not in `CLAUDE.md`. Update it when providers, channels, or major features change.
 
 ## Step 3 — Impact analysis
 
@@ -66,7 +73,12 @@ memory — the codebase may have changed since last time).
 Use Grep and Read to find the specific locations. For example:
 - A new config option → grep `templates/openclaw.json.example` for the parent key
   to see if the section exists and where to insert it.
-- A new CLI command → check `scripts/commands/` to see if a wrapper already exists.
+- A new CLI command or flag → check `docs/commands.md` for existing documentation
+  and `scripts/commands/` to see if a wrapper already exists.
+- A new chat command → check `docs/commands.md` for where to add it.
+- A new built-in tool → check sandbox allow list in the config template and
+  any model config sections (e.g., `videoGenerationModel`, `musicGenerationModel`).
+- A removed feature → grep across docs and templates to find stale references.
 - A version bump → read `VERSION` and grep `CLAUDE.md` for the version string.
 
 Present a numbered table so the user can cherry-pick:
@@ -98,6 +110,13 @@ For config template edits (`templates/openclaw.json.example`):
 - Preserve JSON5 formatting (comments, trailing commas).
 - Add new options near related existing options, not at the end of the file.
 - Include a brief comment explaining what the option does.
+
+For command docs edits (`docs/commands.md`):
+- New CLI commands/flags → add to the appropriate section with version annotation.
+- New chat commands (e.g., `/dreaming`) → add explanation near the related CLI section.
+- New built-in tools with config → include a config snippet reference.
+- Removed commands → remove from docs or mark as removed with version.
+- New advanced/system commands → add to the "高级命令" list at the bottom.
 
 ## Step 6 — Validate
 
