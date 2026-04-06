@@ -303,6 +303,7 @@ openclaw config file               # 显示当前配置文件路径
 openclaw config get <path>         # 获取配置值
 openclaw config set <path> <value> # 设置配置值
 openclaw config unset <path>       # 删除配置值
+openclaw config schema             # 导出 JSON Schema (含标题和描述, v2026.4.5 enriched)
 ```
 
 #### 配置验证
@@ -408,6 +409,10 @@ openclaw memory index --force      # 强制重建
 openclaw memory search <query>     # 搜索记忆 (位置参数)
 openclaw memory search --query <text>  # 搜索记忆 (命名参数)
 openclaw memory search --max-results 10  # 限制结果数量
+
+# 记忆梦境 (实验性, v2026.4.5+)
+openclaw memory rem-harness        # REM 预览工具 (查看待提升记忆)
+openclaw memory promote-explain    # 解释提升决策
 ```
 
 ### 插件
@@ -417,6 +422,7 @@ openclaw plugins list              # 列出插件
 openclaw plugins info <id>         # 插件详情
 openclaw plugins install <source>  # 安装插件
 openclaw plugins install <npm> --pin  # 从 npm 安装并锁定版本
+openclaw plugins install <source> --force  # 替换已有目标 (v2026.4.5+)
 openclaw plugins enable <id>       # 启用插件
 openclaw plugins disable <id>      # 禁用插件
 openclaw plugins uninstall <id>    # 卸载插件
@@ -543,7 +549,7 @@ openclaw --help                    # 帮助
 
 以下命令主要用于开发和系统集成，一般用户无需使用：
 
-`acp`, `approvals`, `clawbot`, `daemon`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tui`, `voicecall`
+`acp`, `approvals`, `clawbot`, `daemon`, `flows`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tasks`, `tui`, `voicecall`
 
 运行 `openclaw <command> --help` 查看详情。
 

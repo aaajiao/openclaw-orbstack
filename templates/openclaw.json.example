@@ -161,6 +161,18 @@
       //   primary: "google/gemini-3-pro-image-preview"
       // },
 
+      // 视频生成模型 (v2026.4.5+)
+      // 内置 video_generate 工具，支持 xAI (grok-imagine-video)、Alibaba Wan、Runway
+      // videoGenerationModel: {
+      //   primary: "xai/grok-imagine-video"
+      // },
+
+      // 音乐生成模型 (v2026.4.5+)
+      // 内置 music_generate 工具，支持 Google Lyria、MiniMax、Comfy workflow
+      // musicGenerationModel: {
+      //   primary: "google/lyria"
+      // },
+
       // 模型目录 / 别名
       // Anthropic 1M 上下文 Beta: params: { context1m: true }
       //   仅 API Key 模式支持，token/OAuth 不支持；>200K 按 premium 计费
@@ -326,6 +338,15 @@
         //   maxFileBytes: 10000000           // 10MB
         // },
       },
+
+      // ========== 记忆梦境 (实验性, v2026.4.5+) ==========
+      // 自动将短期记忆提升为长期记忆，通过 light/deep/REM 三阶段后台处理
+      // dreaming: {
+      //   enabled: false,
+      //   frequency: "daily",            // 梦境处理频率
+      //   recencyHalfLifeDays: 7,        // 近期记忆衰减半衰期 (天)
+      //   maxAgeDays: 90,                // 记忆最大保留天数 (0 = 无限)
+      // },
 
       // ========== 上下文修剪配置 ==========
       contextPruning: {
@@ -727,9 +748,9 @@
         //   reactionNotifications: "own",
         //   users: ["987654321098765432"],
         //   channels: {
-        //     "general": { allow: true },
+        //     "general": { enabled: true },
         //     "help": {
-        //       allow: true,
+        //       enabled: true,
         //       requireMention: true,
         //       users: ["987654321098765432"],
         //       skills: ["docs"]
@@ -855,6 +876,15 @@
     // QQ Bot: 内置频道插件，支持多账号、斜杠命令、提醒、媒体收发
     // 通过 openclaw plugins list 查看可用插件
 
+    // 频道默认配置 (v2026.4.5+)
+    // defaults: {
+    //   // 上下文可见性: 控制引用/线程/历史上下文的可见性
+    //   //   "all"             - 包含所有上下文 (默认)
+    //   //   "allowlist"       - 仅包含 allowlist 发送者的上下文
+    //   //   "allowlist_quote" - 同 allowlist 但保留显式引用/回复上下文
+    //   // contextVisibility: "all",
+    // },
+
     // 按频道指定模型 (v2026.2.21+)
     // modelByChannel: {
     //   telegram: "anthropic/claude-sonnet-4-5",
@@ -896,6 +926,8 @@
           "memory_get",
           "web_search",
           "web_fetch"
+          // "video_generate",  // 视频生成 (v2026.4.5+)
+          // "music_generate",  // 音乐生成 (v2026.4.5+)
         ],
         // 禁止的工具 (会覆盖 allow)
         deny: [
