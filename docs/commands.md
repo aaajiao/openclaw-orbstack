@@ -417,20 +417,21 @@ openclaw memory rem-harness        # REM 预览工具 (查看待提升记忆)
 openclaw memory promote-explain    # 解释提升决策
 ```
 
-**聊天命令**: 在 Telegram/Discord 等频道中发送 `/dreaming` 可查看梦境状态和 Dream Diary。
-Control UI 的 Dreams 面板也可查看梦境日志。
+**聊天命令**: `/dreaming status|on|off|help`
 
 配置（在 `agents.defaults.dreaming` 中设置）：
 ```json5
 {
   "dreaming": {
-    "enabled": false,
-    "frequency": "daily",
-    "recencyHalfLifeDays": 7,
-    "maxAgeDays": 90
+    "enabled": true,
+    "timezone": "Asia/Shanghai",
+    "frequency": "0 3 * * *"   // cron 表达式，默认每天凌晨 3 点
   }
 }
 ```
+
+产出位置：`memory/.dreams/`（机器状态）、`DREAMS.md`（人类可读）、`MEMORY.md`（长期提升）。
+Control UI 的 Dreams 面板也可查看梦境日志。
 
 ### 插件
 
