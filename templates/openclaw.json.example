@@ -1433,7 +1433,6 @@
   //   //     config: {
   //   //       dreaming: {
   //   //         enabled: true,
-  //   //         timezone: "Asia/Shanghai",     // IANA 时区
   //   //         frequency: "0 3 * * *",        // cron 表达式 (默认每天凌晨 3 点)
   //   //       }
   //   //     }

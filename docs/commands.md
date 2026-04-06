@@ -428,7 +428,6 @@ openclaw memory promote-explain    # 解释提升决策
         "config": {
           "dreaming": {
             "enabled": true,
-            "timezone": "Asia/Shanghai",
             "frequency": "0 3 * * *"  // cron 表达式，默认每天凌晨 3 点
           }
         }
