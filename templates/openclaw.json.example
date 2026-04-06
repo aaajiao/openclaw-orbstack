@@ -339,18 +339,6 @@
         // },
       },
 
-      // ========== 记忆梦境 (实验性, v2026.4.5+) ==========
-      // memory-core 内置插件的后台记忆整合系统
-      // 三阶段: Light (采集候选) → Deep (评分提升到 MEMORY.md) → REM (提取模式)
-      // 产出: memory/.dreams/ (机器状态), DREAMS.md (人类可读), MEMORY.md (长期提升)
-      // 聊天命令: /dreaming status|on|off|help
-      // CLI: openclaw memory promote [--apply], promote-explain, rem-harness
-      // dreaming: {
-      //   enabled: false,
-      //   timezone: "Asia/Shanghai",     // IANA 时区
-      //   frequency: "0 3 * * *",        // cron 表达式 (默认每天凌晨 3 点)
-      // },
-
       // ========== 上下文修剪配置 ==========
       contextPruning: {
         mode: "cache-ttl",      // "off" | "cache-ttl"
@@ -1433,6 +1421,21 @@
   //   //     config: {
   //   //       xSearch: { /* x_search 设置 */ },
   //   //       webSearch: { apiKey: { "$secret": "XAI_API_KEY" } }
+  //   //     }
+  //   //   },
+  //   //   // ========== 记忆梦境 (实验性, v2026.4.5+) ==========
+  //   //   // memory-core 内置插件的后台记忆整合系统
+  //   //   // 三阶段: Light (采集候选) → Deep (评分提升到 MEMORY.md) → REM (提取模式)
+  //   //   // 产出: memory/.dreams/ (机器状态), DREAMS.md (人类可读), MEMORY.md (长期提升)
+  //   //   // 聊天命令: /dreaming status|on|off|help
+  //   //   // CLI: openclaw memory promote [--apply], promote-explain, rem-harness
+  //   //   "memory-core": {
+  //   //     config: {
+  //   //       dreaming: {
+  //   //         enabled: true,
+  //   //         timezone: "Asia/Shanghai",     // IANA 时区
+  //   //         frequency: "0 3 * * *",        // cron 表达式 (默认每天凌晨 3 点)
+  //   //       }
   //   //     }
   //   //   }
   //   // }

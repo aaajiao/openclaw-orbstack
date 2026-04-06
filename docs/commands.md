@@ -419,13 +419,21 @@ openclaw memory promote-explain    # 解释提升决策
 
 **聊天命令**: `/dreaming status|on|off|help`
 
-配置（在 `agents.defaults.dreaming` 中设置）：
+配置（在 `plugins.entries.memory-core.config.dreaming` 中设置）：
 ```json5
 {
-  "dreaming": {
-    "enabled": true,
-    "timezone": "Asia/Shanghai",
-    "frequency": "0 3 * * *"   // cron 表达式，默认每天凌晨 3 点
+  "plugins": {
+    "entries": {
+      "memory-core": {
+        "config": {
+          "dreaming": {
+            "enabled": true,
+            "timezone": "Asia/Shanghai",
+            "frequency": "0 3 * * *"  // cron 表达式，默认每天凌晨 3 点
+          }
+        }
+      }
+    }
   }
 }
 ```
