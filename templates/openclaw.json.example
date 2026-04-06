@@ -807,7 +807,7 @@
       
       // 频道设置
       channels: {
-        // "#general": { allow: true, requireMention: true }
+        // "#general": { enabled: true, requireMention: true }
       },
       
       // DM 设置
