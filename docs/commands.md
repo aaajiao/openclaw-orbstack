@@ -411,8 +411,25 @@ openclaw memory search --query <text>  # 搜索记忆 (命名参数)
 openclaw memory search --max-results 10  # 限制结果数量
 
 # 记忆梦境 (实验性, v2026.4.5+)
+# 自动将短期记忆提升为长期记忆，通过 light/deep/REM 三阶段后台处理
+# 产出写入顶层 dreams.md，不进入默认 recall，需显式读取
 openclaw memory rem-harness        # REM 预览工具 (查看待提升记忆)
 openclaw memory promote-explain    # 解释提升决策
+```
+
+**聊天命令**: 在 Telegram/Discord 等频道中发送 `/dreaming` 可查看梦境状态和 Dream Diary。
+Control UI 的 Dreams 面板也可查看梦境日志。
+
+配置（在 `agents.defaults.dreaming` 中设置）：
+```json5
+{
+  "dreaming": {
+    "enabled": false,
+    "frequency": "daily",
+    "recencyHalfLifeDays": 7,
+    "maxAgeDays": 90
+  }
+}
 ```
 
 ### 插件
