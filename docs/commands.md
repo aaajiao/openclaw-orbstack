@@ -415,6 +415,14 @@ openclaw memory search --max-results 10  # 限制结果数量
 # 产出写入顶层 dreams.md，不进入默认 recall，需显式读取
 openclaw memory rem-harness        # REM 预览工具 (查看待提升记忆)
 openclaw memory promote-explain    # 解释提升决策
+
+# Memory Wiki (v2026.4.7+, memory-wiki 插件)
+# 结构化知识库：claim/evidence 字段、矛盾聚类、新鲜度加权搜索
+openclaw memory wiki sync          # 同步 wiki 数据
+openclaw memory wiki query <text>  # 搜索 wiki
+openclaw memory wiki apply         # 应用 wiki 操作
+openclaw memory wiki digest        # 获取编译摘要
+openclaw memory wiki lint          # claim 健康检查 (矛盾检测)
 ```
 
 **聊天命令**: `/dreaming status|on|off|help`
@@ -523,6 +531,19 @@ openclaw hooks install <source>    # 安装 hook
 openclaw hooks update <name>       # 更新 hook
 ```
 
+### 推理工作流 (v2026.4.7+)
+
+```bash
+# openclaw infer — 提供商推理命令中心
+# 支持模型推理、媒体生成、Web 搜索、嵌入等任务
+# 自动回退认证、尺寸/分辨率自动映射到最接近的支持选项
+openclaw infer --help              # 查看所有子命令
+openclaw infer models              # 模型推理
+openclaw infer media               # 媒体生成 (图像/视频/音乐)
+openclaw infer web                 # Web 搜索
+openclaw infer embedding           # 嵌入向量
+```
+
 ### 备份管理 (v2026.3.8+)
 
 ```bash
@@ -543,6 +564,12 @@ openclaw sessions --json           # JSON 格式输出
 openclaw sessions cleanup          # 会话维护
 openclaw sessions cleanup --dry-run    # 预览清理操作
 openclaw sessions cleanup --enforce    # 强制执行清理
+
+# 会话压缩检查点 (v2026.4.7+)
+# Control UI Sessions 面板可查看压缩检查点、分支/恢复压缩前状态
+openclaw sessions checkpoint       # 查看压缩检查点
+openclaw sessions branch <id>      # 从检查点分支 (恢复压缩前状态)
+openclaw sessions restore <id>     # 恢复到指定检查点
 
 openclaw dashboard                 # 打开控制面板
 openclaw dashboard --no-open       # 只打印 URL
@@ -574,7 +601,7 @@ openclaw --help                    # 帮助
 
 以下命令主要用于开发和系统集成，一般用户无需使用：
 
-`acp`, `approvals`, `clawbot`, `daemon`, `flows`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tasks`, `tui`, `voicecall`
+`acp`, `approvals`, `clawbot`, `daemon`, `flows`, `infer`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tasks`, `tui`, `voicecall`
 
 运行 `openclaw <command> --help` 查看详情。
 
