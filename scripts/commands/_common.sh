@@ -5,18 +5,34 @@
 
 set -e
 
-# Progress ticker for long-running commands (prints a dot every 10s)
+# Progress spinner for long-running commands (braille animation)
 _progress_pid=""
+_progress_flag=""
 start_progress() {
-    (while true; do sleep 10; printf "."; done) &
+    _progress_flag="$(mktemp)"
+    (
+        trap 'exit 0' TERM
+        frames="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
+        while [ -e "$_progress_flag" ]; do
+            for f in $frames; do
+                [ -e "$_progress_flag" ] || break
+                printf "\r  %s " "$f"
+                sleep 0.08
+            done
+        done
+    ) &
     _progress_pid=$!
 }
 stop_progress() {
+    if [ -n "$_progress_flag" ]; then
+        rm -f "$_progress_flag"
+        _progress_flag=""
+    fi
     if [ -n "$_progress_pid" ]; then
         kill "$_progress_pid" 2>/dev/null || true
         wait "$_progress_pid" 2>/dev/null || true
         _progress_pid=""
-        printf "\n"
+        printf "\r    \r"
     fi
 }
 
