@@ -414,6 +414,7 @@ openclaw memory search --max-results 10  # 限制结果数量
 # 自动将短期记忆提升为长期记忆，通过 light/deep/REM 三阶段后台处理
 # 产出写入顶层 dreams.md，不进入默认 recall，需显式读取
 openclaw memory rem-harness        # REM 预览工具 (查看待提升记忆)
+openclaw memory rem-harness --path <dir>  # 历史 daily notes 回放补填 (v2026.4.9+)
 openclaw memory promote-explain    # 解释提升决策
 
 # Memory Wiki (v2026.4.7+, memory-wiki 插件)

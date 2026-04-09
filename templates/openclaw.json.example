@@ -222,7 +222,14 @@
       
       // 超时时间 (秒)
       timeoutSeconds: 600,
-      
+
+      // LLM 空闲超时 (秒, v2026.4.9+)
+      // 默认继承 timeoutSeconds，单独设置可解耦 LLM 空闲看门狗与整体超时
+      // cron 任务自动跳过空闲看门狗
+      // llm: {
+      //   idleTimeoutSeconds: 600,
+      // },
+
       // 媒体文件大小限制 (MB)
       mediaMaxMb: 5,
       
