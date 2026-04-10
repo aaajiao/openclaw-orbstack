@@ -261,7 +261,14 @@ trap - EXIT
 
 # Ensure systemd service matches current install path (npm vs source build)
 echo "$MSG_CMD_UPDATE_DOCTOR"
+# 1) Config migration + systemd user service fix (as regular user)
 orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw doctor --fix" > /dev/null 2>&1 || true
+# 2) Bundled plugin runtime deps (e.g. @discordjs/opus) need root for global npm prefix
+#    Config is already fixed above, so this run only installs deps.
+#    --preserve-env=HOME ensures doctor reads the correct user config (~/.openclaw/)
+orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo --preserve-env=HOME openclaw doctor --fix" > /dev/null 2>&1 || true
+# 3) Restore file ownership in case sudo created/modified files under ~/.openclaw/
+orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/" > /dev/null 2>&1 || true
 
 echo "$MSG_CMD_UPDATE_STARTING"
 orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start"

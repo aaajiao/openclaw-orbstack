@@ -114,8 +114,7 @@
     // 同 provider 过载时的重试策略 (v2026.3.31+)
     // cooldowns: {
     //   retries: 1,       // 重试次数 (默认 1)
-    //   retryDelayMs: 0,  // 重试延迟毫秒 (默认 0)
-    //   rateLimitedProfileRotations: 2  // 同 provider 内 auth profile 轮转上限 (v2026.4.1+)
+    //   retryDelayMs: 0   // 重试延迟毫秒 (默认 0)
     // }
   },
 
@@ -155,11 +154,8 @@
       },
       pdfMaxBytesMb: 30,   // 单个 PDF 最大 MB，默认 10
 
-      // 图片生成模型 (v2026.3.22+)
-      // 替代已移除的 nano-banana-pro skill wrapper
-      // imageGenerationModel: {
-      //   primary: "google/gemini-3-pro-image-preview"
-      // },
+      // 图片生成模型 (v2026.3.22+, v2026.4.9 移除 — 改由 skill 配置)
+      // 已废弃: imageGenerationModel 不再是有效 key，使用 skills.entries 配置图片生成
 
       // 视频生成模型 (v2026.4.5+)
       // 内置 video_generate 工具，支持 xAI (grok-imagine-video)、Alibaba Wan、Runway
@@ -382,16 +378,15 @@
         // postCompactionSections: ["Session Startup", "Red Lines"],
         // 压缩质量保护：保留最近 N 轮对话不被压缩 (v2026.3.7+)
         // recentTurnsPreserve: 3,
-        // 压缩后重新索引记忆 (v2026.3.12+, v2026.3.13 改为枚举)
-        // postIndexSync: "await",   // "off" | "async" | "await" — 压缩完成后同步记忆索引
+        // 压缩后重新索引记忆 (v2026.3.12–v2026.4.8, v2026.4.9 移除)
+        // postIndexSync 已废弃 — 记忆索引现在自动管理
         // 压缩摘要自定义指令 (v2026.3.13+)
         // 用于保持压缩后的语言/人格一致性（防止非英语会话被压缩成英语）
         // 不设置时使用内置默认指令（自动检测会话语言并保持）
         // 最大 800 字符
         // customInstructions: "用中文撰写压缩摘要，保持事实准确",
-        // 压缩开始通知 (v2026.4.2+)
-        // 设为 true 时显示 "🧹 Compacting context..." 提示 (默认不显示)
-        // notifyUser: false,
+        // 压缩开始通知 (v2026.4.2–v2026.4.8, v2026.4.9 移除)
+        // notifyUser 已废弃 — 通知行为现在由 Gateway 自动管理
         // 可插拔压缩提供商 (v2026.4.7+)
         // 设置后替换内置 LLM 摘要，使用注册的压缩提供商插件
         // provider: "my-compaction-plugin",
@@ -668,9 +663,18 @@
       // 链接预览
       linkPreview: true,
       
-      // 流式传输模式: "off" | "partial" | "block" | "progress"
-      // v2026.3.2 起默认 "partial" (旧名 streamMode 仍可用，自动映射)
-      streaming: "partial",
+      // 流式传输 (v2026.4.9+: 从标量迁移到对象格式)
+      // mode: "off" | "partial" | "block" | "progress" (默认 "partial")
+      // 旧标量格式 streaming: "partial" 仍可用，openclaw doctor --fix 自动迁移
+      streaming: {
+        mode: "partial",
+        // chunkMode: "word",              // 分块模式 (可选)
+        // preview: { chunk: true },       // 预览分块 (可选)
+        // block: {                        // block 模式配置 (可选)
+        //   enabled: false,
+        //   coalesce: true
+        // }
+      },
 
       // 内联按钮样式: "primary" | "success" | "danger" (可选)
       // buttonStyle: "primary",
