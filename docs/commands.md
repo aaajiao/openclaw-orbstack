@@ -419,14 +419,25 @@ openclaw memory promote-explain    # 解释提升决策
 
 # Memory Wiki (v2026.4.7+, memory-wiki 插件)
 # 结构化知识库：claim/evidence 字段、矛盾聚类、新鲜度加权搜索
-openclaw memory wiki sync          # 同步 wiki 数据
-openclaw memory wiki query <text>  # 搜索 wiki
-openclaw memory wiki apply         # 应用 wiki 操作
-openclaw memory wiki digest        # 获取编译摘要
-openclaw memory wiki lint          # claim 健康检查 (矛盾检测)
+openclaw wiki status               # wiki 状态 (vault、bridge、页面统计)
+openclaw wiki sync                 # 同步 wiki 数据
+openclaw wiki query <text>         # 搜索 wiki
+openclaw wiki apply                # 应用 wiki 操作
+openclaw wiki digest               # 获取编译摘要
+openclaw wiki lint                 # claim 健康检查 (矛盾检测)
 ```
 
-**聊天命令**: `/dreaming status|on|off|help`
+**聊天命令**:
+
+| 命令 | 功能 |
+|------|------|
+| `/dreaming status` | 查看梦境状态 |
+| `/dreaming on\|off` | 开关梦境 |
+| `/dreaming help` | 帮助 |
+| `/active-memory status` | 查看 Active Memory 状态 (含延迟、召回字数) |
+| `/active-memory on` | 当前会话开启 Active Memory |
+| `/active-memory off` | 当前会话关闭 Active Memory |
+| `/verbose on` | 显示 Active Memory 调试信息 (延迟、召回内容) |
 
 配置（在 `plugins.entries.memory-core.config.dreaming` 中设置）：
 ```json5
