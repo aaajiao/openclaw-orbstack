@@ -119,6 +119,21 @@
   },
 
   // --------------------------------------------------------------------------
+  // 三(b)、模型提供商配置 (可选)
+  // --------------------------------------------------------------------------
+  // 自托管 OpenAI 兼容端点等高级配置
+  // models: {
+  //   providers: {
+  //     "my-local": {
+  //       request: {
+  //         // 允许私有网络请求 (v2026.4.10+, 仅用于自托管端点)
+  //         allowPrivateNetwork: true,
+  //       }
+  //     }
+  //   }
+  // },
+
+  // --------------------------------------------------------------------------
   // 四、Agent 运行时配置
   // --------------------------------------------------------------------------
   agents: {
@@ -158,7 +173,7 @@
       // 已废弃: imageGenerationModel 不再是有效 key，使用 skills.entries 配置图片生成
 
       // 视频生成模型 (v2026.4.5+)
-      // 内置 video_generate 工具，支持 xAI (grok-imagine-video)、Alibaba Wan、Runway
+      // 内置 video_generate 工具，支持 xAI (grok-imagine-video)、Alibaba Wan、Runway、fal/Seedance 2.0
       // videoGenerationModel: {
       //   primary: "xai/grok-imagine-video"
       // },
@@ -187,6 +202,9 @@
         "opencode/gpt-5.4": { alias: "GPT 5.4" },
         "openai/gpt-5.4-mini": { alias: "GPT 5.4 Mini" },
         "openai/gpt-5.4-nano": { alias: "GPT 5.4 Nano" }
+        // v2026.4.10: codex/gpt-* 路径走 Codex 托管认证 (原生线程、模型发现、压缩)
+        // openai/gpt-* 仍走常规 OpenAI 路径
+        // "codex/gpt-5.4": { alias: "GPT 5.4 (Codex)" }
       },
 
       // ========== Fast Mode (v2026.3.12+) ==========
@@ -255,6 +273,8 @@
       //   // DM 投递策略 (v2026.2.25+)
       //   // v2026.2.24 曾默认改为 block，v2026.2.25 恢复为 allow
       //   directPolicy: "allow",     // "allow" - 允许投递到私聊 | "block" - 只投递到群组/频道
+      //   // 心跳 Agent 超时 (v2026.4.10+)
+      //   // timeoutSeconds: 300,    // 默认继承 agents.defaults.timeoutSeconds
       // },
 
       // ========== 子代理配置 ==========
@@ -962,6 +982,10 @@
     // web: {
     //   fetch: {
     //     readability: true,      // Readability 主内容提取 (默认开启)
+    //     // SSRF 策略 (v2026.4.10+)
+    //     // ssrfPolicy: {
+    //     //   allowRfc2544BenchmarkRange: false,  // 允许 198.18.0.0/15 (fake-IP 代理环境)
+    //     // },
     //   },
     // },
 
@@ -1447,6 +1471,16 @@
   //   //     config: {
   //   //       xSearch: { /* x_search 设置 */ },
   //   //       webSearch: { apiKey: { "$secret": "XAI_API_KEY" } }
+  //   //     }
+  //   //   },
+  //   //   // ========== Active Memory (v2026.4.10+) ==========
+  //   //   // 可选记忆子代理: 回复前自动拉取相关偏好/上下文/历史
+  //   //   // 文档: https://docs.openclaw.ai/concepts/active-memory
+  //   //   "active-memory": {
+  //   //     enabled: false,
+  //   //     config: {
+  //   //       mode: "recent",       // "message" | "recent" | "full"
+  //   //       // 高级: prompt/thinking 覆盖、transcript 持久化等
   //   //     }
   //   //   },
   //   //   // ========== 记忆梦境 (实验性, v2026.4.5+) ==========

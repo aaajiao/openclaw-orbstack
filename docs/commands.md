@@ -532,6 +532,16 @@ openclaw hooks install <source>    # 安装 hook
 openclaw hooks update <name>       # 更新 hook
 ```
 
+### 执行策略管理 (v2026.4.10+)
+
+```bash
+openclaw exec-policy show               # 查看当前 exec 策略
+openclaw exec-policy preset <name>      # 应用预设策略
+openclaw exec-policy set <key> <value>  # 设置策略字段
+```
+
+同步 `tools.exec.*` 配置与本地 exec 审批文件，支持回滚安全和冲突检测。
+
 ### 推理工作流 (v2026.4.7+)
 
 ```bash
@@ -602,7 +612,7 @@ openclaw --help                    # 帮助
 
 以下命令主要用于开发和系统集成，一般用户无需使用：
 
-`acp`, `approvals`, `clawbot`, `daemon`, `flows`, `infer`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tasks`, `tui`, `voicecall`
+`acp`, `approvals`, `clawbot`, `daemon`, `exec-policy`, `flows`, `infer`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tasks`, `tui`, `voicecall`
 
 运行 `openclaw <command> --help` 查看详情。
 
