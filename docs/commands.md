@@ -460,6 +460,14 @@ openclaw wiki lint                 # claim 健康检查 (矛盾检测)
 产出位置：`memory/.dreams/`（机器状态）、`DREAMS.md`（人类可读）、`MEMORY.md`（长期提升）。
 Control UI 的 Dreams 面板也可查看梦境日志。
 
+### Memory Wiki 导入 (v2026.4.11+)
+
+Memory Wiki 支持从 ChatGPT 导出文件导入对话历史，在 Control UI Dreams 面板新增：
+- **Imported Insights** — 查看导入的源对话编译后的 wiki 页面
+- **Memory Palace** — 浏览完整源页面
+
+导入通过 Control UI 的 Dreams 面板操作，非 CLI 命令。
+
 ### 插件
 
 ```bash

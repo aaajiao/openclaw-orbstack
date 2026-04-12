@@ -172,8 +172,10 @@
       // 图片生成模型 (v2026.3.22+, v2026.4.9 移除 — 改由 skill 配置)
       // 已废弃: imageGenerationModel 不再是有效 key，使用 skills.entries 配置图片生成
 
-      // 视频生成模型 (v2026.4.5+)
+      // 视频生成模型 (v2026.4.5+, v2026.4.11 增强)
       // 内置 video_generate 工具，支持 xAI (grok-imagine-video)、Alibaba Wan、Runway、fal/Seedance 2.0
+      // v2026.4.11: URL-only 交付、typed providerOptions、reference audio 输入、
+      //   per-asset role hints、adaptive 宽高比、更高图片输入上限
       // videoGenerationModel: {
       //   primary: "xai/grok-imagine-video"
       // },
@@ -1045,7 +1047,12 @@
         models: [
           { provider: "google", model: "gemini-3-flash-preview" }
         ]
-      }
+      },
+      // 异步完成交付 (v2026.4.11+)
+      // 控制异步音乐/视频生成完成后是否直接投递到频道
+      // asyncCompletion: {
+      //   directSend: false,  // true = 直接投递到频道，false = 唤醒请求者会话 (默认)
+      // },
     }
   },
 
