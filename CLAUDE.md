@@ -14,10 +14,23 @@ Mac ─────────────────────────�
         ├── Gateway (Node.js, systemd)    ← orchestrator, NOT in Docker
         └── Docker
             ├── sandbox-common            ← code execution
+            │   └── /workspace/           ← persistent volume, agent-managed deps
             └── sandbox-browser           ← Chromium
 ```
 
 Gateway runs directly on VM. Docker containers are the only isolation protecting Mac files (VM has `/mnt/mac` access).
+
+### Three-Layer Maintenance Model
+
+| Layer | Owner | How | Can we modify? |
+|-------|-------|-----|----------------|
+| Docker images | Upstream OpenClaw | Follow upstream updates, don't touch | No |
+| VM (`openclaw-vm`) | Us (minimal intervention) | `local/weekly-maintenance.sh` + installer/updater scripts | Yes, but keep minimal |
+| `/workspace/` in sandbox | AI agent (self-managed) | Rebuild script restores deps after container recreation | Agent-autonomous |
+
+Each layer is responsible only for itself. Diagnose and fix issues at the layer where they occur.
+
+The sandbox Dockerfile is upstream-controlled, so custom dependencies (bun, pnpm, etc.) are installed at runtime into `/workspace/` (persistent volume). A rebuild script can restore everything after container recreation. This is the optimal approach without forking the upstream image.
 
 **IMPORTANT: Claude Code runs on the Mac host, NOT inside the VM.**
 - NEVER run commands inside the VM, access VM files, or diagnose VM processes
