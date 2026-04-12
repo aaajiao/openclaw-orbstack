@@ -4,12 +4,12 @@
 
 在 Mac 上有两类命令可用：
 
-1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 13 个命令
+1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 14 个命令
 2. **官方 CLI 命令** (`openclaw <command>`) - 透传到 VM 的 150+ 官方命令
 
 ---
 
-## OrbStack 管理命令 (13 个)
+## OrbStack 管理命令 (14 个)
 
 这些命令在 `~/bin/` 目录下，用于管理 OrbStack VM 和服务：
 
@@ -63,6 +63,22 @@ openclaw-whatsapp                      # 扫码登录
 | `openclaw-doctor` | 运行诊断 (openclaw doctor) |
 | `openclaw-update` | 更新版本 (`--sandbox` 重建镜像，`--force` 强制重建) |
 | `openclaw-sandbox-rebuild` | 重建沙箱 Docker 镜像 |
+| `openclaw-uninstall` | 完全卸载 (`--vm` 同时删除虚拟机) |
+
+### 卸载命令详情
+
+`openclaw-uninstall` 完全清理所有 OpenClaw 组件：
+
+```bash
+openclaw-uninstall              # 交互式 (逐步确认)
+openclaw-uninstall --yes        # 跳过确认 (默认保留 VM)
+openclaw-uninstall --yes --vm   # 跳过确认并删除 VM
+```
+
+清理内容：
+- **VM 内**: Gateway 服务、Docker 沙箱容器/镜像、npm 全局包、配置文件、源代码
+- **Mac 端**: `~/bin/openclaw-*` 命令、Shell 配置中的 PATH 条目
+- **可选**: 删除整个 OrbStack VM
 
 ### 更新命令详情
 

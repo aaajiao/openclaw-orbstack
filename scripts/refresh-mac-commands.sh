@@ -193,6 +193,17 @@ fi
 exec bash "$REPO/scripts/commands/sandbox-rebuild.sh" "$@"
 CMDEOF
 
+cat > ~/bin/openclaw-uninstall << 'CMDEOF'
+#!/bin/bash
+set -e
+REPO=$(cat ~/bin/.openclaw-repo 2>/dev/null)
+if [ -z "$REPO" ] || [ ! -d "$REPO" ]; then
+    echo "Error: openclaw-orbstack repo not found. Run: cd openclaw-orbstack && bash scripts/commands/uninstall.sh"
+    exit 1
+fi
+exec bash "$REPO/scripts/commands/uninstall.sh" "$@"
+CMDEOF
+
 chmod +x ~/bin/openclaw-*
 chmod +x ~/bin/openclaw
 
@@ -211,6 +222,7 @@ echo "$MSG_REFRESH_CMD_REBUILD"
 echo "$MSG_REFRESH_CMD_DOCTOR"
 echo "$MSG_REFRESH_CMD_TELEGRAM"
 echo "$MSG_REFRESH_CMD_WHATSAPP"
+echo "$MSG_REFRESH_CMD_UNINSTALL"
 echo ""
 # Auto-add ~/bin to PATH in shell rc (same logic as setup script)
 if ! echo "$PATH" | grep -q "$HOME/bin"; then

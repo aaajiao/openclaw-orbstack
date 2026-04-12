@@ -153,13 +153,21 @@ openclaw-start
 
 ---
 
-## 完全重置
+## 完全卸载
 
 ```bash
-# 删除 VM（会丢失所有数据！）
-orb delete openclaw-vm
+# 交互式卸载 (逐步确认，可选删除 VM)
+openclaw-uninstall
 
-# 重新部署
+# 自动卸载 (跳过确认，保留 VM)
+openclaw-uninstall --yes
+
+# 自动卸载 + 删除 VM
+openclaw-uninstall --yes --vm
+```
+
+如需重新部署：
+```bash
 bash openclaw-orbstack-setup.sh
 ```
 

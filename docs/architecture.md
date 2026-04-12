@@ -191,7 +191,8 @@ Gateway 还支持以下扩展能力：
   ├── openclaw-update        # 更新版本 (--sandbox 重建镜像，--force 强制重建)
   ├── openclaw-sandbox-rebuild # 重建沙箱镜像
   ├── openclaw-telegram      # Telegram 频道配置
-  └── openclaw-whatsapp      # WhatsApp 登录
+  ├── openclaw-whatsapp      # WhatsApp 登录
+  └── openclaw-uninstall     # 完全卸载
 ```
 
 ## Gateway 与沙箱的通信

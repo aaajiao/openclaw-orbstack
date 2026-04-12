@@ -111,6 +111,7 @@ openclaw doctor
 | `openclaw-doctor` | Run diagnostics |
 | `openclaw-update` | Update app (`--sandbox` rebuild images, `--force` force rebuild) |
 | `openclaw-sandbox-rebuild` | Rebuild sandbox Docker images |
+| `openclaw-uninstall` | Clean uninstall |
 
 Full command reference: [docs/commands.md](docs/commands.md)
 
