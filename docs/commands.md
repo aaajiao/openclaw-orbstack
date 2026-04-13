@@ -575,7 +575,7 @@ openclaw exec-policy preset <name>      # 应用预设策略
 openclaw exec-policy set <key> <value>  # 设置策略字段
 ```
 
-同步 `tools.exec.*` 配置与本地 exec 审批文件，支持回滚安全和冲突检测。
+同步 `tools.exec.*` 配置与本地 exec 审批文件。v2026.4.12 增强：node-host rejection 加固、回滚安全保护、同步冲突检测。
 
 ### 推理工作流 (v2026.4.7+)
 

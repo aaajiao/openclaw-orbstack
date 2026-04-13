@@ -205,7 +205,8 @@
         "openai/gpt-5.4-mini": { alias: "GPT 5.4 Mini" },
         "openai/gpt-5.4-nano": { alias: "GPT 5.4 Nano" }
         // v2026.4.10: codex/gpt-* 路径走 Codex 托管认证 (原生线程、模型发现、压缩)
-        // openai/gpt-* 仍走常规 OpenAI 路径
+        // v2026.4.12: Codex bundled provider + plugin-owned app-server harness
+        //   codex/gpt-* 使用 Codex-managed auth，openai/gpt-* 仍走常规 OpenAI 路径
         // "codex/gpt-5.4": { alias: "GPT 5.4 (Codex)" }
       },
 
@@ -1342,6 +1343,12 @@
       // "ollama": {
       //   baseUrl: "http://localhost:11434",
       //   models: [{ id: "llama3.3", name: "Llama 3.3" }]
+      // },
+      // LM Studio (v2026.4.12+, bundled provider)
+      // 本地 OpenAI 兼容模型，含 onboarding、运行时模型发现、stream preload、memory-search embedding
+      // "lmstudio": {
+      //   baseUrl: "http://localhost:1234",
+      //   models: [{ id: "local-model", name: "My Local Model" }]
       // },
       // Kilo Gateway (多模型网关)
       // "kilo": {
