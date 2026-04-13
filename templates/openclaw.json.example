@@ -169,8 +169,13 @@
       },
       pdfMaxBytesMb: 30,   // 单个 PDF 最大 MB，默认 10
 
-      // 图片生成模型 (v2026.3.22+, v2026.4.9 移除 — 改由 skill 配置)
-      // 已废弃: imageGenerationModel 不再是有效 key，使用 skills.entries 配置图片生成
+      // 图片生成模型 (v2026.3.22+)
+      // 内置 image_generate 工具，有可用 provider API key 时自动激活
+      // 回退顺序: tool call 指定 → primary → fallbacks → 已认证 provider 自动检测
+      // imageGenerationModel: {
+      //   primary: "openai/gpt-image-1",
+      //   fallbacks: ["google/gemini-3.1-flash-image-preview"]
+      // },
 
       // 视频生成模型 (v2026.4.5+, v2026.4.11 增强)
       // 内置 video_generate 工具，支持 xAI (grok-imagine-video)、Alibaba Wan、Runway、fal/Seedance 2.0
