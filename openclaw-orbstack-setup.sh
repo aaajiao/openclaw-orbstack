@@ -270,7 +270,7 @@ info "$(printf "$MSG_PKG_INSTALL_VERSION" "$NPM_VERSION")"
 NPM_OK=false
 if vm_exec "sudo npm install -g openclaw@$NPM_VERSION"; then
     # Verify package completeness (e.g. npm tarball may ship without dist/control-ui/)
-    # v2026.4.14: canonical entrypoint moved from dist/entry.js to dist/index.js
+    # Check both index.js (canonical since ≤v2026.3.x) and entry.js (legacy reference)
     if vm_exec "{ test -f \$(npm root -g)/openclaw/dist/index.js || test -f \$(npm root -g)/openclaw/dist/entry.js; } && test -d \$(npm root -g)/openclaw/dist/control-ui && test -d \$(npm root -g)/openclaw/dist/extensions"; then
         NPM_OK=true
         ok "$MSG_PKG_INSTALL_OK"
@@ -558,6 +558,13 @@ info "$MSG_INFO_CREATING_SERVICE"
 
 # Enable lingering so user services start at boot without login
 vm_exec "sudo loginctl enable-linger \$(whoami)"
+
+# --- Startup optimization drop-in (upstream recommended for VM/ARM: docs/vps.md) ---
+# Bridge pattern: create drop-in only if the main service doesn't already have these vars.
+# When upstream adds them natively, the update script auto-removes this drop-in.
+vm_exec "mkdir -p ~/.config/systemd/user/openclaw-gateway.service.d /var/tmp/openclaw-compile-cache"
+vm_exec "printf '[Service]\nEnvironment=NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache\nEnvironment=OPENCLAW_NO_RESPAWN=1\n' > ~/.config/systemd/user/openclaw-gateway.service.d/openclaw-orbstack.conf"
+vm_exec "systemctl --user daemon-reload"
 
 # Enable and start the official user-level gateway service
 vm_exec "systemctl --user enable openclaw-gateway.service"

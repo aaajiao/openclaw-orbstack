@@ -128,7 +128,7 @@ NPM_OK=false
 if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo npm install -g openclaw@$NPM_VERSION"; then
     # Verify package completeness (e.g. npm tarball may ship without dist/control-ui/)
     # $(npm root -g) must expand inside the VM, not on Mac
-    # v2026.4.14: canonical entrypoint moved from dist/entry.js to dist/index.js
+    # Check both index.js (canonical since ≤v2026.3.x) and entry.js (legacy reference)
     # shellcheck disable=SC2016
     if orb -m "$OPENCLAW_VM_NAME" bash -lc '{ test -f $(npm root -g)/openclaw/dist/index.js || test -f $(npm root -g)/openclaw/dist/entry.js; } && test -d $(npm root -g)/openclaw/dist/control-ui && test -d $(npm root -g)/openclaw/dist/extensions'; then
         NPM_OK=true
@@ -270,6 +270,24 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw doctor --fix" > /dev/null 2>&1 || 
 orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo --preserve-env=HOME openclaw doctor --fix" > /dev/null 2>&1 || true
 # 3) Restore file ownership in case sudo created/modified files under ~/.openclaw/
 orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/" > /dev/null 2>&1 || true
+
+# --- Startup optimization drop-in (upstream recommended for VM/ARM: docs/vps.md) ---
+# Bridge pattern: if the main service already has NODE_COMPILE_CACHE, upstream has taken
+# over — remove our drop-in. Otherwise, ensure it exists for older service files.
+# shellcheck disable=SC2016
+orb -m "$OPENCLAW_VM_NAME" bash -lc '
+DROPIN_DIR=~/.config/systemd/user/openclaw-gateway.service.d
+DROPIN=$DROPIN_DIR/openclaw-orbstack.conf
+SERVICE=~/.config/systemd/user/openclaw-gateway.service
+if grep -q NODE_COMPILE_CACHE "$SERVICE" 2>/dev/null; then
+    rm -f "$DROPIN"
+    rmdir "$DROPIN_DIR" 2>/dev/null || true
+elif [ ! -f "$DROPIN" ]; then
+    mkdir -p "$DROPIN_DIR" /var/tmp/openclaw-compile-cache
+    printf "[Service]\nEnvironment=NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache\nEnvironment=OPENCLAW_NO_RESPAWN=1\n" > "$DROPIN"
+fi
+systemctl --user daemon-reload
+' 2>/dev/null || true
 
 echo "$MSG_CMD_UPDATE_STARTING"
 orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start"

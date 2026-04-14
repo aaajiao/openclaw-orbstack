@@ -129,6 +129,9 @@ if vm_exists; then
         vm_exec "openclaw gateway stop 2>/dev/null || true"
         vm_exec "systemctl --user disable openclaw-gateway.service 2>/dev/null || true"
         vm_exec "systemctl --user stop openclaw-gateway.service 2>/dev/null || true"
+        # Clean up our systemd drop-in override
+        vm_exec "rm -f ~/.config/systemd/user/openclaw-gateway.service.d/openclaw-orbstack.conf 2>/dev/null || true"
+        vm_exec "rmdir ~/.config/systemd/user/openclaw-gateway.service.d 2>/dev/null || true"
         ok "$MSG_CMD_UNINSTALL_SERVICE_STOPPED"
 
         # 1b. Stop and remove Docker containers

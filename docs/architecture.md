@@ -169,6 +169,14 @@ Gateway 还支持以下扩展能力：
   - Environment:
     - NODE_ENV=production
     - OPENCLAW_DISABLE_BONJOUR=1    # 禁用 Bonjour 避免冲突
+
+~/.config/systemd/user/openclaw-gateway.service.d/openclaw-orbstack.conf
+  - 由安装/更新脚本创建的 drop-in override
+  - 上游推荐的 VM/ARM 启动优化 (docs/vps.md, docs/platforms/raspberry-pi.md)
+  - Environment:
+    - NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache  # Node 编译缓存
+    - OPENCLAW_NO_RESPAWN=1                               # 跳过 self-respawn
+  - 桥梁模式: 每次更新检查主 service 是否已包含这些变量，是则自动删除 drop-in
 ```
 
 **关于 Bonjour**：OrbStack 环境下，macOS 的 mDNSResponder 会与 Gateway 的 Bonjour 服务冲突，

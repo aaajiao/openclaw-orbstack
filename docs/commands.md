@@ -123,11 +123,14 @@ openclaw status --deep             # 探测所有频道
 openclaw status --usage            # 模型使用量/配额
 openclaw status --json             # JSON 格式输出
 
-openclaw doctor                    # 健康检查 + 快速修复
-openclaw doctor --repair           # 自动修复 (备份到 .bak 后清理未知字段)
-openclaw doctor --fix              # --repair 的别名
-openclaw doctor --deep             # 深度扫描系统服务
-openclaw doctor --non-interactive  # 无人值守模式 (跳过 OAuth 等交互提示)
+openclaw doctor                    # 健康检查 + 报告问题 (不自动修复)
+openclaw doctor --fix              # 自动修复: config 迁移、systemd 修复、plugin 依赖、stale lock 清理
+openclaw doctor --repair           # --fix 的别名
+openclaw doctor --force            # 与 --fix/--repair 组合: 覆盖自定义 supervisor 配置
+openclaw doctor --deep             # 深度扫描系统服务 (launchd/systemd/schtasks)
+openclaw doctor --non-interactive  # 无人值守: 仅安全迁移，跳过需确认的操作 (重启/服务/沙箱)
+openclaw doctor --yes              # 接受默认值，跳过交互提示
+openclaw doctor --generate-gateway-token  # 生成 Gateway 认证 token (仅当未配置时)
 
 openclaw health                    # Gateway 健康状态
 openclaw health --json             # JSON 格式输出
@@ -681,10 +684,12 @@ orb import -n openclaw-vm backup.tar.zst # 从快照恢复 VM
 
 这些环境变量已在 systemd 服务中配置：
 
-| 变量 | 用途 | 默认值 |
-|------|------|--------|
-| `OPENCLAW_DISABLE_BONJOUR` | 禁用 Bonjour/mDNS 广播 | `1` (已启用) |
-| `NODE_ENV` | Node.js 环境 | `production` |
+| 变量 | 用途 | 配置位置 |
+|------|------|----------|
+| `OPENCLAW_DISABLE_BONJOUR` | 禁用 Bonjour/mDNS 广播 | 主 service (`onboard` 设置) |
+| `NODE_ENV` | Node.js 环境 | 主 service (`onboard` 设置) |
+| `NODE_COMPILE_CACHE` | Node 编译缓存，加速重复启动 | drop-in (`openclaw-orbstack.conf`) |
+| `OPENCLAW_NO_RESPAWN` | 跳过 self-respawn，减少启动开销 | drop-in (`openclaw-orbstack.conf`) |
 
 ### OpenClaw 路径环境变量
 

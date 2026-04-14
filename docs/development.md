@@ -88,7 +88,7 @@ fi
 
 无论安装方式如何，git checkout (`~/openclaw`) 始终保留在目标 tag，因为沙箱 Docker 镜像从 repo 的 Dockerfile 构建。
 
-更新完成后会运行 `openclaw doctor --fix`，确保 systemd service 入口路径与当前安装方式一致。
+更新完成后会运行 `openclaw doctor --fix`，确保 systemd service 入口路径与当前安装方式一致，并安装 bundled plugin 依赖。
 
 ## 开发命令
 
