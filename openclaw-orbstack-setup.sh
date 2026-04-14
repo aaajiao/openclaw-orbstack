@@ -270,7 +270,8 @@ info "$(printf "$MSG_PKG_INSTALL_VERSION" "$NPM_VERSION")"
 NPM_OK=false
 if vm_exec "sudo npm install -g openclaw@$NPM_VERSION"; then
     # Verify package completeness (e.g. npm tarball may ship without dist/control-ui/)
-    if vm_exec "test -f \$(npm root -g)/openclaw/dist/entry.js && test -d \$(npm root -g)/openclaw/dist/control-ui && test -d \$(npm root -g)/openclaw/dist/extensions"; then
+    # v2026.4.14: canonical entrypoint moved from dist/entry.js to dist/index.js
+    if vm_exec "{ test -f \$(npm root -g)/openclaw/dist/index.js || test -f \$(npm root -g)/openclaw/dist/entry.js; } && test -d \$(npm root -g)/openclaw/dist/control-ui && test -d \$(npm root -g)/openclaw/dist/extensions"; then
         NPM_OK=true
         ok "$MSG_PKG_INSTALL_OK"
     else

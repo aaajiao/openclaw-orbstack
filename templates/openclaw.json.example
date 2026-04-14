@@ -208,7 +208,9 @@
         "opencode/gpt-5.3-codex": { alias: "GPT 5.3 Codex" },
         "opencode/gpt-5.4": { alias: "GPT 5.4" },
         "openai/gpt-5.4-mini": { alias: "GPT 5.4 Mini" },
-        "openai/gpt-5.4-nano": { alias: "GPT 5.4 Nano" }
+        "openai/gpt-5.4-nano": { alias: "GPT 5.4 Nano" },
+        // v2026.4.14: gpt-5.4-pro forward-compat (Codex pricing/limits pre-catalog)
+        // "openai/gpt-5.4-pro": { alias: "GPT 5.4 Pro" }
         // v2026.4.10: codex/gpt-* 路径走 Codex 托管认证 (原生线程、模型发现、压缩)
         // v2026.4.12: Codex bundled provider + plugin-owned app-server harness
         //   codex/gpt-* 使用 Codex-managed auth，openai/gpt-* 仍走常规 OpenAI 路径

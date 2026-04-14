@@ -1,7 +1,7 @@
 # CLAUDE.md - Project Guide for Claude Code
 
 **Project:** OpenClaw OrbStack — one-click OpenClaw AI chatbot deployment on macOS via OrbStack VM.
-**Version:** v2026.4.12 | **License:** MIT
+**Version:** v2026.4.14 | **License:** MIT
 
 ## Architecture
 
@@ -82,7 +82,7 @@ Architecture decisions, config structure, feature status, and operational knowle
 | Secrets (in VM) | `~/.openclaw/.env` |
 | Node.js | 24.x LTS |
 | Service | `systemctl --user` (`openclaw-gateway.service`) |
-| Gateway cmd | `node dist/entry.js gateway --port 18789` |
+| Gateway cmd | `node dist/index.js gateway --port 18789` |
 
 ## Build / Test / Run
 
