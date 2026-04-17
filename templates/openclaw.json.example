@@ -195,6 +195,9 @@
       // Anthropic 1M 上下文 Beta: params: { context1m: true }
       //   仅 API Key 模式支持，token/OAuth 不支持；>200K 按 premium 计费
       models: {
+        // v2026.4.15: Anthropic 默认已升级到 Claude Opus 4.7
+        //   (opus 别名、Claude CLI 默认、bundled image understanding 都指向 4.7)
+        // "anthropic/claude-opus-4-7": { alias: "Opus 4.7" },
         "anthropic/claude-opus-4-6": { alias: "Opus 4.6" },
         // params: { context1m: true } — 仅 API Key 模式，需要 Usage Tier 4+
         // "anthropic/claude-opus-4-6": { alias: "Opus 4.6", params: { context1m: true } },
@@ -1121,7 +1124,7 @@
       //   "inbound" - 收到语音消息时才回语音 (推荐)
       auto: "off",
 
-      // TTS 提供商: "edge" | "openai" | "elevenlabs"
+      // TTS 提供商: "edge" | "openai" | "elevenlabs" | "google" (v2026.4.15+)
       provider: "edge",
 
       // 各提供商配置 (v2026.3.28+ 新结构)
@@ -1149,6 +1152,19 @@
         // elevenlabs: {
         //   voiceId: "...",
         //   model: "eleven_multilingual_v2"
+        // }
+
+        // Google Gemini TTS (v2026.4.15+, bundled google plugin)
+        // API key 自动从以下来源读取 (按优先级):
+        //   messages.tts.providers.google.apiKey →
+        //   models.providers.google.apiKey →
+        //   GEMINI_API_KEY 环境变量 → GOOGLE_API_KEY 环境变量
+        // 30 个跨语种声线 (支持普通话), 返回 24kHz PCM / WAV (不支持 voice note)
+        // Voice: Kore(稳重) / Sulafat(暖) / Zephyr(明亮) / Leda(年轻) / Charon(权威) 等
+        // 试听: https://aistudio.google.com/apps/bundled/voice-library?showPreview=true
+        // google: {
+        //   model: "gemini-3.1-flash-tts-preview",
+        //   voiceName: "Kore"
         // }
       }
     },
@@ -1515,6 +1531,10 @@
   //   //       dreaming: {
   //   //         enabled: true,
   //   //         frequency: "0 3 * * *",        // cron 表达式 (默认每天凌晨 3 点)
+  //   //         // v2026.4.15+: storage.mode 默认从 "inline" 改为 "separate"
+  //   //         //   separate: phase 块写到 memory/dreaming/{light,rem}/YYYY-MM-DD.md
+  //   //         //   inline:   phase 块注入到每日 memory/YYYY-MM-DD.md (旧行为)
+  //   //         // storage: { mode: "separate" }
   //   //       }
   //   //     }
   //   //   }
