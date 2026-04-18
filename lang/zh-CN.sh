@@ -134,6 +134,7 @@ MSG_CMD_UPDATE_SANDBOX_NOTE="  💡 已运行的容器仍使用旧镜像，重�
 MSG_CMD_UPDATE_DOCTOR="  检查服务配置..."
 MSG_CMD_UPDATE_STARTING="  启动服务..."
 MSG_CMD_UPDATE_DONE="✅ 更新完成！"
+MSG_CMD_UPDATE_DOCTOR_LOG="💡 Doctor 日志: VM 内运行 cat ~/.openclaw/.update-doctor.log 查看"
 MSG_CMD_UPDATE_SANDBOX_HINT="💡 如需重建沙箱镜像: openclaw-update --sandbox"
 MSG_CMD_UPDATE_NPM_REINSTALL="npm 缺失，正在重新安装 Node.js 软件包..."
 MSG_CMD_UPDATE_RECOVER="  ⚠ 构建失败，正在使用上一版本重启服务..."

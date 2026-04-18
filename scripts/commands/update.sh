@@ -262,14 +262,20 @@ trap - EXIT
 
 # Ensure systemd service matches current install path (npm vs source build)
 echo "$MSG_CMD_UPDATE_DOCTOR"
+# Defensive cleanup: absorb any /root ghost state left behind by a prior bare
+# `sudo openclaw doctor --fix` (without --preserve-env=HOME) that would otherwise
+# keep re-polluting subsequent sudo runs.
+orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/systemd/user/openclaw-gateway.service* 2>/dev/null" || true
 # 1) Bundled plugin runtime deps need root for global npm prefix — run sudo FIRST
 #    to avoid non-sudo run leaving partial npm state that blocks the sudo install.
 #    --preserve-env=HOME ensures doctor reads the correct user config (~/.openclaw/)
-orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo --preserve-env=HOME openclaw doctor --fix" > /dev/null 2>&1 || true
+#    Output captured to ~/.openclaw/.update-doctor.log for post-mortem.
+orb -m "$OPENCLAW_VM_NAME" bash -lc "mkdir -p ~/.openclaw && echo '=== sudo doctor --fix (plugin deps) ===' > ~/.openclaw/.update-doctor.log && sudo --preserve-env=HOME openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 # 2) Restore file ownership in case sudo created/modified files under ~/.openclaw/
-orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/" > /dev/null 2>&1 || true
+#    or left root-owned systemd user service files under ~/.config/systemd/user/.
+orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/ 2>/dev/null; sudo chown \$(id -u):\$(id -g) ~/.config/systemd/user/openclaw-*.service* 2>/dev/null" || true
 # 3) Config migration + systemd user service fix (as regular user, after chown)
-orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw doctor --fix" > /dev/null 2>&1 || true
+orb -m "$OPENCLAW_VM_NAME" bash -lc "echo '=== doctor --fix (config migration) ===' >> ~/.openclaw/.update-doctor.log && openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 
 # --- Startup optimization drop-in (upstream recommended for VM/ARM: docs/vps.md) ---
 # Bridge pattern: if the main service already has NODE_COMPILE_CACHE, upstream has taken
@@ -297,6 +303,7 @@ OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
     bash "$OPENCLAW_REPO_DIR/scripts/refresh-mac-commands.sh" 2>/dev/null || true
 
 echo "$MSG_CMD_UPDATE_DONE"
+echo "$MSG_CMD_UPDATE_DOCTOR_LOG"
 if [ "$SANDBOX" = false ]; then
     echo "$MSG_CMD_UPDATE_SANDBOX_HINT"
 fi

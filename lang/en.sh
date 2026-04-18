@@ -134,6 +134,7 @@ MSG_CMD_UPDATE_SANDBOX_NOTE="  💡 Running containers still use old images, res
 MSG_CMD_UPDATE_DOCTOR="  Checking service configuration..."
 MSG_CMD_UPDATE_STARTING="  Starting service..."
 MSG_CMD_UPDATE_DONE="✅ Update complete!"
+MSG_CMD_UPDATE_DOCTOR_LOG="💡 Doctor output: cat ~/.openclaw/.update-doctor.log (inside VM)"
 MSG_CMD_UPDATE_SANDBOX_HINT="💡 To rebuild sandbox images: openclaw-update --sandbox"
 MSG_CMD_UPDATE_NPM_REINSTALL="npm missing, reinstalling Node.js package..."
 MSG_CMD_UPDATE_RECOVER="  ⚠ Build failed, restarting service with previous version..."
