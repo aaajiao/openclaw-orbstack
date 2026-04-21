@@ -206,7 +206,8 @@
         "opencode/gemini-3.1-pro": { alias: "Gemini 3.1 Pro" },
         "opencode/gemini-3-flash": { alias: "Gemini 3 Flash" },
         "google/gemini-3.1-flash-lite-preview": { alias: "Gemini 3.1 Flash Lite" },
-        "opencode/kimi-k2.5": { alias: "Kimi K2.5" },
+        "opencode/kimi-k2.6": { alias: "Kimi K2.6" },
+        // "opencode/kimi-k2.5": { alias: "Kimi K2.5" }, // v2026.4.20: bundled default 切换到 K2.6，K2.5 仍可用
         "opencode/gpt-5.2": { alias: "GPT 5.2" },
         "opencode/gpt-5.3-codex": { alias: "GPT 5.3 Codex" },
         "opencode/gpt-5.4": { alias: "GPT 5.4" },
@@ -1380,12 +1381,12 @@
       //   api: "openai",
       //   models: [{ id: "kilo-router", name: "Kilo Router" }]
       // },
-      // Moonshot AI / Kimi (月之暗面)
+      // Moonshot AI / Kimi (月之暗面) — v2026.4.20: bundled 默认 kimi-k2.6 (k2.5 兼容保留)
       // "moonshot": {
       //   baseUrl: "https://api.moonshot.cn/v1",
       //   apiKey: "${MOONSHOT_API_KEY}",
       //   api: "openai",
-      //   models: [{ id: "moonshot-v1-128k", name: "Moonshot v1 128K" }]
+      //   models: [{ id: "kimi-k2.6", name: "Kimi K2.6" }]
       // },
       // MiniMax (v2026.3.2+, v2026.3.28: only M2.7 retained, image-01 added)
       // "minimax": {
