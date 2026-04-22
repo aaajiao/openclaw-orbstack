@@ -173,7 +173,7 @@
       // 内置 image_generate 工具，有可用 provider API key 时自动激活
       // 回退顺序: tool call 指定 → primary → fallbacks → 已认证 provider 自动检测
       // imageGenerationModel: {
-      //   primary: "openai/gpt-image-1",
+      //   primary: "openai/gpt-image-2",
       //   fallbacks: ["google/gemini-3.1-flash-image-preview"]
       // },
 
