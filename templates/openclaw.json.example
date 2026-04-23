@@ -234,7 +234,17 @@
       // },
       
       // 默认思考级别: "off" | "low" | "high"
+      // v2026.4.22: reasoning 模型无显式默认时从 off/low 提升为 medium；此处显式 "low" 不受影响
       thinkingDefault: "low",
+
+      // GPT-5 prompt overlay (v2026.4.22+)
+      // GPT-5 系统提示词 friendly 风格开关，共享给 OpenAI/OpenRouter/OpenCode/Codex 等 GPT-5 provider
+      // 不配置则沿用 plugins.entries.openai.config.personality（fallback）
+      // promptOverlays: {
+      //   gpt5: {
+      //     personality: "default"   // "default" | "friendly"
+      //   }
+      // },
       
       // 默认详细模式: "off" | "on"
       verboseDefault: "off",
@@ -614,7 +624,7 @@
         // "+8613800138000"
       ],
       
-      // 群组设置
+      // 群组设置 (v2026.4.22+: 支持每群 systemPrompt 注入)
       groups: {
         // 所有群组的默认设置
         "*": {
@@ -623,29 +633,40 @@
         // 特定群组设置
         // "120363403215116621@g.us": {
         //   requireMention: false,
-        //   allowFrom: ["@admin"]
+        //   allowFrom: ["@admin"],
+        //   systemPrompt: "保持回答简洁"   // v2026.4.22: 每群行为指令，按轮注入
         // }
       },
-      
+
+      // DM 级 systemPrompt (v2026.4.22+)
+      // direct: {
+      //   "*": { systemPrompt: "DM 默认人设" },
+      //   "+8613800138000": { systemPrompt: "针对该用户的覆盖" }
+      // },
+
+      // 回复模式 (v2026.4.22+): "off" | "first" | "all"
+      // replyToMode: "off",    // native reply quoting
+
       // Agent 反应级别 (v2026.4.1+)
       // reactionLevel: "default",  // agent 对用户消息的 emoji 反应策略
 
       // 是否发送已读回执 (蓝勾)
       sendReadReceipts: true,
-      
+
       // 媒体大小限制 (MB)
       mediaMaxMb: 50,
-      
+
       // 消息分块限制 (字符)
       textChunkLimit: 4000,
-      
+
       // 分块模式: "length" | "newline"
       chunkMode: "length"
-      
-      // 多账户配置 (可选)
+
+      // 多账户配置 (v2026.4.22+)
+      // accounts.<id>.{groups,direct} 账号级 systemPrompt 完全替换 root map（不深合并）
       // accounts: {
-      //   default: {},
-      //   business: {}
+      //   default: { groups: { "*": { systemPrompt: "..." } } },
+      //   business: { direct: { "*": { systemPrompt: "..." } } }
       // }
     },
     
@@ -783,6 +804,11 @@
       // 自动线程命名 (v2026.3.24+)
       // 设为 "generated" 时用 LLM 自动生成简短线程标题，默认使用消息内容命名
       // autoThreadName: "generated",
+
+      // 自动建线程的父频道 transcript 继承 (v2026.4.22+, 默认 false)
+      // thread: {
+      //   inheritParent: false   // true = 新线程继承父频道历史（显式 opt-in）
+      // },
 
       // 服务器设置
       guilds: {

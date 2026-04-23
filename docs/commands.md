@@ -122,6 +122,8 @@ openclaw status --all              # 完整诊断 (可粘贴)
 openclaw status --deep             # 探测所有频道
 openclaw status --usage            # 模型使用量/配额
 openclaw status --json             # JSON 格式输出
+# v2026.4.22: /status 新增 `Runner:` 字段 (embedded pi / CLI-backed / ACP harness
+# 如 codex (acp/acpx) / gemini (acp/acpx))；fast mode 启用时显示 `Fast` 字段
 
 openclaw doctor                    # 健康检查 + 报告问题 (不自动修复)
 openclaw doctor --fix              # 自动修复: config 迁移、systemd 修复、plugin 依赖、stale lock 清理
@@ -244,6 +246,10 @@ openclaw models set <model>        # 设置默认模型
 openclaw models set-image <model>  # 设置图像模型
 openclaw models scan               # 扫描 OpenRouter 免费模型
 
+# 聊天命令 (v2026.4.22+)
+# /models                          # 浏览已配置 provider
+# /models add <provider> <modelId> # 运行时注册模型，无需重启 Gateway
+
 # 别名
 openclaw models aliases list
 openclaw models aliases add <alias> <model>
@@ -321,6 +327,8 @@ openclaw configure                 # 配置向导
 openclaw config file               # 显示当前配置文件路径
 openclaw config get <path>         # 获取配置值
 openclaw config set <path> <value> # 设置配置值
+openclaw config set --merge <path> <json>  # v2026.4.22+: 合并到 map/list (provider-scoped 默认行为)
+openclaw config set --replace <path> <json> # v2026.4.22+: 完全替换 map/list (显式 clobber)
 openclaw config unset <path>       # 删除配置值
 openclaw config schema             # 导出 JSON Schema (含标题和描述, v2026.4.5 enriched)
 ```
