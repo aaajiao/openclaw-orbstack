@@ -273,7 +273,11 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 orb -m "$OPENCLAW_VM_NAME" bash -lc "mkdir -p ~/.openclaw && echo '=== sudo doctor --fix (plugin deps) ===' > ~/.openclaw/.update-doctor.log && sudo --preserve-env=HOME openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 # 2) Restore file ownership in case sudo created/modified files under ~/.openclaw/
 #    or left root-owned systemd user service files under ~/.config/systemd/user/.
-orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/ 2>/dev/null; sudo chown \$(id -u):\$(id -g) ~/.config/systemd/user/openclaw-*.service* 2>/dev/null" || true
+#    ~/.npm/ MUST be chowned too: with --preserve-env=HOME, sudo npm writes into
+#    user's ~/.npm/_cacache/ as root, which blocks any later non-root npm call
+#    (npm 7+ safety check → EACCES). Surfaced by 4.23's merged 17-pkg plugin
+#    runtime deps install (2026-04-24, Node 24 on Ubuntu 24).
+orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/ ~/.npm/ 2>/dev/null; sudo chown \$(id -u):\$(id -g) ~/.config/systemd/user/openclaw-*.service* 2>/dev/null" || true
 # 3) Config migration + systemd user service fix (as regular user, after chown)
 orb -m "$OPENCLAW_VM_NAME" bash -lc "echo '=== doctor --fix (config migration) ===' >> ~/.openclaw/.update-doctor.log && openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 
