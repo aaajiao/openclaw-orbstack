@@ -172,6 +172,10 @@
       // 图片生成模型 (v2026.3.22+)
       // 内置 image_generate 工具，有可用 provider API key 时自动激活
       // 回退顺序: tool call 指定 → primary → fallbacks → 已认证 provider 自动检测
+      // v2026.4.23 (#70703): `openai/gpt-image-2` 现在支持 Codex OAuth 路由，
+      //   配置了 `openai-codex:*` auth profile 即自动走该路径，无需 OPENAI_API_KEY
+      // v2026.4.23: image_generate 工具新增 per-call hints (quality/format/background/
+      //   moderation/compression/user/timeoutMs)，通过 agent tool call 参数传递，不在此处配置
       // imageGenerationModel: {
       //   primary: "openai/gpt-image-2",
       //   fallbacks: ["google/gemini-3.1-flash-image-preview"]
@@ -219,6 +223,12 @@
         // v2026.4.12: Codex bundled provider + plugin-owned app-server harness
         //   codex/gpt-* 使用 Codex-managed auth，openai/gpt-* 仍走常规 OpenAI 路径
         // "codex/gpt-5.4": { alias: "GPT 5.4 (Codex)" }
+        // v2026.4.23: GPT-5.5 bundled via Pi 0.70.0 (OpenAI + OpenAI Codex 两条路径都可)
+        //   ⚠️ GPT-5.5 上下文 400k (vs GPT-5.4 的 1M)，显式设 params.contextTokens 防 overflow
+        // "openai-codex/gpt-5.5": {
+        //   alias: "Codex GPT 5.5",
+        //   params: { contextTokens: 400000 }
+        // }
       },
 
       // ========== Fast Mode (v2026.3.12+) ==========
@@ -336,6 +346,11 @@
         // provider: "auto",  // "auto" | "openai" | "gemini" | "local" | "ollama"
         // auto 模式会按顺序尝试: local → openai → gemini
         // 如果没有可用的 embedding provider，memory search 会被静默禁用
+        //
+        // 本地 embedding 上下文大小 (v2026.4.23+, #70544)
+        // local: {
+        //   contextSize: 4096  // 默认 4096，受限宿主可调低；拉高会提升 recall 质量但耗内存
+        // },
         sources: ["memory", "sessions"],
         experimental: {
           sessionMemory: true   // 索引会话记录

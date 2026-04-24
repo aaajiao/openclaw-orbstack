@@ -342,6 +342,10 @@ openclaw config validate --json    # JSON 格式输出，适用于 CI/CD 集成
 
 检查 `openclaw.json` 的语法错误、未知字段、类型不匹配等问题。
 
+#### doctor --fix 迁移 (v2026.4.23+)
+
+升级到 v2026.4.23 后**推荐跑一次** `openclaw doctor --fix`：会把旧的 main-session dreaming cron job 迁移到新的 isolated lightweight agent turn 形态（#70737 解耦的配套迁移）。不跑的话旧 cron 条目会被标记 stale 但仍按新路径执行，不影响功能。
+
 ### 浏览器控制
 
 ```bash
@@ -661,6 +665,10 @@ openclaw --help                    # 帮助
 `acp`, `approvals`, `clawbot`, `daemon`, `exec-policy`, `flows`, `infer`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tasks`, `tui`, `voicecall`
 
 运行 `openclaw <command> --help` 查看详情。
+
+#### sessions_spawn forkedContext (v2026.4.23+)
+
+Agent 通过 `sessions_spawn` 原生工具派生子 session 时，可选 `forkedContext: true` 让子 agent 继承 requester 的 transcript（非默认）。适合需要共享上下文的协作子任务；默认仍是 clean isolated，避免上下文污染。
 
 ---
 
