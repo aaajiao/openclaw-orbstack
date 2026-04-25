@@ -248,7 +248,9 @@ openclaw models scan               # 扫描 OpenRouter 免费模型
 
 # 聊天命令 (v2026.4.22+)
 # /models                          # 浏览已配置 provider
-# /models add <provider> <modelId> # 运行时注册模型，无需重启 Gateway
+# /models add <provider> <modelId> # ⚠️ v2026.4.24 起已废弃 (#71175)
+#                                  # 调用会返回 deprecation message，不再写入配置
+#                                  # provider 菜单也移除了 add 选项
 
 # 别名
 openclaw models aliases list
@@ -364,10 +366,12 @@ openclaw browser focus             # 激活标签页
 # 检查
 openclaw browser screenshot        # 截图
 openclaw browser snapshot          # 捕获 DOM 状态
+openclaw browser doctor            # v2026.4.24+: 浏览器就绪诊断 (managed Chromium 启动前置检查)
 
 # 交互
 openclaw browser navigate <url>    # 导航到 URL
 openclaw browser click             # 点击元素
+openclaw browser click-coords      # v2026.4.24+: 视口坐标点击 (#54452, managed + existing-session)
 openclaw browser type              # 输入文本
 openclaw browser press             # 按键
 openclaw browser hover             # 悬停
@@ -382,6 +386,9 @@ openclaw browser profiles          # 列出配置文件
 openclaw browser create-profile    # 创建配置文件
 openclaw browser delete-profile    # 删除配置文件
 ```
+
+> v2026.4.24+ 默认 `actionTimeoutMs: 60000` (60s)，避免长浏览器等待在客户端边界过早超时。
+> 配置项: `browser.actionTimeoutMs`，per-profile 可覆盖 `browser.profiles.<name>.headless`。
 
 ### 定时任务
 
@@ -605,6 +612,31 @@ openclaw infer web                 # Web 搜索
 openclaw infer embedding           # 嵌入向量
 ```
 
+### Voice Call (v2026.4.24+)
+
+```bash
+openclaw voicecall setup           # 初始化 Voice Call 配置
+openclaw voicecall smoke           # dry-run 默认的就绪冒烟测试 (Twilio/provider)
+```
+
+> v4.24 新增 `openclaw_agent_consult` realtime 工具，电话中的 AI 可以问"全 OpenClaw agent" 拿更深入答案。
+
+### Matrix 验证 (v2026.4.24+)
+
+```bash
+openclaw matrix verify self        # 在 CLI 端建立 self-device 的 cross-signing 信任 (#70401)
+openclaw matrix verify status      # 查看 verify 状态
+```
+
+### Google Meet (v2026.4.24+)
+
+```bash
+openclaw googlemeet doctor --oauth # OAuth + 浏览器状态诊断
+openclaw googlemeet recover-tab    # 接管已开的 Meet tab，避免重复打开
+```
+
+> 需要个人 Google OAuth；支持 Chrome 与 Twilio realtime + paired-node Chrome；可导出会议记录、转写、smart notes、参与者会话。
+
 ### 备份管理 (v2026.3.8+)
 
 ```bash
@@ -662,7 +694,7 @@ openclaw --help                    # 帮助
 
 以下命令主要用于开发和系统集成，一般用户无需使用：
 
-`acp`, `approvals`, `clawbot`, `daemon`, `exec-policy`, `flows`, `infer`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tasks`, `tui`, `voicecall`
+`acp`, `approvals`, `clawbot`, `daemon`, `exec-policy`, `flows`, `infer`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tasks`, `tui`
 
 运行 `openclaw <command> --help` 查看详情。
 

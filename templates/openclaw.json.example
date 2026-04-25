@@ -437,6 +437,10 @@
         // postCompactionSections: ["Session Startup", "Red Lines"],
         // 压缩质量保护：保留最近 N 轮对话不被压缩 (v2026.3.7+)
         // recentTurnsPreserve: 3,
+        // 手动 /compact 时保留最近 N tokens 不压缩 (v2026.4.24+, #71357)
+        // 与 recentTurnsPreserve 互补：前者按轮，这个按 token
+        // safeguard 模式下也会重新 distill 摘要而不是叠加之前的摘要
+        // keepRecentTokens: 8000,
         // 压缩后重新索引记忆 (v2026.3.12–v2026.4.8, v2026.4.9 移除)
         // postIndexSync 已废弃 — 记忆索引现在自动管理
         // 压缩摘要自定义指令 (v2026.3.13+)
@@ -594,6 +598,9 @@
       //   name: "公共助手",
       //   workspace: "~/.openclaw/workspace-public",
       //   model: { primary: "anthropic/claude-haiku-4-5" },
+      //   // Per-agent 上下文窗口覆盖 (v2026.4.24+, #70692)
+      //   // 让 /status 显示真实窗口而不是 200k fallback
+      //   // contextTokens: 200000,
       //   // 每个 Agent 的运行时参数 (v2026.3.13+ config validate 支持)
       //   // params: {
       //   //   temperature: 0.7,
@@ -739,7 +746,12 @@
       streaming: {
         mode: "partial",
         // chunkMode: "word",              // 分块模式 (可选)
-        // preview: { chunk: true },       // 预览分块 (可选)
+        // preview: {
+        //   chunk: true,                  // 预览分块 (可选)
+        //   // 工具调用进度行 (v2026.4.24+, 默认 true 与发布行为一致)
+        //   // 设 false 可关闭"Working on..."类状态行，仅保留 chunk 流
+        //   toolProgress: true
+        // },
         // block: {                        // block 模式配置 (可选)
         //   enabled: false,
         //   coalesce: true
@@ -1626,6 +1638,10 @@
     // extraArgs: ["--disable-gpu", "--no-sandbox"],
     // 更多选项见官方文档: https://docs.openclaw.ai/tools/browser
 
+    // 浏览器动作超时 (v2026.4.24+, 默认 60000ms)
+    // 给较长的健康浏览器等待留出预算，避免在客户端传输边界过早超时
+    // actionTimeoutMs: 60000,
+
     // 浏览器配置文件 (v2026.3.13+)
     // defaultProfile: "openclaw",  // 默认使用的 profile: "openclaw" | "user" | "chrome-relay"
     // profiles: {
@@ -1639,6 +1655,11 @@
     //   // "brave": {
     //   //   driver: "existing-session",
     //   //   userDataDir: "/path/to/BraveSoftware/Brave-Browser/User Data"
+    //   // },
+    //   // Per-profile headless 覆盖 (v2026.4.24+)
+    //   // 让一个 profile 单独 headless 运行，不强制其他 profile 也 headless
+    //   // "headless-job": {
+    //   //   headless: true,
     //   // },
     // }
   }
