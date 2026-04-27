@@ -1178,7 +1178,16 @@
       //   "inbound" - 收到语音消息时才回语音 (推荐)
       auto: "off",
 
-      // TTS 提供商: "edge" | "openai" | "elevenlabs" | "google" (v2026.4.15+)
+      // TTS 提供商:
+      //   "edge" | "openai" | "elevenlabs" (含 eleven_v3, v4.25+) | "google" (v4.15+)
+      //   v2026.4.25+ 新增 bundled providers:
+      //     "azure-speech"  - Azure Speech (SSML, Ogg/Opus voice-note, 电话 PCM)
+      //     "xiaomi-mimo"   - 小米 MiMo (MP3/WAV + Opus 转码)
+      //     "local-cli"     - 本地命令行 TTS (file/stdout, voice-note Opus, 电话 PCM)
+      //     "inworld"       - Inworld (streaming + voice list + voice-note + PCM)
+      //     "volcengine"    - 火山引擎/BytePlus Seed Speech (Ogg/Opus + MP3)
+      // 注：agents.list[].tts 可覆盖全局；channels.<channel>.accounts.<id>.tts
+      // 可深度合并到全局 + per-agent 配置之上 (v4.25 Feishu/QQBot 等支持)
       provider: "edge",
 
       // 各提供商配置 (v2026.3.28+ 新结构)

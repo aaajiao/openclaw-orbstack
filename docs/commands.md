@@ -348,12 +348,21 @@ openclaw config validate --json    # JSON 格式输出，适用于 CI/CD 集成
 
 升级到 v2026.4.23 后**推荐跑一次** `openclaw doctor --fix`：会把旧的 main-session dreaming cron job 迁移到新的 isolated lightweight agent turn 形态（#70737 解耦的配套迁移）。不跑的话旧 cron 条目会被标记 stale 但仍按新路径执行，不影响功能。
 
+#### doctor --fix 迁移 (v2026.4.25+)
+
+升级到 v2026.4.25 后**强烈推荐再跑一次** `openclaw doctor --fix`：
+
+1. **修复 #71761 transcript 污染**：v2026.4.24 的 embedded runtime context 会以可见 user prompt 写入会话，doctor 会自动检测并合并这些被复制的 prompt-rewrite 分支。
+2. **`agentRuntime.id` 字段迁移**：旧的 runtime-policy 配置自动迁移到 canonical `agentRuntime.id`（#71957）。
+3. **冷注册表迁移**：`plugins/installs.json` 取代 `plugins/installed-index.json`，doctor 会刷新冷注册表索引。
+
 ### 浏览器控制
 
 ```bash
 # 管理
 openclaw browser status            # 浏览器状态
 openclaw browser start             # 启动浏览器
+openclaw browser start --headless  # v2026.4.25+: 一次性 headless 启动 (不修改持久化配置)
 openclaw browser stop              # 停止浏览器
 openclaw browser reset-profile     # 重置浏览器配置
 
@@ -367,6 +376,7 @@ openclaw browser focus             # 激活标签页
 openclaw browser screenshot        # 截图
 openclaw browser snapshot          # 捕获 DOM 状态
 openclaw browser doctor            # v2026.4.24+: 浏览器就绪诊断 (managed Chromium 启动前置检查)
+openclaw browser doctor --deep     # v2026.4.25+: 实时 snapshot 探测 + iframe-aware role / cursor-clickable 检测
 
 # 交互
 openclaw browser navigate <url>    # 导航到 URL
@@ -476,6 +486,10 @@ openclaw wiki lint                 # claim 健康检查 (矛盾检测)
 | `/active-memory on` | 当前会话开启 Active Memory |
 | `/active-memory off` | 当前会话关闭 Active Memory |
 | `/verbose on` | 显示 Active Memory 调试信息 (延迟、召回内容) |
+| `/tts latest` | v2026.4.25+: 朗读最新一条回复 (按需重读，含去重) |
+| `/tts chat on\|off\|default` | v2026.4.25+: 当前会话级 auto-TTS 覆盖 |
+| `/tts persona <name>` | v2026.4.25+: 切换声线人格 (provider-aware, 70748) |
+| `/tts audio` / `/tts status` | 上次音频 / TTS 当前状态 |
 
 配置（在 `plugins.entries.memory-core.config.dreaming` 中设置）：
 ```json5
@@ -520,7 +534,12 @@ openclaw plugins uninstall <id>    # 卸载插件
 openclaw plugins update <id>       # 更新单个插件
 openclaw plugins update --all      # 更新所有插件
 openclaw plugins doctor            # 插件诊断
+openclaw plugins registry          # v2026.4.25+: 检查持久化冷注册表 (plugins/installs.json)
+openclaw plugins registry --refresh # v2026.4.25+: 强制重建注册表 (修复 stale entries)
 ```
+
+> v2026.4.25 起插件启动改用持久化冷注册表 (`plugins/installs.json`)，普通启动不再扫描 manifest。
+> `OPENCLAW_DISABLE_PERSISTED_PLUGIN_REGISTRY` 标记为 deprecated break-glass，遇问题先跑 `plugins registry --refresh` 或 `doctor --fix`。
 
 ### 沙箱
 
@@ -610,6 +629,13 @@ openclaw infer models              # 模型推理
 openclaw infer media               # 媒体生成 (图像/视频/音乐)
 openclaw infer web                 # Web 搜索
 openclaw infer embedding           # 嵌入向量
+
+# v2026.4.25+ image 子命令通用 flags:
+openclaw infer image generate --background <transparent|opaque>  # 通用 (alias --openai-background)
+openclaw infer image generate --output-format png|jpeg           # fal/兼容 provider
+openclaw infer image edit --size <WxH>                           # 编辑尺寸
+openclaw infer image edit --aspect-ratio <比例>                  # 比例覆盖
+openclaw infer image edit --resolution <分辨率>                  # 分辨率覆盖
 ```
 
 ### Voice Call (v2026.4.24+)
