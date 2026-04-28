@@ -652,7 +652,32 @@ openclaw voicecall smoke           # dry-run 默认的就绪冒烟测试 (Twilio
 ```bash
 openclaw matrix verify self        # 在 CLI 端建立 self-device 的 cross-signing 信任 (#70401)
 openclaw matrix verify status      # 查看 verify 状态
+
+# v2026.4.26+: Matrix E2EE 一键引导
+openclaw matrix encryption setup   # 启用 Matrix 加密、bootstrap recovery、打印 verification 状态
 ```
+
+### Nodes 多主机 (v2026.4.26+)
+
+```bash
+openclaw nodes list                          # 列出 paired-node（v4.26 默认改为 effective paired-node 视图，与 nodes status 对齐）
+openclaw nodes status                        # 节点状态
+openclaw nodes remove --node <id|name|ip>    # 清理过期 paired-node 记录（无需手编 state 文件）
+```
+
+> 多 Mac/多机部署见 `memory/multi_mac_setup.md`：Mac A (Gateway) + Mac B (Node) 通过 pairing 协作。
+
+### 配置迁移 (v2026.4.26+)
+
+```bash
+openclaw migrate                             # 启动迁移向导
+openclaw migrate --plan                      # 仅打印迁移计划
+openclaw migrate --dry-run                   # 模拟运行，不写入
+openclaw migrate --json                      # 机器可读输出
+openclaw migrate --backup                    # 迁移前自动备份
+```
+
+> bundled 导入器：**Claude Code/Desktop**（指令、MCP servers、skills、command prompts、archive/manual-review state）+ **Hermes**（NousResearch 的 config/memory/plugin hints/model providers/MCP servers/skills/credentials）。包含 onboarding 检测和 archive-only report 副本。
 
 ### Google Meet (v2026.4.24+)
 

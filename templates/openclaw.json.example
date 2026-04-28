@@ -441,6 +441,11 @@
         // 与 recentTurnsPreserve 互补：前者按轮，这个按 token
         // safeguard 模式下也会重新 distill 摘要而不是叠加之前的摘要
         // keepRecentTokens: 8000,
+        // JSONL transcript 字节阈值预压缩触发器 (v2026.4.26+, opt-in)
+        // 当活跃 transcript 超过此字节数，提前跑一次本地压缩并轮转 transcript
+        // 让后续轮次写入更小的 successor 文件，避免按 raw byte 切分历史
+        // 默认未设置；建议大会话/长 sessions 启用
+        // maxActiveTranscriptBytes: 10485760,  // 10 MiB
         // 压缩后重新索引记忆 (v2026.3.12–v2026.4.8, v2026.4.9 移除)
         // postIndexSync 已废弃 — 记忆索引现在自动管理
         // 压缩摘要自定义指令 (v2026.3.13+)
@@ -1598,6 +1603,9 @@
   //   //         //   separate: phase 块写到 memory/dreaming/{light,rem}/YYYY-MM-DD.md
   //   //         //   inline:   phase 块注入到每日 memory/YYYY-MM-DD.md (旧行为)
   //   //         // storage: { mode: "separate" }
+  //   //         // v2026.4.26+: Dream Diary 叙事子代理 model 覆盖 (refs #65963)
+  //   //         //   走 plugin subagent model-override trust gate
+  //   //         // model: "openai-codex/gpt-5.4"
   //   //       }
   //   //     }
   //   //   }
