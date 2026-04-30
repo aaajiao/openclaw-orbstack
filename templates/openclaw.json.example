@@ -323,6 +323,17 @@
       //   directPolicy: "allow",     // "allow" - 允许投递到私聊 | "block" - 只投递到群组/频道
       //   // 心跳 Agent 超时 (v2026.4.10+)
       //   // timeoutSeconds: 300,    // 默认继承 agents.defaults.timeoutSeconds
+      //   // v2026.4.29+: cron / 子代理 lane 占用时跳过 heartbeat (#50773, opt-in)
+      //   // 不推进调度，下次到点再判断；本地 Ollama 等单 GPU 主机有用
+      //   // skipWhenBusy: false,
+      // },
+
+      // ========== 跟进承诺 (v2026.4.29+, opt-in) ==========
+      // commitments: 隐式抽取代理"我会跟进 X" 类承诺，按 heartbeat 节奏发提醒 (#74189)
+      // 默认关闭；启用后每代理/每频道独立 scoping，会过滤掉立即 echo 的伪承诺
+      // commitments: {
+      //   enabled: false,
+      //   maxPerDay: 5
       // },
 
       // ========== 子代理配置 ==========
@@ -407,6 +418,12 @@
         // 允许当前 Agent 搜索其他 Agent 的会话记录（QMD 后端）
         // qmd: {
         //   extraCollections: ["other-agent-id"]
+        //   // v2026.4.29+: QMD 启动时刷新改为 opt-in
+        //   // 默认 Gateway 冷启动不再 import / 初始化 QMD（节省启动 RSS）
+        //   // 我们 QMD 因 ARM64 segfault BLOCKED，保持默认 false 即可，无需改
+        //   // update: {
+        //   //   startup: false,    // true 才在启动时刷新；正常文件 watch 不受影响
+        //   // },
         // },
         // 额外索引目录
         // extraPaths: ["docs", "assets/diagrams"],
@@ -1075,12 +1092,17 @@
     // ⚠️ v2026.4.2 Breaking: xAI x_search 已迁移到 plugins.entries.xai.config.xSearch
     // 旧路径 (tools.web.fetch.firecrawl / tools.web.x_search) 不再生效
     // 运行 `openclaw doctor --fix` 自动迁移
+    // 注意 (v2026.4.29+ #74896): credential-free `tools.web.fetch` 配置块存在时，
+    //   Gateway 启动期不再 pre-bind 做 web-fetch provider 发现 — Docker/K8s 安装可放心保留
     // web: {
     //   fetch: {
     //     readability: true,      // Readability 主内容提取 (默认开启)
     //     // SSRF 策略 (v2026.4.10+)
     //     // ssrfPolicy: {
     //     //   allowRfc2544BenchmarkRange: false,  // 允许 198.18.0.0/15 (fake-IP 代理环境)
+    //     //   // v2026.4.29+ (#74351): 允许 IPv6 ULA `fc00::/7`（trusted fake-IP 代理栈）
+    //     //   // 走 cache key + DNS/IP 检查，无需打开整个 private-network 范围
+    //     //   // allowIpv6UniqueLocalRange: false,
     //     // },
     //   },
     // },
@@ -1157,7 +1179,17 @@
     // 消息前缀 (可选)
     // messagePrefix: "[openclaw]",
     // responsePrefix: ">",
-    
+
+    // v2026.4.29+: active-run 插队消息默认改为 "steer" (之前是 "queue")
+    // - "steer": 收到新 prompt 时在下个 model boundary 一次 drain 全部 pending steering（500ms followup debounce）
+    // - "queue": 旧行为，一次只发一条；如需保留旧行为显式设回
+    // queueMode: "steer",
+
+    // v2026.4.29+: 全局 visible-reply enforcement (#74868 同源)
+    // 开启后任何 source chat 的可见输出都必须走 message(action=send)
+    // 群聊覆盖仍走 messages.groupChat.visibleReplies
+    // visibleReplies: "automatic",   // "automatic" | "message_tool"
+
     // 收到消息时的反应 emoji
     ackReaction: "👀",
     ackReactionScope: "all",  // "all" | "group-mentions" | "none"
@@ -1311,12 +1343,17 @@
   gateway: {
     // 模式: "local" | "remote"
     mode: "local",
-    
+
     // 监听端口
     port: 18789,
-    
+
     // 绑定地址: "loopback" | "tailnet" | "0.0.0.0"
     bind: "loopback",
+
+    // v2026.4.29+: WebSocket 握手超时（#51282/#73592/#73652）
+    // 之前只能用 OPENCLAW_HANDSHAKE_TIMEOUT_MS env，env 仍优先
+    // 慢主机/重负载时可拉长，避免 cold CLI 启动被 close
+    // handshakeTimeoutMs: 15000,
     
     // 控制面板 UI
     controlUi: {
@@ -1617,6 +1654,12 @@
   //   //     config: {
   //   //       mode: "recent",       // "message" | "recent" | "full"
   //   //       // 高级: prompt/thinking 覆盖、transcript 持久化等
+  //   //       // v2026.4.29+ (#67977): per-conversation 过滤
+  //   //       //   只对指定 chat 启用 recall，其余 broad session 跳过
+  //   //       // allowedChatIds: ["telegram:peer:123", "discord:guild:456:channel:789"],
+  //   //       // deniedChatIds: ["whatsapp:peer:noisy-group@g.us"],
+  //   //       // v2026.4.29+ (#73219): hidden recall 子代理超时返回 bounded 部分摘要
+  //   //       //   default temporary-transcript path 也走，避免有用上下文被丢
   //   //     }
   //   //   },
   //   //   // ========== 记忆梦境 (实验性, v2026.4.5+) ==========

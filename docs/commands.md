@@ -540,7 +540,11 @@ openclaw plugins update --all      # 更新所有插件
 openclaw plugins doctor            # 插件诊断
 openclaw plugins registry          # v2026.4.25+: 检查持久化冷注册表 (plugins/installs.json)
 openclaw plugins registry --refresh # v2026.4.25+: 强制重建注册表 (修复 stale entries)
+openclaw plugins deps              # v2026.4.29+: 检查 bundled 插件 runtime 依赖（不阻塞 doctor）
+openclaw plugins deps --repair     # v2026.4.29+: 修复缺失/破损的 bundled runtime deps
 ```
+
+> v2026.4.29 引入独立 `plugins deps` inspect/repair，专门处理 bundled 插件 runtime-deps tarball；v4.27 缺 chokidar/sqlite-vec/ajv 类问题主要靠这条命令排查。打包路径走 script-free package-manager 默认值，不破坏 JSON 输出，也不阻塞无冲突的其他依赖。
 
 > v2026.4.25 起插件启动改用持久化冷注册表 (`plugins/installs.json`)，普通启动不再扫描 manifest。
 > `OPENCLAW_DISABLE_PERSISTED_PLUGIN_REGISTRY` 标记为 deprecated break-glass，遇问题先跑 `plugins registry --refresh` 或 `doctor --fix`。
