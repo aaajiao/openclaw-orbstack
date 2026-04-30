@@ -52,7 +52,10 @@ echo "$MSG_CMD_UPDATE_UPDATING"
 
 # Fetch tags before stopping gateway to check if update is needed
 echo "$MSG_CMD_UPDATE_PULLING"
-orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git fetch --tags --force"
+# --prune is required: upstream openclaw has many force-pushed and renamed branches
+# (e.g. clawsweeper/* automerge bots), which create refname conflicts on plain fetch.
+# Without --prune, fetch fails with "some local refs could not be updated".
+orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git remote prune origin && git fetch --prune --tags --force"
 LATEST_TAG=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
 if [ -z "$LATEST_TAG" ]; then
     echo "$MSG_ERR_NO_VERSION"
