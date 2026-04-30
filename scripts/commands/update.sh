@@ -273,7 +273,13 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 #    to avoid non-sudo run leaving partial npm state that blocks the sudo install.
 #    --preserve-env=HOME ensures doctor reads the correct user config (~/.openclaw/)
 #    Output captured to ~/.openclaw/.update-doctor.log for post-mortem.
-orb -m "$OPENCLAW_VM_NAME" bash -lc "mkdir -p ~/.openclaw && echo '=== sudo doctor --fix (plugin deps) ===' > ~/.openclaw/.update-doctor.log && sudo --preserve-env=HOME openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
+#    `yes n` keeps doctor non-interactive: v2026.4.29 #73106 added an interactive
+#    "Archive N orphan transcripts?" confirm. With redirected stdin, @clack/prompts
+#    sees EOF and triggers `Setup cancelled`, which skips state migration + systemd
+#    service file repair + security audit. Feeding "n" answers conservatively
+#    (preserve transcripts) and lets doctor finish its remaining work; users can
+#    archive transcripts later via interactive `openclaw doctor --fix`.
+orb -m "$OPENCLAW_VM_NAME" bash -lc "mkdir -p ~/.openclaw && echo '=== sudo doctor --fix (plugin deps) ===' > ~/.openclaw/.update-doctor.log && yes n | sudo --preserve-env=HOME openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 # 2) Restore file ownership in case sudo created/modified files under ~/.openclaw/
 #    or left root-owned systemd user service files under ~/.config/systemd/user/.
 #    ~/.npm/ MUST be chowned too: with --preserve-env=HOME, sudo npm writes into
@@ -281,8 +287,10 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "mkdir -p ~/.openclaw && echo '=== sudo doct
 #    (npm 7+ safety check → EACCES). Surfaced by 4.23's merged 17-pkg plugin
 #    runtime deps install (2026-04-24, Node 24 on Ubuntu 24).
 orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/ ~/.npm/ 2>/dev/null; sudo chown \$(id -u):\$(id -g) ~/.config/systemd/user/openclaw-*.service* 2>/dev/null" || true
-# 3) Config migration + systemd user service fix (as regular user, after chown)
-orb -m "$OPENCLAW_VM_NAME" bash -lc "echo '=== doctor --fix (config migration) ===' >> ~/.openclaw/.update-doctor.log && openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
+# 3) Config migration + systemd user service fix (as regular user, after chown).
+#    Same `yes n` rationale as above — keeps the @clack/prompts orphan-archive
+#    confirm from cancelling the whole doctor pass.
+orb -m "$OPENCLAW_VM_NAME" bash -lc "echo '=== doctor --fix (config migration) ===' >> ~/.openclaw/.update-doctor.log && yes n | openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 
 # --- Startup optimization drop-in (upstream recommended for VM/ARM: docs/vps.md) ---
 # Bridge pattern: if the main service already has NODE_COMPILE_CACHE, upstream has taken
@@ -311,6 +319,7 @@ OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
 
 echo "$MSG_CMD_UPDATE_DONE"
 echo "$MSG_CMD_UPDATE_DOCTOR_LOG"
+echo "$MSG_CMD_UPDATE_DOCTOR_ORPHAN_HINT"
 if [ "$SANDBOX" = false ]; then
     echo "$MSG_CMD_UPDATE_SANDBOX_HINT"
 fi
