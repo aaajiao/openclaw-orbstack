@@ -59,10 +59,56 @@ Step 3 — it tells you which of our files to inspect:
 | New install dependencies | `openclaw-orbstack-setup.sh` (dependency install steps) |
 | New channels or providers | `docs/`, Docs Snapshot in memory |
 | New experimental features | `templates/openclaw.json.example` (config), `docs/commands.md` (commands) |
+| **Doctor / wrapper-impacting CLI behavior** | **`scripts/commands/update.sh`** (verify non-interactive flow still completes), `lang/*.sh` (hint messages) |
 | Bug fixes only | Usually just a version bump — no structural changes needed |
 
 **Docs Snapshot location**: The Docs Snapshot lives in auto-memory (`memory/MEMORY.md`),
 not in `CLAUDE.md`. Update it when providers, channels, or major features change.
+
+### Doctor / non-interactive flow scan (mandatory)
+
+`scripts/commands/update.sh` runs `openclaw doctor --fix` **twice** (sudo for plugin
+deps, then non-sudo for config migration) with stdin redirected to a log file.
+Any upstream change that introduces new interactive prompts can silently break
+the entire post-install flow — `@clack/prompts` treats redirected-stdin EOF as
+`Setup cancelled` and skips all subsequent doctor steps (state migration, systemd
+service repair, security audit).
+
+**While reading release notes, flag any line matching these patterns** (case-insensitive):
+
+- `doctor` + (`interactive` | `confirm` | `prompt` | `Yes/No` | `require ... confirmation`)
+- `@clack/prompts` | `clack` (the prompt library)
+- `Setup cancelled` | `Setup canceled`
+- `--non-interactive` | `--yes` | `--assume-yes` (if upstream adds these as opt-out flags, we can drop our `yes n` workaround)
+- `doctor --fix` behavior changes
+- `archive` / `migrate` / `repair` paired with "ask" / "prompt"
+
+**For each flagged change, perform an explicit verification step in Step 3:**
+
+1. **Read `scripts/commands/update.sh`** lines around the two doctor invocations
+   (currently pipe `yes n |` for non-interactive answer).
+2. **Classify the new prompt type:**
+   - **Yes/No confirm** — `yes n` answers "No". Verify "No" is the **safe / non-destructive** default
+     (e.g., "Archive orphan transcripts? No" → preserves files, ✅ safe). If "No"
+     is destructive ("Delete corrupted lock?" → Yes is required), the wrapper needs
+     to answer differently or fall back.
+   - **Select / multi-choice** — `yes n` does NOT match a list option. Plan a
+     wrapper fix: `expect` script, a `printf "1\n"`-style answer, or wait for an
+     upstream `--non-interactive` flag.
+   - **Free-text input** — `yes n` will inject "n" as the answer. Almost always wrong.
+     Plan a wrapper fix.
+3. **Add the doctor change to the impact table** with explicit "verify
+   `scripts/commands/update.sh:276` and `:285` still complete" in the action column,
+   even if no other file needs touching. Treat it as a blocker until verified.
+4. **If a wrapper fix is needed**, list it as a separate impact-table row so the
+   user can approve the script change alongside the version bump.
+
+**Reference incident**: v2026.4.29 #73106 added the
+`Archive N orphan transcript files?` confirm. Our update.sh hit `Setup cancelled`
+right after plugin registry refresh, leaving systemd service repair on the floor.
+Fixed in commit `33434d7` by piping `yes n` to both doctor invocations. Whenever
+release notes mention doctor + interactivity, **assume the same regression class
+until proven otherwise**.
 
 ## Step 3 — Impact analysis
 
@@ -80,6 +126,10 @@ Use Grep and Read to find the specific locations. For example:
   any model config sections (e.g., `videoGenerationModel`, `musicGenerationModel`).
 - A removed feature → grep across docs and templates to find stale references.
 - A version bump → read `VERSION` and grep `CLAUDE.md` for the version string.
+- **A doctor / interactive-prompt change** → read `scripts/commands/update.sh:266-285`
+  and verify the existing `yes n |` pipe still answers safely (see the "Doctor /
+  non-interactive flow scan" section above). If a new prompt type (select,
+  free-text) would break the pipe, propose a wrapper fix as a separate impact-table row.
 
 Present a numbered table so the user can cherry-pick:
 
@@ -132,6 +182,11 @@ Also validate any other shell scripts that were modified (e.g., files in `script
 
 If validation fails, fix the issue before proceeding. Don't ask the user to fix
 lint errors introduced by this sync.
+
+**If this sync touched doctor / non-interactive flow**, also remind the user that
+post-upgrade verification means checking `~/.openclaw/.update-doctor.log` for
+`Setup cancelled` lines. A clean log = doctor finished all passes. Any
+`Setup cancelled` = a new interactive prompt slipped past our checks.
 
 ## Step 7 — Commit
 
