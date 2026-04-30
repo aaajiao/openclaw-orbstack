@@ -51,6 +51,20 @@
   },
 
   // --------------------------------------------------------------------------
+  // 二点五、外发代理 (v2026.4.27+, 可选)
+  // --------------------------------------------------------------------------
+  // 操作员管理的统一外发 HTTP 代理 (#70044)
+  // 启用后所有外发 LLM/插件/Webhook 请求都走配置的 forward proxy
+  // - 仅接受 http:// 前缀的 forward proxy URL (严格校验)
+  // - Gateway loopback 流量 (本机 control plane) 自动 bypass
+  // - 进程退出时自动清理 dispatcher 与代理 env
+  // 也可用 OPENCLAW_PROXY_URL 环境变量覆盖
+  // proxy: {
+  //   enabled: false,
+  //   proxyUrl: "http://proxy.example.com:8080"
+  // },
+
+  // --------------------------------------------------------------------------
   // 三、认证配置 (API Key / OAuth)
   // --------------------------------------------------------------------------
   // 外部 Secrets 管理 (v2026.2.26+):
@@ -463,6 +477,11 @@
         memoryFlush: {
           enabled: true,
           softThresholdTokens: 15000
+          // v2026.4.27+: 精确 model 覆盖 (#53772)
+          // 设置后 memory flush 直接用此模型，不会继承 active session 的 fallback chain
+          // 适合用本地/便宜模型做 housekeeping，避免被替换为付费会话模型
+          // 例如: model: "ollama/qwen3:8b"
+          // model: "openai/gpt-5.4-mini",
         }
       },
       
@@ -544,7 +563,12 @@
           ulimits: {
             nofile: { soft: 1024, hard: 2048 },
             nproc: 256
-          }
+          },
+          // v2026.4.27+: GPU 透传 (#57976, opt-in)
+          // 当宿主 Docker runtime 支持 --gpus 时，可让本地 GPU 工作负载在沙箱里运行
+          // 取值与 docker run --gpus 一致 ("all" / "device=0" 等)
+          // OrbStack 默认无 GPU 透传，仅在专门配置后设置
+          // gpus: "all",
           // 可选配置:
           // setupCommand: "apt-get update && apt-get install -y git",
           // dns: ["1.1.1.1", "8.8.8.8"],
@@ -1408,7 +1432,14 @@
   models: {
     // 模式: "merge" | "replace"
     mode: "merge",
-    
+
+    // v2026.4.27+: OpenRouter / LiteLLM 启动期价格表抓取 (#53639)
+    // 离线/受限网络环境可设 false 跳过启动 OpenRouter/LiteLLM 价格目录获取
+    // 显式 cost 仍然有效，仅跳过启动期 background fetch
+    // pricing: {
+    //   enabled: true
+    // },
+
     providers: {
       // 自定义代理示例
       // "custom-proxy": {

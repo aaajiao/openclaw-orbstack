@@ -412,6 +412,10 @@ openclaw cron disable <id>         # 禁用任务
 openclaw cron rm <id>              # 删除任务 (也可能是 cron delete，待实测确认)
 openclaw cron runs                 # 查看运行记录
 openclaw cron run <id>             # 手动触发任务
+
+# v2026.4.27+: Telegram forum topic 投递保留 (cron add/edit)
+openclaw cron add --thread-id <topicId>     # 跨调度保留 Telegram forum topic
+openclaw cron edit <id> --thread-id <topicId>
 ```
 
 ### 消息发送
@@ -636,6 +640,11 @@ openclaw infer image generate --output-format png|jpeg           # fal/兼容 pr
 openclaw infer image edit --size <WxH>                           # 编辑尺寸
 openclaw infer image edit --aspect-ratio <比例>                  # 比例覆盖
 openclaw infer image edit --resolution <分辨率>                  # 分辨率覆盖
+
+# v2026.4.27+ image describe 透传 prompt + 超时 (#63700)
+openclaw infer image describe --prompt "..."        # 自定义视觉指令传给 Ollama/OpenAI/Google/OpenRouter
+openclaw infer image describe --timeout-ms 60000    # 慢本地模型预算
+openclaw infer image describe-many --prompt "..." --timeout-ms 60000
 ```
 
 ### Voice Call (v2026.4.24+)
@@ -656,6 +665,15 @@ openclaw matrix verify status      # 查看 verify 状态
 # v2026.4.26+: Matrix E2EE 一键引导
 openclaw matrix encryption setup   # 启用 Matrix 加密、bootstrap recovery、打印 verification 状态
 ```
+
+### Codex Computer Use (v2026.4.27+)
+
+```bash
+openclaw codex computer-use status        # 查看 Codex Computer Use 是否就绪 (MCP 服务器 fail-closed 检查)
+openclaw codex computer-use install       # 安装 / 接入 marketplace 发现的桌面控制 MCP
+```
+
+> v4.27 新增 (#72094)：为 Codex-mode agent 启用桌面控制需要 fail-closed MCP server 检查；本机 desktop control 在 Codex 模式下可通过此命令族管理。可与 `cua-driver mcp`、PeekabooBridge 协同。
 
 ### Nodes 多主机 (v2026.4.26+)
 
