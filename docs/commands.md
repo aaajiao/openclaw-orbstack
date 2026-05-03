@@ -163,6 +163,8 @@ openclaw gateway uninstall                 # 卸载 Gateway 服务
 openclaw gateway start                     # 启动 Gateway 服务
 openclaw gateway stop                      # 停止 Gateway 服务
 openclaw gateway restart                   # 重启 Gateway 服务
+openclaw gateway restart --force           # 强制重启 (v2026.5.2+)，跳过 active task 延迟器
+openclaw gateway restart --wait <duration> # 重启等待 (v2026.5.2+)，例如 --wait 30s
 openclaw gateway call <method>             # 调用 Gateway RPC 方法
 ```
 
@@ -749,6 +751,9 @@ openclaw update                    # 更新 CLI
 
 openclaw --version                 # 版本
 openclaw --help                    # 帮助
+
+# 代理验证 (v2026.5.2+, #73438)
+openclaw proxy validate            # 验证 effective proxy 配置 + 可达性 + allow/deny 行为
 ```
 
 ### 全局 Flags

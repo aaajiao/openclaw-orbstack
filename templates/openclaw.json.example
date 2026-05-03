@@ -155,7 +155,11 @@
     defaults: {
       // 工作区目录
       workspace: "~/.openclaw/workspace",
-      
+      // 工作区 bootstrap 跳过列表 (v2026.5.2+, opt-in, #62110)
+      // 跳过指定的可选 bootstrap 文件，但不会禁用必需的 workspace setup
+      // 例如不想让 agent 接触 RULES.md / TASKS.md 等模板文件时
+      // skipOptionalBootstrapFiles: ["RULES.md"],
+
       // 用户时区
       userTimezone: "Asia/Shanghai",
       
@@ -499,7 +503,11 @@
           // 适合用本地/便宜模型做 housekeeping，避免被替换为付费会话模型
           // 例如: model: "ollama/qwen3:8b"
           // model: "openai/gpt-5.4-mini",
-        }
+        },
+        // 中途 tool-loop 压缩预检 (v2026.5.2+, opt-in, #73499)
+        // 在工具调用回合中段检测 context 压力，提前触发压缩而非等回合结束
+        // 适合长 tool-heavy 会话；我们 1M 窗口主模型一般用不上
+        // midTurnPrecheck: { enabled: true }
       },
       
       // ========== 沙箱配置 ==========
@@ -1326,6 +1334,16 @@
     // Slack 线程父会话 token 上限 (v2026.2.25+)
     // 防止父会话过大导致子线程继承时卡死
     // parentForkMaxTokens: 100000,
+
+    // Transcript 写锁获取超时 (v2026.5.2+, #75894)
+    // 默认从 30s 提到 60s，避免合法的慢 prep / cleanup / compaction / mirror 期间撞 timeout
+    // 不设置吃上游默认（60s）；只有特别快/特别慢的 IO 才需要覆盖
+    // writeLock: { acquireTimeoutMs: 60000 },
+
+    // 子代理/ACP thread-spawn 绑定 (v2026.5.2+, #75943)
+    // 替代旧的拆分 toggle，doctor --fix 升级时自动迁移
+    // 默认 thread-bound spawns 已开启，不需要手动设
+    // threadBindings: { spawnSessions: true },
 
     // 打字指示器间隔 (秒)
     typingIntervalSeconds: 5,

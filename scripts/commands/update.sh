@@ -279,6 +279,11 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 #    service file repair + security audit. Feeding "n" answers conservatively
 #    (preserve transcripts) and lets doctor finish its remaining work; users can
 #    archive transcripts later via interactive `openclaw doctor --fix`.
+#    v2026.5.2 added a second prompt: "Install/rewrite Gateway service?" before
+#    replacing the operator's launchd/systemd service from a temporary environment.
+#    `yes n` answers "no" → preserves the operator's existing service file, which
+#    is the safe default. If a fresh service file is genuinely needed, run
+#    interactive `openclaw doctor --fix` manually or reinstall via setup.sh.
 orb -m "$OPENCLAW_VM_NAME" bash -lc "mkdir -p ~/.openclaw && echo '=== sudo doctor --fix (plugin deps) ===' > ~/.openclaw/.update-doctor.log && yes n | sudo --preserve-env=HOME openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 # 2) Restore file ownership in case sudo created/modified files under ~/.openclaw/
 #    or left root-owned systemd user service files under ~/.config/systemd/user/.
