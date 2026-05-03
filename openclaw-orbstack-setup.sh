@@ -564,6 +564,14 @@ vm_exec "sudo loginctl enable-linger \$(whoami)"
 # When upstream adds them natively, the update script auto-removes this drop-in.
 vm_exec "mkdir -p ~/.config/systemd/user/openclaw-gateway.service.d /var/tmp/openclaw-compile-cache"
 vm_exec "printf '[Service]\nEnvironment=NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache\nEnvironment=OPENCLAW_NO_RESPAWN=1\n' > ~/.config/systemd/user/openclaw-gateway.service.d/openclaw-orbstack.conf"
+
+# --- Gateway PATH drop-in (Linux only; upstream #75233 PATH cleanup is macOS LaunchAgent only) ---
+# Pin a canonical PATH so version-manager / package-manager dirs from the operator's shell
+# (.bun/bin, .npm-global/bin, .nix-profile/bin, .local/share/pnpm) cannot leak into the
+# gateway service PATH. Drop-in is evaluated AFTER the main unit; LAST Environment=PATH wins.
+# 99- prefix wins lexicographic ordering against any other drop-ins.
+vm_exec "printf '[Service]\nEnvironment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n' > ~/.config/systemd/user/openclaw-gateway.service.d/99-openclaw-orbstack-path.conf"
+
 vm_exec "systemctl --user daemon-reload"
 
 # Enable and start the official user-level gateway service
