@@ -273,6 +273,8 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 #    to avoid non-sudo run leaving partial npm state that blocks the sudo install.
 #    --preserve-env=HOME ensures doctor reads the correct user config (~/.openclaw/)
 #    Output captured to ~/.openclaw/.update-doctor.log for post-mortem.
+#    Previous runs rotated to .update-doctor.log.{1..5} (last 5 kept) so a
+#    failed upgrade can be diff'd against the last successful run.
 #    `yes n` keeps doctor non-interactive: v2026.4.29 #73106 added an interactive
 #    "Archive N orphan transcripts?" confirm. With redirected stdin, @clack/prompts
 #    sees EOF and triggers `Setup cancelled`, which skips state migration + systemd
@@ -284,6 +286,18 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 #    `yes n` answers "no" → preserves the operator's existing service file, which
 #    is the safe default. If a fresh service file is genuinely needed, run
 #    interactive `openclaw doctor --fix` manually or reinstall via setup.sh.
+# Rotate previous .update-doctor.log → .update-doctor.log.{1..5}, keeping the last 5 runs.
+# Cheap insurance: if a future upgrade fails, the previous (working) baseline is one diff away.
+# shellcheck disable=SC2016
+orb -m "$OPENCLAW_VM_NAME" bash -lc '
+LOG=~/.openclaw/.update-doctor.log
+mkdir -p ~/.openclaw
+[ -f "$LOG.5" ] && rm -f "$LOG.5"
+for i in 4 3 2 1; do
+  [ -f "$LOG.$i" ] && mv "$LOG.$i" "$LOG.$((i+1))"
+done
+[ -f "$LOG" ] && mv "$LOG" "$LOG.1"
+' 2>/dev/null || true
 orb -m "$OPENCLAW_VM_NAME" bash -lc "mkdir -p ~/.openclaw && echo '=== sudo doctor --fix (plugin deps) ===' > ~/.openclaw/.update-doctor.log && yes n | sudo --preserve-env=HOME openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 # 2) Restore file ownership in case sudo created/modified files under ~/.openclaw/
 #    or left root-owned systemd user service files under ~/.config/systemd/user/.
@@ -312,6 +326,23 @@ elif [ ! -f "$DROPIN" ]; then
     mkdir -p "$DROPIN_DIR" /var/tmp/openclaw-compile-cache
     printf "[Service]\nEnvironment=NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache\nEnvironment=OPENCLAW_NO_RESPAWN=1\n" > "$DROPIN"
 fi
+systemctl --user daemon-reload
+' 2>/dev/null || true
+
+# --- Gateway PATH drop-in (Linux only; upstream #75233 fix is macOS LaunchAgent only as of v2026.5.2) ---
+# `openclaw gateway install` on Linux derives PATH from the user shell at install time, so
+# version-manager / package-manager dirs (.bun/bin, .npm-global/bin, .nix-profile/bin,
+# .local/share/pnpm) leak into the gateway service PATH. Functionally harmless (Node lives
+# at /usr/bin/node) but doctor flags it as advisory on every run. We pin a canonical PATH
+# via drop-in. systemd evaluates drop-ins after the main unit; the LAST `Environment=PATH=`
+# wins, so this overrides anything upstream sets. The 99- prefix also wins lexicographic
+# ordering against any later drop-ins openclaw or third parties might ship.
+# shellcheck disable=SC2016
+orb -m "$OPENCLAW_VM_NAME" bash -lc '
+DROPIN_DIR=~/.config/systemd/user/openclaw-gateway.service.d
+DROPIN=$DROPIN_DIR/99-openclaw-orbstack-path.conf
+mkdir -p "$DROPIN_DIR"
+printf "[Service]\nEnvironment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n" > "$DROPIN"
 systemctl --user daemon-reload
 ' 2>/dev/null || true
 
