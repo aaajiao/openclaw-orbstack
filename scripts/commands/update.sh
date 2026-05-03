@@ -275,17 +275,15 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 #    Output captured to ~/.openclaw/.update-doctor.log for post-mortem.
 #    Previous runs rotated to .update-doctor.log.{1..5} (last 5 kept) so a
 #    failed upgrade can be diff'd against the last successful run.
-#    `yes n` keeps doctor non-interactive: v2026.4.29 #73106 added an interactive
-#    "Archive N orphan transcripts?" confirm. With redirected stdin, @clack/prompts
-#    sees EOF and triggers `Setup cancelled`, which skips state migration + systemd
-#    service file repair + security audit. Feeding "n" answers conservatively
-#    (preserve transcripts) and lets doctor finish its remaining work; users can
-#    archive transcripts later via interactive `openclaw doctor --fix`.
-#    v2026.5.2 added a second prompt: "Install/rewrite Gateway service?" before
-#    replacing the operator's launchd/systemd service from a temporary environment.
-#    `yes n` answers "no" → preserves the operator's existing service file, which
-#    is the safe default. If a fresh service file is genuinely needed, run
-#    interactive `openclaw doctor --fix` manually or reinstall via setup.sh.
+#    `yes n` keeps doctor non-interactive past v2026.4.29 #73106 (orphan-archive
+#    confirm) and v2026.5.2 line 310 (Gateway-service-rewrite confirm).
+#    Orphan transcripts are pre-archived below — doctor sees zero orphans and the
+#    "Archive N orphan transcripts?" prompt does NOT appear in the normal flow.
+#    The `yes n` remains as defense-in-depth (in case prompts shift or new ones
+#    appear) and to safely answer "no" to the v5.2 Gateway service rewrite prompt:
+#    "no" preserves the operator's existing service file, which is the safe default.
+#    If a fresh service file is genuinely needed, run interactive
+#    `openclaw doctor --fix` manually or reinstall via setup.sh.
 # Rotate previous .update-doctor.log → .update-doctor.log.{1..5}, keeping the last 5 runs.
 # Cheap insurance: if a future upgrade fails, the previous (working) baseline is one diff away.
 # shellcheck disable=SC2016
@@ -298,6 +296,29 @@ for i in 4 3 2 1; do
 done
 [ -f "$LOG" ] && mv "$LOG" "$LOG.1"
 ' 2>/dev/null || true
+
+# Pre-archive orphan transcripts so doctor's "Archive N orphan transcripts?" prompt
+# (added in v2026.4.29 #73106) doesn't appear. Doctor's archive action just renames
+# .jsonl files NOT referenced in sessions.json to *.deleted.<timestamp>; we do the
+# same here with a UUID substring grep, which is collision-safe (32-char hex = 128-bit
+# unique). After this, no orphans → doctor finishes without the orphan prompt.
+# Walks every agent's sessions/ dir to handle multi-agent setups.
+# shellcheck disable=SC2016
+orb -m "$OPENCLAW_VM_NAME" bash -lc '
+TS=$(date +%Y%m%dT%H%M%S)
+shopt -s nullglob
+for SESSION_DIR in ~/.openclaw/agents/*/sessions; do
+    STORE=$SESSION_DIR/sessions.json
+    [ -f "$STORE" ] || continue
+    for f in "$SESSION_DIR"/*.jsonl; do
+        base=$(basename "$f" .jsonl)
+        if ! grep -q "$base" "$STORE"; then
+            mv "$f" "$f.deleted.$TS"
+        fi
+    done
+done
+' 2>/dev/null || true
+
 orb -m "$OPENCLAW_VM_NAME" bash -lc "mkdir -p ~/.openclaw && echo '=== sudo doctor --fix (plugin deps) ===' > ~/.openclaw/.update-doctor.log && yes n | sudo --preserve-env=HOME openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 # 2) Restore file ownership in case sudo created/modified files under ~/.openclaw/
 #    or left root-owned systemd user service files under ~/.config/systemd/user/.
