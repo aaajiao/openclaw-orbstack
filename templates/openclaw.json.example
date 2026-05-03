@@ -1348,10 +1348,19 @@
     // 打字指示器间隔 (秒)
     typingIntervalSeconds: 5,
     // 会话磁盘管理 (v2026.2.23+)
+    // 默认值（不配也生效）：mode "enforce", pruneAfter "30d", maxEntries 500
+    // pruneAfter 同时控制两件事：
+    //   1) sessions.json 里超过 N 天未活跃的 entry 被剪掉
+    //   2) `*.deleted.<timestamp>` 归档文件超过 N 天后真删（fs.rm）
+    // 想自动清掉 archive 不需要做什么——已经默认开了
+    // 设短一点（如 7d）可加快磁盘回收；设 false 禁用 entry 剪枝（archive 也不会清了）
     // maintenance: {
-    //   maxDiskBytes: 524288000,   // 磁盘配额 (~500MB)
-    //   highWaterBytes: 419430400, // 触发清理阈值 (~400MB)
-    //   pruneOlderThanDays: 30    // 清理超过 N 天的会话
+    //   mode: "enforce",            // "enforce" | "warn"，默认 "enforce"
+    //   pruneAfter: "30d",          // 字符串 duration，默认 30 天
+    //   maxEntries: 500,            // sessions.json 最大条目数，默认 500
+    //   resetArchiveRetention: "30d", // *.reset.<ts> 归档保留期，默认跟 pruneAfter
+    //   maxDiskBytes: 524288000,    // 磁盘配额 (~500MB)，默认无上限
+    //   highWaterBytes: 419430400,  // 触发清理阈值 (~400MB)
     // },
   },
 

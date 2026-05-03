@@ -303,9 +303,18 @@ done
 # same here with a UUID substring grep, which is collision-safe (32-char hex = 128-bit
 # unique). After this, no orphans → doctor finishes without the orphan prompt.
 # Walks every agent's sessions/ dir to handle multi-agent setups.
+#
+# Timestamp format MUST match upstream's `formatSessionArchiveTimestamp()`:
+#   `new Date().toISOString().replaceAll(":", "-")` → `2026-05-03T08-15-30.123Z`
+# Upstream's archive cleanup (`cleanupArchivedSessionTranscripts`, called by
+# `saveSessionStore` when `session.maintenance.pruneAfter` is set, default 30d)
+# parses this format via regex /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(\.\d{3})?Z$/.
+# Files NOT matching the regex are unrecognized → never auto-pruned, sit forever.
+# We use bash `date -u +%Y-%m-%dT%H-%M-%SZ` which produces a regex-compliant
+# (without ms suffix) timestamp.
 # shellcheck disable=SC2016
 orb -m "$OPENCLAW_VM_NAME" bash -lc '
-TS=$(date +%Y%m%dT%H%M%S)
+TS=$(date -u +%Y-%m-%dT%H-%M-%SZ)
 shopt -s nullglob
 for SESSION_DIR in ~/.openclaw/agents/*/sessions; do
     STORE=$SESSION_DIR/sessions.json
