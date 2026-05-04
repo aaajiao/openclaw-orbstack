@@ -284,6 +284,10 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 #    "no" preserves the operator's existing service file, which is the safe default.
 #    If a fresh service file is genuinely needed, run interactive
 #    `openclaw doctor --fix` manually or reinstall via setup.sh.
+#    v2026.5.3 (#74831): doctor --fix also silently migrates the legacy monolithic
+#    sandbox registry into per-runtime shard files under
+#    ~/.openclaw/state/sandbox/runtimes/*.json. No prompt; nothing to handle here.
+#    Future debugging: don't look for one big sandbox registry JSON — it's sharded.
 # Rotate previous .update-doctor.log → .update-doctor.log.{1..5}, keeping the last 5 runs.
 # Cheap insurance: if a future upgrade fails, the previous (working) baseline is one diff away.
 # shellcheck disable=SC2016

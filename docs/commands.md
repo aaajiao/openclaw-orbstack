@@ -305,6 +305,14 @@ openclaw agent -m "local" --local  # 本地运行
 
 > 多 Agent 路由配置详见 [官方文档](https://docs.openclaw.ai/gateway/configuration)。
 
+### 通用聊天命令
+
+| 命令 | 功能 | 版本 |
+|------|------|------|
+| `/btw <message>` | 插入旁支问题，不影响主线对话节奏 | — |
+| `/side <message>` | `/btw` 的别名 | v2026.5.3+ (#76934 同 PR) |
+| `/steer <message>` | 在当前 session 跑动时打断/引导，不开新 turn；session idle 时直接走普通流程 | v2026.5.3+ (#76934) |
+
 ### Skills 管理
 
 ```bash
