@@ -418,17 +418,6 @@
             concurrency: 2
           }
         },
-        // 跨 Agent 会话搜索 (v2026.3.31+)
-        // 允许当前 Agent 搜索其他 Agent 的会话记录（QMD 后端）
-        // qmd: {
-        //   extraCollections: ["other-agent-id"]
-        //   // v2026.4.29+: QMD 启动时刷新改为 opt-in
-        //   // 默认 Gateway 冷启动不再 import / 初始化 QMD（节省启动 RSS）
-        //   // 我们 QMD 因 ARM64 segfault BLOCKED，保持默认 false 即可，无需改
-        //   // update: {
-        //   //   startup: false,    // true 才在启动时刷新；正常文件 watch 不受影响
-        //   // },
-        // },
         // 额外索引目录
         // extraPaths: ["docs", "assets/diagrams"],
         // 多模态索引 (v2026.3.11+, 仅 Gemini embedding)
