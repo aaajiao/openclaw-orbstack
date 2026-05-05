@@ -804,7 +804,12 @@
         //   chunk: true,                  // 预览分块 (可选)
         //   // 工具调用进度行 (v2026.4.24+, 默认 true 与发布行为一致)
         //   // 设 false 可关闭"Working on..."类状态行，仅保留 chunk 流
-        //   toolProgress: true
+        //   toolProgress: true,
+        //   // 命令/exec 文本可见性 (v2026.5.4+ #77072)
+        //   // - "raw"    : 默认，preview 里显示完整命令文本（如 `bash -c "find ..."`）
+        //   // - "status" : 只显示工具状态标签（如 "🔧 exec"），隐藏具体命令
+        //   //   DM 友好：避免长命令污染 preview；调试时跑 `/verbose on` 临时看完整命令
+        //   commandText: "status"
         // },
         // block: {                        // block 模式配置 (可选)
         //   enabled: false,
