@@ -266,6 +266,8 @@ MSG_CMD_UNINSTALL_DONE_HINT="如不再需要，可安全删除 openclaw-orbstack
 # --- openclaw-update auto-repair ---
 MSG_UPDATE_AUTO_UPGRADE="🔧 检测到旧版服务配置，正在自动修复..."
 MSG_UPDATE_AUTO_UPGRADE_DONE="✓ 服务配置已修复，继续更新..."
+MSG_UPDATE_SANDBOX_HASH_MIGRATE="🔧 检测到空 sandbox hash（上游 v2026.5.3 路径搬位导致的旧 bug），正在原地修复..."
+MSG_UPDATE_SANDBOX_HASH_MIGRATE_DONE="✓ Sandbox hash 已修复。现有镜像保留 — 无需重建。"
 MSG_UPDATE_ENV_CREATED="✓ 已创建 ~/.openclaw/.env（Bonjour 配置）"
 
 # --- openclaw-update Node.js 升级 ---

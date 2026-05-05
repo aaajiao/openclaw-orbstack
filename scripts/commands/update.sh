@@ -85,15 +85,52 @@ else
 fi
 
 # --- Migrate old single hash → per-image hashes (no rebuild) ---
+# Hash inputs list both new (≥ v2026.5.3 scripts/docker/sandbox/) and legacy
+# (≤ v2026.5.2 root) Dockerfile paths; cat skips missing files via 2>/dev/null
+# so the hash reflects whichever layout the current upstream checkout has.
 orb -m "$OPENCLAW_VM_NAME" bash -lc '
     if [ -f ~/.openclaw/.sandbox-build-hash ] && [ ! -f ~/.openclaw/.sandbox-hash-base ]; then
         cd ~/openclaw
-        cat Dockerfile.sandbox scripts/sandbox-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-base
-        cat Dockerfile.sandbox-common scripts/sandbox-common-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-common
-        cat Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-browser
+        cat scripts/docker/sandbox/Dockerfile Dockerfile.sandbox scripts/sandbox-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-base
+        cat scripts/docker/sandbox/Dockerfile.common Dockerfile.sandbox-common scripts/sandbox-common-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-common
+        cat scripts/docker/sandbox/Dockerfile.browser Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-browser
         rm -f ~/.openclaw/.sandbox-build-hash
     fi
 ' 2>/dev/null || true
+
+# --- One-time sandbox hash format migration (v2026.5.4-fix) ---
+# Background: v2026.5.3 upstream moved sandbox Dockerfiles from the repo root
+# to scripts/docker/sandbox/ AND renamed them. Pre-v2026.5.4-fix wrappers had
+# multiple silent hash-tracking bugs because they `cat`d the now-missing
+# legacy paths, producing inconsistent hashes that didn't reflect the actual
+# Dockerfile content.
+#
+# CRITICAL FACT (verified at sync time): the sandbox Dockerfile *content* is
+# byte-identical across upstream v2026.5.2 → v2026.5.3 → v2026.5.4 — only the
+# paths and filenames changed. So any sandbox image built from a v5.x upstream
+# checkout is byte-equivalent to one built from v5.4.
+#
+# Therefore, if the user's last successful build was a v2026.5.x release, we
+# can safely overwrite their hash files with the new fallback-aware format
+# (matching what this fixed wrapper would compute) and skip the cosmetic
+# rebuild that the bare hash mismatch would otherwise trigger. A marker file
+# prevents rerunning the migration on subsequent updates.
+LAST_BUILT=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'cat ~/.openclaw/.build-version 2>/dev/null' || echo "")
+case "$LAST_BUILT" in
+    v2026.5.*)
+        if ! orb -m "$OPENCLAW_VM_NAME" bash -lc 'test -f ~/.openclaw/.sandbox-hash-format-v54' 2>/dev/null; then
+            echo "$MSG_UPDATE_SANDBOX_HASH_MIGRATE"
+            orb -m "$OPENCLAW_VM_NAME" bash -lc '
+                cd ~/openclaw
+                cat scripts/docker/sandbox/Dockerfile         Dockerfile.sandbox          scripts/sandbox-setup.sh          2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-base
+                cat scripts/docker/sandbox/Dockerfile.common  Dockerfile.sandbox-common   scripts/sandbox-common-setup.sh   2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-common
+                cat scripts/docker/sandbox/Dockerfile.browser Dockerfile.sandbox-browser  scripts/sandbox-browser-setup.sh  2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-browser
+                touch ~/.openclaw/.sandbox-hash-format-v54
+            ' 2>/dev/null || true
+            echo "$MSG_UPDATE_SANDBOX_HASH_MIGRATE_DONE"
+        fi
+        ;;
+esac
 
 # Check if already on the latest tag AND build succeeded previously
 CURRENT_HEAD=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git rev-parse HEAD 2>/dev/null")
@@ -175,15 +212,18 @@ if [ "$SANDBOX" = true ]; then
     # --sandbox flag: force rebuild all
     BUILD_BASE=true; BUILD_COMMON=true; BUILD_BROWSER=true
 else
-    # Single orb round-trip: read 3 old hashes + calculate 3 new hashes
+    # Single orb round-trip: read 3 old hashes + calculate 3 new hashes.
+    # Hash inputs list both new (≥ v2026.5.3 scripts/docker/sandbox/) and legacy
+    # (≤ v2026.5.2 root) paths; cat skips missing files so this works whether
+    # the just-checked-out tag uses the new layout or the old one.
     HASH_DATA=$(orb -m "$OPENCLAW_VM_NAME" bash -lc '
         cat ~/.openclaw/.sandbox-hash-base 2>/dev/null || echo none
         cat ~/.openclaw/.sandbox-hash-common 2>/dev/null || echo none
         cat ~/.openclaw/.sandbox-hash-browser 2>/dev/null || echo none
         cd ~/openclaw
-        cat Dockerfile.sandbox scripts/sandbox-setup.sh 2>/dev/null | sha256sum | cut -c1-64
-        cat Dockerfile.sandbox-common scripts/sandbox-common-setup.sh 2>/dev/null | sha256sum | cut -c1-64
-        cat Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -c1-64
+        cat scripts/docker/sandbox/Dockerfile        Dockerfile.sandbox         scripts/sandbox-setup.sh         2>/dev/null | sha256sum | cut -c1-64
+        cat scripts/docker/sandbox/Dockerfile.common Dockerfile.sandbox-common  scripts/sandbox-common-setup.sh  2>/dev/null | sha256sum | cut -c1-64
+        cat scripts/docker/sandbox/Dockerfile.browser Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -c1-64
     ')
     # Parse 6 lines
     OLD_BASE=$(echo "$HASH_DATA" | sed -n '1p')
@@ -213,7 +253,7 @@ if [ "$SANDBOX" = true ]; then
         start_progress
         if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
             stop_progress
-            save_sandbox_hash base Dockerfile.sandbox scripts/sandbox-setup.sh
+            save_sandbox_hash base scripts/docker/sandbox/Dockerfile Dockerfile.sandbox scripts/sandbox-setup.sh
         else
             stop_progress
             BUILD_COMMON=false  # cascade: skip common if base failed
@@ -230,7 +270,7 @@ if [ "$SANDBOX" = true ]; then
         start_progress
         if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
             stop_progress
-            save_sandbox_hash common Dockerfile.sandbox-common scripts/sandbox-common-setup.sh
+            save_sandbox_hash common scripts/docker/sandbox/Dockerfile.common Dockerfile.sandbox-common scripts/sandbox-common-setup.sh
         else
             stop_progress
             echo "$MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL"
@@ -246,7 +286,7 @@ if [ "$SANDBOX" = true ]; then
         start_progress
         if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
             stop_progress
-            save_sandbox_hash browser Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh
+            save_sandbox_hash browser scripts/docker/sandbox/Dockerfile.browser Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh
         else
             stop_progress
             echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL"

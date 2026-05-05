@@ -307,7 +307,7 @@ start_progress
 if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
     stop_progress
     ok "$MSG_OK_SANDBOX_BASE"
-elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox:bookworm-slim -f Dockerfile.sandbox .'" 2>/dev/null; then
+elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox:bookworm-slim -f scripts/docker/sandbox/Dockerfile .'" 2>/dev/null; then
     stop_progress
     ok "$MSG_OK_SANDBOX_BASE_DF"
 else
@@ -332,7 +332,7 @@ start_progress
 if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
     stop_progress
     ok "$MSG_OK_SANDBOX_BROWSER"
-elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox-browser:bookworm-slim -f Dockerfile.sandbox-browser .'" 2>/dev/null; then
+elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox-browser:bookworm-slim -f scripts/docker/sandbox/Dockerfile.browser .'" 2>/dev/null; then
     stop_progress
     ok "$MSG_OK_SANDBOX_BROWSER_DF"
 else
@@ -340,11 +340,14 @@ else
     warn "$MSG_WARN_SANDBOX_BROWSER_FAIL"
 fi
 
-# Save per-image sandbox build hashes for staleness detection during updates
+# Save per-image sandbox build hashes for staleness detection during updates.
+# cat lists both new (≥ v2026.5.3) and legacy (≤ v2026.5.2) Dockerfile paths;
+# cat silently skips missing files via 2>/dev/null, so the hash reflects whichever
+# path the upstream checkout actually has — robust across the v5.3 path move.
 vm_exec "cd ~/openclaw && \
-  cat Dockerfile.sandbox scripts/sandbox-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-base && \
-  cat Dockerfile.sandbox-common scripts/sandbox-common-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-common && \
-  cat Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-browser"
+  cat scripts/docker/sandbox/Dockerfile Dockerfile.sandbox scripts/sandbox-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-base && \
+  cat scripts/docker/sandbox/Dockerfile.common Dockerfile.sandbox-common scripts/sandbox-common-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-common && \
+  cat scripts/docker/sandbox/Dockerfile.browser Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-browser"
 
 # ============================================================================
 # Step 7/8

@@ -265,6 +265,8 @@ MSG_CMD_UNINSTALL_DONE_HINT="You can safely delete this openclaw-orbstack repo f
 # --- openclaw-update auto-repair ---
 MSG_UPDATE_AUTO_UPGRADE="🔧 Detected outdated service configuration, auto-repairing..."
 MSG_UPDATE_AUTO_UPGRADE_DONE="✓ Service configuration repaired. Continuing update..."
+MSG_UPDATE_SANDBOX_HASH_MIGRATE="🔧 Migrating empty sandbox hashes (one-time fix for upstream path move in v2026.5.3)..."
+MSG_UPDATE_SANDBOX_HASH_MIGRATE_DONE="✓ Sandbox hashes migrated in place. Existing images preserved — no rebuild needed."
 MSG_UPDATE_ENV_CREATED="✓ Created ~/.openclaw/.env with Bonjour settings"
 
 # --- openclaw-update Node.js upgrade ---
