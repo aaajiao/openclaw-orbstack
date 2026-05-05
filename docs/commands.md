@@ -278,6 +278,9 @@ openclaw models auth login --provider <id> # 指定提供商登录
 openclaw models auth setup-token           # 设置 token
 openclaw models auth paste-token           # 粘贴 token
 openclaw models auth order                 # 管理认证优先级
+openclaw models auth list                  # v2026.5.4+: 列出 saved per-agent auth profiles (不 dump secrets)
+openclaw models auth list --provider <id>  # v2026.5.4+: 仅列出指定 provider
+openclaw models auth list --json           # v2026.5.4+: JSON 格式输出
 ```
 
 ### Agent 管理
@@ -734,9 +737,10 @@ openclaw backup verify <archive>           # 验证备份完整性
 ### 其他
 
 ```bash
-openclaw sessions                  # 会话列表
+openclaw sessions                  # 会话列表 (v2026.5.4+ 默认仅返回最新 100 行)
 openclaw sessions --active 60      # 最近 60 分钟活跃的
 openclaw sessions --json           # JSON 格式输出
+openclaw sessions --limit <n|all>  # v2026.5.4+ (#77500): 显式行数 (n) 或 all 取消上限
 openclaw sessions cleanup          # 会话维护
 openclaw sessions cleanup --dry-run    # 预览清理操作
 openclaw sessions cleanup --enforce    # 强制执行清理
