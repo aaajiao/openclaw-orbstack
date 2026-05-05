@@ -1220,7 +1220,12 @@
       // @mention 模式
       mentionPatterns: ["@openclaw", "openclaw"],
       // 历史消息数量
-      historyLimit: 50
+      historyLimit: 50,
+      // v2026.4.27+ (#73046): 群聊默认改为私回（消息走 message tool 而非 automatic visible reply）
+      // - "automatic"   : 旧行为，群聊回复自动可见
+      // - "message_tool": 新默认，群聊回复必须显式走 message(action=send)
+      // doctor `--fix` 升级时会自动写入 "message_tool"; 显式回退到 "automatic" 才会保留旧行为
+      // visibleReplies: "message_tool"
     },
     
     // 消息队列
