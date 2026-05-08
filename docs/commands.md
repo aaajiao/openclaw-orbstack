@@ -172,7 +172,8 @@ openclaw gateway call <method>             # 调用 Gateway RPC 方法
 
 ```bash
 # 列出与状态
-openclaw channels list             # 列出所有频道
+openclaw channels list             # 列出已配置频道 (v2026.5.7+ 仅频道，不再包含 model auth/usage)
+openclaw channels list --all       # v2026.5.7+: 包含 bundled + catalog 频道 (#78456)
 openclaw channels status           # 频道状态
 openclaw channels status --deep    # 深度探测
 openclaw channels capabilities     # 提供商能力
@@ -418,6 +419,8 @@ openclaw browser delete-profile    # 删除配置文件
 ```bash
 openclaw cron status               # 定时任务状态
 openclaw cron list                 # 列出任务
+openclaw cron list --json          # v2026.5.7+: 含 status 字段 (disabled/running/ok/error/skipped/idle, #78701)
+openclaw cron show <id> --json     # v2026.5.7+: 同上 status 字段
 openclaw cron add                  # 添加任务
 openclaw cron edit <id>            # 编辑任务
 openclaw cron enable <id>          # 启用任务
