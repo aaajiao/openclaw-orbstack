@@ -395,7 +395,14 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "mkdir -p ~/.openclaw && echo '=== sudo doct
 #    user's ~/.npm/_cacache/ as root, which blocks any later non-root npm call
 #    (npm 7+ safety check → EACCES). Surfaced by 4.23's merged 17-pkg plugin
 #    runtime deps install (2026-04-24, Node 24 on Ubuntu 24).
-orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/ ~/.npm/ 2>/dev/null; sudo chown \$(id -u):\$(id -g) ~/.config/systemd/user/openclaw-*.service* 2>/dev/null" || true
+#    /tmp/jiti is jiti's compiled-output cache used by the codex plugin's
+#    plugin-sdk-json-schema-runtime require chain. The sudo doctor pass populates
+#    it as root with default 0644 perms; user-mode plugin loads then hit
+#    EACCES on read (some entries open O_RDWR via jiti's lock path). Wipe so
+#    subsequent user passes rebuild the cache with correct ownership.
+#    Surfaced 2026-05-15 on v2026.5.14-beta.1: codex plugin failed to load 5×
+#    during one update run, leaving Codex harness unregistered until next restart.
+orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/ ~/.npm/ 2>/dev/null; sudo chown \$(id -u):\$(id -g) ~/.config/systemd/user/openclaw-*.service* 2>/dev/null; sudo rm -rf /tmp/jiti 2>/dev/null" || true
 # 3) Config migration + systemd user service fix (as regular user, after chown).
 #    Same `yes n` rationale as above — keeps the @clack/prompts orphan-archive
 #    confirm from cancelling the whole doctor pass.
