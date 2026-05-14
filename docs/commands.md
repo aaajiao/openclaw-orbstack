@@ -176,6 +176,7 @@ openclaw channels list             # 列出已配置频道 (v2026.5.7+ 仅频道
 openclaw channels list --all       # v2026.5.7+: 包含 bundled + catalog 频道 (#78456)
 openclaw channels status           # 频道状态
 openclaw channels status --deep    # 深度探测
+openclaw channels status --channel <name>  # v2026.5.12+ (#80706): 仅探单一频道，避免同时启动其他频道 monitor
 openclaw channels capabilities     # 提供商能力
 openclaw channels resolve          # 频道/用户名 → ID 解析
 openclaw channels logs             # 频道日志
@@ -276,6 +277,9 @@ openclaw models image-fallbacks clear
 openclaw models auth add                   # 交互式添加认证
 openclaw models auth login                 # 提供商登录流程
 openclaw models auth login --provider <id> # 指定提供商登录
+                                           # v2026.5.12+: --provider openai 默认走 ChatGPT/Codex 账号登录
+                                           # 要走 API-key 走: --provider openai --method api-key
+openclaw models auth login --provider openai --method api-key  # v2026.5.12+ 显式 API-key 路径
 openclaw models auth setup-token           # 设置 token
 openclaw models auth paste-token           # 粘贴 token
 openclaw models auth order                 # 管理认证优先级
@@ -316,6 +320,7 @@ openclaw agent -m "local" --local  # 本地运行
 | `/btw <message>` | 插入旁支问题，不影响主线对话节奏 | — |
 | `/side <message>` | `/btw` 的别名 | v2026.5.3+ (#76934 同 PR) |
 | `/steer <message>` | 在当前 session 跑动时打断/引导，不开新 turn；session idle 时直接走普通流程 | v2026.5.3+ (#76934) |
+| `/context map` | 发送当前 session context contributors 的 treemap 图（直观看谁占多少 token） | v2026.5.12+ (#79867) |
 
 ### Skills 管理
 
@@ -421,6 +426,7 @@ openclaw cron status               # 定时任务状态
 openclaw cron list                 # 列出任务
 openclaw cron list --json          # v2026.5.7+: 含 status 字段 (disabled/running/ok/error/skipped/idle, #78701)
 openclaw cron show <id> --json     # v2026.5.7+: 同上 status 字段
+openclaw cron get <id>             # v2026.5.12+ (#75117): 按 id 查看单个 job (优先用这个而非 show)
 openclaw cron add                  # 添加任务
 openclaw cron edit <id>            # 编辑任务
 openclaw cron enable <id>          # 启用任务

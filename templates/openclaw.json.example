@@ -677,6 +677,12 @@
   // 五、聊天频道配置
   // --------------------------------------------------------------------------
   channels: {
+    // v2026.5.12+ 重要变更:
+    //   WhatsApp / Slack / Amazon Bedrock / Anthropic Vertex 已移出 core npm bundle，
+    //   改为外置插件（ClawHub / npm）。core 安装不再自动拉 AWS SDK / Baileys / Slack deps。
+    //   使用这些频道需要先 `openclaw plugins install <name>` 安装对应插件。
+    //   WhatsApp 现走 `baileys@7.0.0-rc11`（不再是 `@whiskeysockets/baileys`）。
+    //
     // ========== WhatsApp ==========
     whatsapp: {
       // DM 策略:
@@ -1014,16 +1020,21 @@
       // }
     },
 
-    // ========== BlueBubbles (推荐替代 iMessage legacy) ==========
-    bluebubbles: {
-      enabled: false
-      // 支持编辑、反应、群管理等完整功能
-      // 通过 openclaw channels add --channel bluebubbles 配置
-    },
-
-    // ========== iMessage legacy (不推荐，建议用 BlueBubbles) ==========
+    // ========== iMessage (v2026.5.9+ canonical 路径) ==========
+    // v2026.5.9 Breaking: bundled `bluebubbles` channel 已移除，统一走 `imessage` + `imsg`
+    // 现有 channels.bluebubbles 配置需迁移到 channels.imessage
+    // 要求: 已登录 iMessage 的 Mac (或 SSH wrapper 远程到登录 Mac)
+    // ⚠️ OrbStack VM 内不能直接用 — VM 是 Linux，没有 iMessage 客户端
+    //   只能在 Mac 主机上跑 imsg，或通过 SSH wrapper 让 VM Gateway 走 Mac 主机的 imsg
     imessage: {
       enabled: false
+      // imsg 二进制路径 (默认走 PATH)
+      // imsgPath: "/usr/local/bin/imsg",
+      // SSH wrapper (远程到登录的 Mac) — 非 macOS / VM 环境必需
+      // sshWrapper: {
+      //   host: "user@mac.local",
+      //   imsgPath: "/usr/local/bin/imsg"
+      // }
     }
 
     // ========== 插件频道 (需要 openclaw plugins install) ==========
@@ -1051,6 +1062,19 @@
   // 六、工具权限配置
   // --------------------------------------------------------------------------
   tools: {
+    // Per-agent message 工具覆盖 (v2026.5.12+)
+    // sandboxed / public agent 可限制 message tool 行为，不影响全局 bot policy
+    // message: {
+    //   crossContext: false,                  // 禁止跨当前会话 send (#75641 衍生)
+    //   actions: { allow: ["send"] },         // 仅暴露 send（隐藏 edit/react 等）
+    // },
+
+    // Per-sender 工具策略 (v2026.5.12+, #66933)
+    // 按 channel-scoped sender key 限制 dangerous 工具
+    // byPolicies: {
+    //   "telegram:142131224": { allow: ["exec", "bash"] },
+    // },
+
     // Web 搜索工具
     web: {
       search: {
@@ -1128,6 +1152,10 @@
       backgroundMs: 10000,      // 后台执行阈值 (毫秒)
       timeoutSec: 1800,         // 超时时间 (秒)
       cleanupMs: 1800000        // 清理时间 (毫秒)
+      // 命令高亮 (v2026.5.12+, #79348)
+      // 在 exec approval prompt 中对解析出的 shell 命令做语法高亮
+      // 当前仅支持 POSIX；Windows / shell-wrapper 不高亮 (#80566)
+      // commandHighlighting: true,
     },
     
     // 提权配置 (允许危险操作)
@@ -1183,6 +1211,14 @@
       // },
     }
   },
+
+  // --------------------------------------------------------------------------
+  // ACP runtime 备用 backend (v2026.5.12+, #69542, 可选)
+  // --------------------------------------------------------------------------
+  // ACP turn 在主 runtime 不可用时按顺序尝试备用 backend (在任何 output emit 之前)
+  // acp: {
+  //   fallbacks: ["acpx", "claude-cli"]
+  // },
 
   // --------------------------------------------------------------------------
   // 七、消息处理配置
@@ -1354,6 +1390,10 @@
     // 默认 thread-bound spawns 已开启，不需要手动设
     // threadBindings: { spawnSessions: true },
 
+    // Agent-to-agent 会话 ping-pong 上限 (v2026.5.12+, #52400)
+    // 默认 5，最大可调到 20；超出后强制停止避免无限对话
+    // agentToAgent: { maxPingPongTurns: 5 },
+
     // 打字指示器间隔 (秒)
     typingIntervalSeconds: 5,
     // 会话磁盘管理 (v2026.2.23+)
@@ -1487,6 +1527,9 @@
     install: {
       preferBrew: true,
       nodeManager: "bun"
+      // 允许 Gateway 客户端上传 zip 安装 skill (v2026.5.12+, #74430)
+      // security-gated, 默认 false；仅在信任 Control UI/CLI 客户端时打开
+      // allowUploadedArchives: false,
     }
     
     // 技能条目配置
@@ -1514,6 +1557,14 @@
     // },
 
     providers: {
+      // OpenAI-compat strict 模式 (v2026.5.12+, #50374)
+      // 对 strict 提供商（oMLX/vLLM Qwen 等）剥离 role/content 之外的 message keys
+      // 避免 follow-up turn 因 tool/metadata 字段被 reject
+      // "my-strict-proxy": {
+      //   compat: { strictMessageKeys: true },
+      //   ...
+      // },
+
       // 自定义代理示例
       // "custom-proxy": {
       //   baseUrl: "http://localhost:4000/v1",
