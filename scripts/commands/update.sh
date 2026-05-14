@@ -8,10 +8,12 @@ source "$(dirname "$0")/_common.sh"
 
 SANDBOX=false
 FORCE=false
+TARGET_VERSION=""
 for arg in "$@"; do
     case "$arg" in
         --sandbox) SANDBOX=true ;;
         --force) FORCE=true ;;
+        --version=*) TARGET_VERSION="${arg#--version=}" ;;
         --help|-h)
             echo "$MSG_CMD_UPDATE_USAGE"
             echo ""
@@ -20,6 +22,7 @@ for arg in "$@"; do
             echo "$MSG_CMD_UPDATE_OPTIONS"
             echo "$MSG_CMD_UPDATE_SANDBOX_OPT"
             echo "$MSG_CMD_UPDATE_FORCE_OPT"
+            echo "$MSG_CMD_UPDATE_VERSION_OPT"
             echo ""
             echo "$MSG_CMD_UPDATE_TIP"
             exit 0
@@ -56,12 +59,25 @@ echo "$MSG_CMD_UPDATE_PULLING"
 # (e.g. clawsweeper/* automerge bots), which create refname conflicts on plain fetch.
 # Without --prune, fetch fails with "some local refs could not be updated".
 orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git remote prune origin && git fetch --prune --tags --force"
-LATEST_TAG=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
-if [ -z "$LATEST_TAG" ]; then
-    echo "$MSG_ERR_NO_VERSION"
-    exit 1
+
+if [ -n "$TARGET_VERSION" ]; then
+    # Explicit version pin: validate tag exists upstream; allow beta/rc/alpha.
+    if ! orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git rev-parse --verify '$TARGET_VERSION^{commit}' >/dev/null 2>&1"; then
+        # shellcheck disable=SC2059
+        printf "$MSG_ERR_VERSION_NOT_FOUND\n" "$TARGET_VERSION"
+        exit 1
+    fi
+    LATEST_TAG="$TARGET_VERSION"
+    # shellcheck disable=SC2059
+    printf "$MSG_UPDATE_VERSION_USING\n" "$LATEST_TAG"
+else
+    LATEST_TAG=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
+    if [ -z "$LATEST_TAG" ]; then
+        echo "$MSG_ERR_NO_VERSION"
+        exit 1
+    fi
+    echo "  -> $LATEST_TAG"
 fi
-echo "  -> $LATEST_TAG"
 
 # --- Ensure Node.js >= 24 (upstream recommends 24.x LTS) ---
 echo "$MSG_UPDATE_NODE_CHECK"
