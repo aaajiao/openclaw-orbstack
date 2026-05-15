@@ -158,6 +158,10 @@ Gateway 还支持以下扩展能力：
   │   ├── MEMORY.md            # 长期记忆 (可选)
   │   └── memory/              # 每日记忆 (YYYY-MM-DD.md)
   └── sandboxes/               # Sandbox workspaces
+
+~/.codex/                      # Codex CLI 状态 (由 openclaw-codex-login 创建)
+  └── auth.json                # OAuth token；OpenClaw v2026.5.14+ 在自身 OAuth refresh
+                               # 失败时从此文件读取 token 作为 runtime fallback (PR #82117)
 ```
 
 ### systemd Service (user-level)
@@ -200,6 +204,7 @@ Gateway 还支持以下扩展能力：
   ├── openclaw-sandbox-rebuild # 重建沙箱镜像
   ├── openclaw-telegram      # Telegram 频道配置
   ├── openclaw-whatsapp      # WhatsApp 登录
+  ├── openclaw-codex-login   # 绑定 ChatGPT 订阅 (Codex CLI device-code 登录)
   └── openclaw-uninstall     # 完全卸载
 ```
 

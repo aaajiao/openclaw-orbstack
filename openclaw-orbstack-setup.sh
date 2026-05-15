@@ -232,6 +232,19 @@ info "$MSG_INFO_INSTALLING_PNPM"
 vm_exec "sudo corepack enable 2>/dev/null || sudo npm install -g pnpm"
 ok "$MSG_OK_PNPM_INSTALLED: $(vm_exec 'pnpm --version')"
 
+# --- Codex CLI (enables ChatGPT subscription auth via PR #82117 runtime fallback) ---
+# OpenClaw v2026.5.14+ fix: when local openai-codex OAuth refresh fails, runtime
+# reads tokens from ~/.codex/auth.json. We install Codex CLI here so the file is
+# present when the user runs `openclaw-codex-login` later. Non-fatal on failure —
+# users without ChatGPT subscription can ignore this and continue on api-key.
+info "$MSG_INFO_INSTALLING_CODEX_CLI"
+if vm_exec "sudo npm install -g @openai/codex" 2>/dev/null; then
+    ok "$(printf "$MSG_OK_CODEX_CLI_INSTALLED" "$(vm_exec 'codex --version 2>/dev/null' || echo 'unknown')")"
+    info "$MSG_INFO_CODEX_CLI_HINT"
+else
+    warn "$MSG_WARN_CODEX_CLI_FAIL"
+fi
+
 # --- Pre-flight: disk space check (need ~5GB for clone + build + Docker images) ---
 AVAIL_MB=$(vm_exec "df -m /home 2>/dev/null | awk 'NR==2{print \$4}'" 2>/dev/null || echo "0")
 if [ "$AVAIL_MB" -lt 5000 ] 2>/dev/null; then
@@ -764,6 +777,7 @@ echo -e "  ${GREEN}openclaw-update${NC}       $MSG_FINAL_CMD_UPDATE"
 echo -e "  ${GREEN}openclaw-sandbox-rebuild${NC} $MSG_FINAL_CMD_REBUILD"
 echo -e "  ${GREEN}openclaw-doctor${NC}       $MSG_FINAL_CMD_DOCTOR"
 echo -e "  ${GREEN}openclaw-shell${NC}        $MSG_FINAL_CMD_SHELL"
+echo -e "  ${GREEN}openclaw-codex-login${NC} $MSG_FINAL_CMD_CODEX_LOGIN"
 echo -e "  ${GREEN}openclaw-uninstall${NC}    $MSG_FINAL_CMD_UNINSTALL"
 echo ""
 echo "$MSG_FINAL_SANDBOX_TITLE"

@@ -100,6 +100,36 @@ else
     fi
 fi
 
+# --- Ensure Codex CLI is present (and up to date) ---
+# Required since openclaw v2026.5.14+ for the ChatGPT subscription path:
+# upstream PR #82117 makes the runtime fall back to ~/.codex/auth.json when
+# OpenClaw's own OAuth refresh fails. We install (first run) or upgrade (latest)
+# Codex CLI on every update so the file format stays aligned with OpenAI's
+# current auth contract. Failure is non-fatal — gpt-5.* still works via api-key.
+echo "$MSG_UPDATE_CODEX_CLI_CHECK"
+CODEX_OLD=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'codex --version 2>/dev/null' || true)
+if [ -z "$CODEX_OLD" ]; then
+    echo "$MSG_UPDATE_CODEX_CLI_INSTALLING"
+else
+    # shellcheck disable=SC2059
+    printf "$MSG_UPDATE_CODEX_CLI_UPGRADING\n" "$CODEX_OLD"
+fi
+if orb -m "$OPENCLAW_VM_NAME" bash -lc 'sudo npm install -g @openai/codex' 2>/dev/null; then
+    CODEX_NEW=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'codex --version 2>/dev/null' || echo "unknown")
+    if [ -z "$CODEX_OLD" ]; then
+        # shellcheck disable=SC2059
+        printf "$MSG_UPDATE_CODEX_CLI_INSTALLED\n" "$CODEX_NEW"
+    elif [ "$CODEX_OLD" = "$CODEX_NEW" ]; then
+        # shellcheck disable=SC2059
+        printf "$MSG_UPDATE_CODEX_CLI_UP_TO_DATE\n" "$CODEX_NEW"
+    else
+        # shellcheck disable=SC2059
+        printf "$MSG_UPDATE_CODEX_CLI_UPGRADED\n" "$CODEX_OLD" "$CODEX_NEW"
+    fi
+else
+    echo "$MSG_UPDATE_CODEX_CLI_FAIL"
+fi
+
 # --- Migrate old single hash → per-image hashes (no rebuild) ---
 # Hash inputs list both new (≥ v2026.5.3 scripts/docker/sandbox/) and legacy
 # (≤ v2026.5.2 root) Dockerfile paths; cat skips missing files via 2>/dev/null

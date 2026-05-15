@@ -80,6 +80,7 @@ Architecture decisions, config structure, feature status, and operational knowle
 | Web console | `http://openclaw-vm.orb.local:18789` |
 | Config (in VM) | `~/.openclaw/openclaw.json` |
 | Secrets (in VM) | `~/.openclaw/.env` |
+| Codex CLI auth (in VM) | `~/.codex/auth.json` — required for ChatGPT subscription path (PR #82117 fallback) |
 | Node.js | 24.x LTS |
 | Service | `systemctl --user` (`openclaw-gateway.service`) |
 | Gateway cmd | `node dist/index.js gateway --port 18789` |

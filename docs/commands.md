@@ -9,7 +9,7 @@
 
 ---
 
-## OrbStack 管理命令 (14 个)
+## OrbStack 管理命令 (15 个)
 
 这些命令在 `~/bin/` 目录下，用于管理 OrbStack VM 和服务：
 
@@ -49,6 +49,27 @@ openclaw-telegram approve <code>       # 批准配对 (回执验证码)
 # WhatsApp 登录
 openclaw-whatsapp                      # 扫码登录
 ```
+
+### AI 认证
+
+| 命令 | 功能 |
+|------|------|
+| `openclaw-codex-login` | 绑定 ChatGPT 订阅（Codex CLI device-code 登录） |
+
+```bash
+openclaw-codex-login                   # 启动 device-code OAuth 登录
+                                       # 输出验证 URL + 6 位数 code
+                                       # 在 Mac 浏览器打开 URL 输入 code 完成
+```
+
+**何时需要**：仅当你想用 ChatGPT/Codex 订阅服务 `openai/gpt-*` 模型时。不绑定也能用 — Gateway 自动 fallback 到 OpenAI API key（前提是已在配置里设置 `OPENAI_API_KEY`）。
+
+**机制**：上游 v2026.5.14+（PR #82117）在 OpenClaw 自身 OAuth refresh 失败时，从 VM 内 `~/.codex/auth.json` 读取 Codex CLI 的 token 作为 runtime fallback。该文件由 `codex login` 写入并由 Codex CLI 自行 refresh。
+- 安装脚本 / 升级脚本会自动安装/升级 Codex CLI（VM 内 `npm install -g @openai/codex`）
+- Login 是一次性操作 — token 由 Codex CLI 自动维护
+- 不需要 codex CLI 跑后台进程；OpenClaw 只读 `auth.json` 文件
+
+详见 [troubleshooting.md](troubleshooting.md) "ChatGPT 订阅认证" 章节。
 
 ### 服务管理
 

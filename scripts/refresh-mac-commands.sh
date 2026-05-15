@@ -144,6 +144,25 @@ $_VM_RESOLVE
 orb -m "\$_VM" bash -lc "openclaw channels login --channel whatsapp"
 EOF
 
+# openclaw-codex-login: device-code OAuth for ChatGPT subscription.
+# VM is headless (no browser), so we use --device-auth: codex prints a
+# verification URL + user code, the user opens that URL in their Mac browser
+# and enters the code. codex polls and writes the token to ~/.codex/auth.json
+# inside the VM. OpenClaw v2026.5.14+ (PR #82117) reads from that file as a
+# runtime fallback when its own openai-codex OAuth refresh fails.
+# We use `orb run` (not `bash -lc`) so the codex TTY stays interactive and
+# the user can see the verification URL/code live.
+cat > ~/bin/openclaw-codex-login << EOF
+#!/bin/bash
+set -e
+$_VM_RESOLVE
+if ! orb -m "\$_VM" bash -lc 'command -v codex >/dev/null 2>&1'; then
+    echo "Codex CLI is not installed in the VM. Run openclaw-update to install it."
+    exit 1
+fi
+exec orb -m "\$_VM" codex login --device-auth "\$@"
+EOF
+
 # --- Complex commands (thin wrappers -> scripts/commands/) ---
 # These delegate to repo scripts so they auto-update on next openclaw-update
 
@@ -222,6 +241,7 @@ echo "$MSG_REFRESH_CMD_REBUILD"
 echo "$MSG_REFRESH_CMD_DOCTOR"
 echo "$MSG_REFRESH_CMD_TELEGRAM"
 echo "$MSG_REFRESH_CMD_WHATSAPP"
+echo "$MSG_REFRESH_CMD_CODEX_LOGIN"
 echo "$MSG_REFRESH_CMD_UNINSTALL"
 echo ""
 # Auto-add ~/bin to PATH in shell rc (same logic as setup script)
