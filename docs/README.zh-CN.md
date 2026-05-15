@@ -109,7 +109,7 @@ openclaw doctor
 | `openclaw-stop/start` | 停止/启动服务 |
 | `openclaw-shell` | 进入 VM |
 | `openclaw-doctor` | 运行诊断 |
-| `openclaw-update` | 更新版本 (`--sandbox` 重建镜像，`--force` 强制重建) |
+| `openclaw-update` | 更新版本 (`--sandbox` 重建镜像，`--force` 强制重建，`--version=<tag>` 装指定版本) |
 | `openclaw-sandbox-rebuild` | 重建沙箱镜像 |
 | `openclaw-uninstall` | 完全卸载 |
 

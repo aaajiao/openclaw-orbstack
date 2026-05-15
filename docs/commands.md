@@ -61,7 +61,7 @@ openclaw-whatsapp                      # 扫码登录
 | `openclaw-start` | 启动服务 |
 | `openclaw-shell` | 进入 VM 终端 |
 | `openclaw-doctor` | 运行诊断 (openclaw doctor) |
-| `openclaw-update` | 更新版本 (`--sandbox` 重建镜像，`--force` 强制重建) |
+| `openclaw-update` | 更新版本 (`--sandbox` 重建镜像，`--force` 强制重建，`--version=<tag>` 装指定版本) |
 | `openclaw-sandbox-rebuild` | 重建沙箱 Docker 镜像 |
 | `openclaw-uninstall` | 完全卸载 (`--vm` 同时删除虚拟机) |
 
@@ -85,10 +85,27 @@ openclaw-uninstall --yes --vm   # 跳过确认并删除 VM
 `openclaw-update` 会先检查是否有新版本。如果已是最新，直接跳过构建流程：
 
 ```bash
-openclaw-update          # 有新版本才更新，已是最新则跳过
-openclaw-update --force  # 强制重新构建（即使已是最新版本）
-openclaw-update --sandbox  # 同时重建沙箱 Docker 镜像
+openclaw-update                            # 有新版本才更新，已是最新则跳过
+openclaw-update --force                    # 强制重新构建（即使已是最新版本）
+openclaw-update --sandbox                  # 同时重建沙箱 Docker 镜像
+openclaw-update --version=v2026.5.14-beta.1  # 装指定版本（支持 beta / rc / alpha tag）
 ```
+
+### 指定版本（`--version=<tag>`）
+
+默认 `openclaw-update` 只看最新稳定版（过滤掉 `-beta` / `-rc` / `-alpha`）。如果想测试某个上游 beta，或者降级回某个稳定 tag，用 `--version=<tag>`：
+
+```bash
+# 试 beta（含上游 fix candidate）
+openclaw-update --version=v2026.5.14-beta.1
+
+# 降回上一个稳定版（出问题时回滚）
+openclaw-update --version=v2026.5.7
+```
+
+- tag 必须是 upstream `openclaw/openclaw` 仓库已存在的 git tag
+- 装指定版本会绕过 build marker 跳过检查，无条件按这个 tag 重装
+- 装完之后下次直接 `openclaw-update`（不带 `--version`）会回到稳定版选择
 
 有新版本时的更新流程：
 1. 获取最新 release tag
