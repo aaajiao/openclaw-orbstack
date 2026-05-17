@@ -494,6 +494,23 @@ OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
     bash "$OPENCLAW_REPO_DIR/scripts/refresh-mac-commands.sh" 2>/dev/null || true
 
 echo "$MSG_CMD_UPDATE_DONE"
+
+# Surface doctor follow-up actions that would otherwise be buried in the log.
+# Currently catches PR #82777's "re-authenticate this profile" warning emitted
+# when doctor strips a legacy oauthRef sidecar but can't decrypt it to inline
+# the credentials — the profile is left invalid and routing silently falls
+# through to the next profile in `auth.order.*`. Without this surface, the
+# user sees a clean "Update complete!" and only notices later when /status
+# shows the wrong auth label.
+# shellcheck disable=SC2016
+REAUTH_HITS=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'grep -F "re-authenticate this profile" ~/.openclaw/.update-doctor.log 2>/dev/null | head -5' || true)
+if [ -n "$REAUTH_HITS" ]; then
+    printf "\n\033[1;33m%s\033[0m\n" "$MSG_CMD_UPDATE_DOCTOR_REAUTH_HEADER"
+    # shellcheck disable=SC2001  # sed is clearer than the bash builtin for per-line indent
+    echo "$REAUTH_HITS" | sed 's/^/   /'
+    printf "\n   \033[1m%s\033[0m\n\n" "$MSG_CMD_UPDATE_DOCTOR_REAUTH_HINT"
+fi
+
 echo "$MSG_CMD_UPDATE_DOCTOR_LOG"
 echo "$MSG_CMD_UPDATE_DOCTOR_ORPHAN_HINT"
 if [ "$SANDBOX" = false ]; then
