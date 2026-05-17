@@ -359,7 +359,7 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 #    to avoid non-sudo run leaving partial npm state that blocks the sudo install.
 #    --preserve-env=HOME ensures doctor reads the correct user config (~/.openclaw/)
 #    Output captured to ~/.openclaw/.update-doctor.log for post-mortem.
-#    Previous runs archived as .update-doctor.<UTC-timestamp>.log (last 5 kept) so
+#    Previous runs archived as .update-doctor.<UTC-timestamp>.log (last 3 kept) so
 #    a failed upgrade can be diff'd against the last successful run, and each
 #    archive's filename tells you exactly which day it came from.
 #    `yes n` keeps doctor non-interactive past v2026.4.29 #73106 (orphan-archive
@@ -375,7 +375,7 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 #    sandbox registry into per-runtime shard files under
 #    ~/.openclaw/state/sandbox/runtimes/*.json. No prompt; nothing to handle here.
 #    Future debugging: don't look for one big sandbox registry JSON — it's sharded.
-# Archive previous .update-doctor.log → .update-doctor.<UTC-timestamp>.log, keeping the last 5 runs.
+# Archive previous .update-doctor.log → .update-doctor.<UTC-timestamp>.log, keeping the last 3 runs.
 # Timestamped filenames make each archive self-describing (no guessing which `.N` was when),
 # and the prune step keeps the directory bounded. Also one-shot-migrates any leftover
 # legacy `.update-doctor.log.{1..5}` from older wrapper versions into the timestamped scheme.
@@ -396,8 +396,8 @@ if [ -f "$LOG" ]; then
   TS=$(date -u -r "$LOG" +%Y-%m-%dT%H-%M-%SZ)
   mv -f "$LOG" "$PREFIX.$TS.log"
 fi
-# Prune: keep the 5 newest archives by mtime, delete the rest
-ls -t "$PREFIX".*.log 2>/dev/null | tail -n +6 | xargs -r rm -f
+# Prune: keep the 3 newest archives by mtime, delete the rest
+ls -t "$PREFIX".*.log 2>/dev/null | tail -n +4 | xargs -r rm -f
 ' 2>/dev/null || true
 
 # Pre-archive orphan transcripts so doctor's "Archive N orphan transcripts?" prompt
