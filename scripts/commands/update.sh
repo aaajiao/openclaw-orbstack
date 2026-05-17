@@ -359,8 +359,9 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 #    to avoid non-sudo run leaving partial npm state that blocks the sudo install.
 #    --preserve-env=HOME ensures doctor reads the correct user config (~/.openclaw/)
 #    Output captured to ~/.openclaw/.update-doctor.log for post-mortem.
-#    Previous runs rotated to .update-doctor.log.{1..5} (last 5 kept) so a
-#    failed upgrade can be diff'd against the last successful run.
+#    Previous runs archived as .update-doctor.<UTC-timestamp>.log (last 5 kept) so
+#    a failed upgrade can be diff'd against the last successful run, and each
+#    archive's filename tells you exactly which day it came from.
 #    `yes n` keeps doctor non-interactive past v2026.4.29 #73106 (orphan-archive
 #    confirm) and v2026.5.2 line 310 (Gateway-service-rewrite confirm).
 #    Orphan transcripts are pre-archived below — doctor sees zero orphans and the
@@ -374,17 +375,29 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 #    sandbox registry into per-runtime shard files under
 #    ~/.openclaw/state/sandbox/runtimes/*.json. No prompt; nothing to handle here.
 #    Future debugging: don't look for one big sandbox registry JSON — it's sharded.
-# Rotate previous .update-doctor.log → .update-doctor.log.{1..5}, keeping the last 5 runs.
-# Cheap insurance: if a future upgrade fails, the previous (working) baseline is one diff away.
+# Archive previous .update-doctor.log → .update-doctor.<UTC-timestamp>.log, keeping the last 5 runs.
+# Timestamped filenames make each archive self-describing (no guessing which `.N` was when),
+# and the prune step keeps the directory bounded. Also one-shot-migrates any leftover
+# legacy `.update-doctor.log.{1..5}` from older wrapper versions into the timestamped scheme.
 # shellcheck disable=SC2016
 orb -m "$OPENCLAW_VM_NAME" bash -lc '
 LOG=~/.openclaw/.update-doctor.log
+PREFIX=${LOG%.log}
 mkdir -p ~/.openclaw
-[ -f "$LOG.5" ] && rm -f "$LOG.5"
-for i in 4 3 2 1; do
-  [ -f "$LOG.$i" ] && mv "$LOG.$i" "$LOG.$((i+1))"
+# One-time migration: legacy numbered archives → timestamped using their own mtime
+for i in 1 2 3 4 5; do
+  if [ -f "$LOG.$i" ]; then
+    TS=$(date -u -r "$LOG.$i" +%Y-%m-%dT%H-%M-%SZ 2>/dev/null || date -u +%Y-%m-%dT%H-%M-%SZ)
+    mv -f "$LOG.$i" "$PREFIX.$TS.log"
+  fi
 done
-[ -f "$LOG" ] && mv "$LOG" "$LOG.1"
+# Archive current log with its own mtime as the timestamp (= when that run finished)
+if [ -f "$LOG" ]; then
+  TS=$(date -u -r "$LOG" +%Y-%m-%dT%H-%M-%SZ)
+  mv -f "$LOG" "$PREFIX.$TS.log"
+fi
+# Prune: keep the 5 newest archives by mtime, delete the rest
+ls -t "$PREFIX".*.log 2>/dev/null | tail -n +6 | xargs -r rm -f
 ' 2>/dev/null || true
 
 # Pre-archive orphan transcripts so doctor's "Archive N orphan transcripts?" prompt
