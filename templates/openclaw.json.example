@@ -683,6 +683,19 @@
     //   使用这些频道需要先 `openclaw plugins install <name>` 安装对应插件。
     //   WhatsApp 现走 `baileys@7.0.0-rc11`（不再是 `@whiskeysockets/baileys`）。
     //
+    // ========== Bot-to-bot 循环保护 (v2026.5.16-beta.*+) ==========
+    // 通用 bot loop guard：当一对 bot 在 windowSeconds 内 bot-authored events
+    // 累计超过 maxEventsPerWindow，后续 bot-to-bot 事件被压制 cooldownSeconds。
+    // 跨 Discord/Slack/Matrix/Google Chat 共享，可在频道级或会话级覆盖。
+    // 不显式配置则使用以下 defaults（频道允许 bot-authored 消息时自动启用）。
+    // defaults: {
+    //   botLoopProtection: {
+    //     maxEventsPerWindow: 20,
+    //     windowSeconds: 60,
+    //     cooldownSeconds: 60
+    //   }
+    // },
+    //
     // ========== WhatsApp ==========
     whatsapp: {
       // DM 策略:
@@ -876,7 +889,11 @@
       
       // 是否允许其他机器人的消息
       allowBots: false,
-      
+
+      // 抑制外发链接卡片预览 (v2026.5.16-beta.*+, 默认 true)
+      // 设为 false 会让 agent 发送的 URL 自动展开为 Discord 链接卡片
+      // suppressEmbeds: true,
+
       // DM 设置
       dm: {
         enabled: true,
@@ -996,6 +1013,10 @@
 
       // v2026.3.12: 频道路由默认使用稳定 ID，可变名称匹配需显式启用
       // dangerouslyAllowNameMatching: false,
+
+      // 外发链接自动展开 (v2026.5.16-beta.*+, 默认 false)
+      // 设为 true 会让 agent 发送的 URL 在 Slack 中自动展开为 inline preview
+      // unfurlLinks: false,
     },
     
     // ========== Google Chat ==========

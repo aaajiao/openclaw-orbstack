@@ -389,6 +389,8 @@ openclaw config set <path> <value> # 设置配置值
 openclaw config set --merge <path> <json>  # v2026.4.22+: 合并到 map/list (provider-scoped 默认行为)
 openclaw config set --replace <path> <json> # v2026.4.22+: 完全替换 map/list (显式 clobber)
 openclaw config unset <path>       # 删除配置值
+openclaw config unset <path> --dry-run        # v2026.5.16-beta.*+: 预览不写入
+openclaw config unset <path> --dry-run --json # v2026.5.16-beta.*+: JSON 输出（与 set/patch 对齐）
 openclaw config schema             # 导出 JSON Schema (含标题和描述, v2026.4.5 enriched)
 ```
 
@@ -472,6 +474,8 @@ openclaw cron disable <id>         # 禁用任务
 openclaw cron rm <id>              # 删除任务 (也可能是 cron delete，待实测确认)
 openclaw cron runs                 # 查看运行记录
 openclaw cron run <id>             # 手动触发任务
+openclaw cron run <id> --wait --timeout 30s --poll 1s  # v2026.5.16-beta.*+: 阻塞等待运行完成
+openclaw cron runs --run-id <run>  # v2026.5.16-beta.*+: 按运行 ID 精确过滤
 
 # v2026.4.27+: Telegram forum topic 投递保留 (cron add/edit)
 openclaw cron add --thread-id <topicId>     # 跨调度保留 Telegram forum topic
@@ -597,6 +601,11 @@ openclaw plugins disable <id>      # 禁用插件
 openclaw plugins uninstall <id>    # 卸载插件
 openclaw plugins update <id>       # 更新单个插件
 openclaw plugins update --all      # 更新所有插件
+
+# 插件开发工具 (v2026.5.16-beta.*+) — 配合 defineToolPlugin SDK
+openclaw plugins init <dir>        # 初始化简单工具插件脚手架
+openclaw plugins build <dir>       # 编译/打包带 manifest 元数据
+openclaw plugins validate <dir>    # 校验 manifest + 类型化工具声明
 openclaw plugins doctor            # 插件诊断
 openclaw plugins registry          # v2026.4.25+: 检查持久化冷注册表 (plugins/installs.json)
 openclaw plugins registry --refresh # v2026.4.25+: 强制重建注册表 (修复 stale entries)
@@ -785,6 +794,7 @@ openclaw backup verify <archive>           # 验证备份完整性
 
 ```bash
 openclaw sessions                  # 会话列表 (v2026.5.4+ 默认仅返回最新 100 行)
+openclaw sessions list             # v2026.5.16-beta.*+ (#81163): list 别名，与其他子命令保持一致
 openclaw sessions --active 60      # 最近 60 分钟活跃的
 openclaw sessions --json           # JSON 格式输出
 openclaw sessions --limit <n|all>  # v2026.5.4+ (#77500): 显式行数 (n) 或 all 取消上限
