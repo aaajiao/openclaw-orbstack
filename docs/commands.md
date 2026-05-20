@@ -368,6 +368,8 @@ openclaw skills list --eligible    # 只显示可用的
 openclaw skills list --verbose     # 显示缺失依赖
 openclaw skills info <name>        # Skill 详情
 openclaw skills check              # 检查状态摘要
+openclaw skills install <name> --global  # v2026.5.19+ (#74466): 安装到 shared managed skills
+openclaw skills update <name> --global   # v2026.5.19+ (#74466): 同上,对 shared 范围更新
 ```
 
 ### 配置管理
@@ -448,6 +450,8 @@ openclaw browser select            # 选择
 openclaw browser upload            # 上传文件
 openclaw browser fill              # 填充表单
 openclaw browser evaluate          # 执行 JavaScript
+openclaw browser evaluate --timeout-ms <ms>  # v2026.5.19+ (#83447): 单次 evaluate 自定义超时
+openclaw browser dialog --dialog-id <id>     # v2026.5.19+: 应答页面 modal 对话框(snapshot 会返回 pending dialog 列表)
 openclaw browser pdf               # 导出 PDF
 
 # 配置文件
@@ -848,6 +852,16 @@ openclaw proxy validate            # 验证 effective proxy 配置 + 可达性 +
 #### sessions_spawn forkedContext (v2026.4.23+)
 
 Agent 通过 `sessions_spawn` 原生工具派生子 session 时，可选 `forkedContext: true` 让子 agent 继承 requester 的 transcript（非默认）。适合需要共享上下文的协作子任务；默认仍是 clean isolated，避免上下文污染。
+
+#### /codex plugins 子命令 (v2026.5.19+)
+
+在 chat 里直接管理 native Codex 插件,不用手改 config:
+
+- `/codex plugins list` — 列出已配置的 Codex 插件
+- `/codex plugins enable <name>` — 启用一个
+- `/codex plugins disable <name>` — 禁用一个
+
+注:这是 Codex app-server 自带的 native 插件管理面,跟 OpenClaw 顶层 `openclaw plugins` 是两套体系(OpenClaw plugins 服务 wrapper / channels / runtime,Codex plugins 服务 Codex harness 内部工具)。
 
 ---
 
