@@ -162,6 +162,8 @@ openclaw status --usage            # 模型使用量/配额
 openclaw status --json             # JSON 格式输出
 # v2026.4.22: /status 新增 `Runner:` 字段 (embedded pi / CLI-backed / ACP harness
 # 如 codex (acp/acpx) / gemini (acp/acpx))；fast mode 启用时显示 `Fast` 字段
+# v2026.5.20: /status 在 session 被 pin 到非默认模型时显示配置默认、当前 pinned model、
+# 切回 hint 和 docs 链接（不再静默处理 pinned-model 偏移）
 
 openclaw doctor                    # 健康检查 + 报告问题 (不自动修复)
 openclaw doctor --fix              # 自动修复: config 迁移、systemd 修复、plugin 依赖、stale lock 清理
@@ -186,6 +188,8 @@ openclaw logs --local-time         # 本地时区显示
 ```bash
 openclaw gateway status                    # Gateway 状态
 openclaw gateway status --deep             # 深度扫描系统服务
+openclaw gateway status --json             # v2026.5.20+ (#56222): 包含 running Gateway version
+                                           # (fallback 到 status RPC 数据，read probe 也可用)
 openclaw gateway health                    # 健康检查
 openclaw gateway probe                     # 完整可达性探测
 openclaw gateway discover                  # Bonjour 发现
@@ -848,6 +852,14 @@ openclaw proxy validate            # 验证 effective proxy 配置 + 可达性 +
 `acp`, `approvals`, `clawbot`, `daemon`, `exec-policy`, `flows`, `infer`, `system`, `node`, `nodes`, `devices`, `dns`, `docs`, `hooks`, `webhooks`, `directory`, `qr`, `security`, `tasks`, `tui`
 
 运行 `openclaw <command> --help` 查看详情。
+
+#### openclaw tasks maintenance --json (v2026.5.20+)
+
+```bash
+openclaw tasks maintenance --json          # 检视 stale-running task 的清理决策
+```
+
+v5.20 (#84691) 起 `--json` 输出对每个 retained 或 reconcile candidate 列出 backing-session、cron、CLI、wedged-subagent 状态，便于排查为什么某个 task 没被自动清理。基础 `openclaw tasks maintenance` 命令本身更早就存在。
 
 #### sessions_spawn forkedContext (v2026.4.23+)
 
