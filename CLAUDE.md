@@ -1,7 +1,7 @@
 # CLAUDE.md - Project Guide for Claude Code
 
 **Project:** OpenClaw OrbStack — one-click OpenClaw AI chatbot deployment on macOS via OrbStack VM.
-**Version:** v2026.5.20 | **License:** MIT
+**Version:** v2026.5.22 | **License:** MIT
 
 ## Architecture
 
@@ -56,7 +56,7 @@ This directory contains the developer's **actual runtime configuration** for the
 | File | Purpose | Syncs To (in VM) |
 |------|---------|------------------|
 | `openclaw.json` | Full Gateway config (agents, models, sandbox, channels, etc.) | `~/.openclaw/openclaw.json` |
-| `.env` | Secrets (API keys, bot tokens, Gateway auth token) | `~/.openclaw/.env` |
+| `.env.local` | Secrets (API keys, bot tokens, Gateway auth token) | `~/.openclaw/.env` |
 
 ### Relationship: local/ vs templates/
 

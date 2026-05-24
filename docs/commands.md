@@ -875,6 +875,16 @@ Agent 通过 `sessions_spawn` 原生工具派生子 session 时，可选 `forked
 
 注:这是 Codex app-server 自带的 native 插件管理面,跟 OpenClaw 顶层 `openclaw plugins` 是两套体系(OpenClaw plugins 服务 wrapper / channels / runtime,Codex plugins 服务 Codex harness 内部工具)。
 
+#### openclaw meeting-notes (v2026.5.22+)
+
+```bash
+openclaw meeting-notes             # 只读访问已捕获的会议记录
+```
+
+v5.22 引入的会议记录功能,实现在一个 **source-only 外部插件**里(不打包进 core npm),提供 auto-start 捕获配置、手动 transcript 导入、以及只读的 `openclaw meeting-notes` CLI;首个 live source 是 Discord voice。
+
+注:这是 **opt-in 外部插件**,默认不安装。本 OrbStack wrapper 不预装它——只有显式安装该插件后 `openclaw meeting-notes` 才可用。
+
 ---
 
 ## OrbStack VM 管理
