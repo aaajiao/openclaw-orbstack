@@ -1465,6 +1465,8 @@
       mode: "token",      // "token" | "none"
       token: ""           // 留空则自动生成
       // allowTailscale: true
+      // v2026.5.26+ (#87148): rateLimit 未设置时，自动对远程非浏览器 / HTTP 认证失败启用限流（loopback 豁免）
+      // rateLimit: { windowMs: 60000, max: 10 },
     },
     
     // 远程访问 (可选)
@@ -1666,6 +1668,7 @@
   cron: {
     enabled: false,
     store: "~/.openclaw/cron/cron.json",
+    // v2026.5.26+: 未设置时默认 8（原约等于 1），让并行调度及其隔离 agent turn 能推进；显式设值仍优先
     maxConcurrentRuns: 2
     // 单任务 Webhook 投递 (可选)
     // delivery: { mode: "webhook", url: "https://example.com/hook" },
