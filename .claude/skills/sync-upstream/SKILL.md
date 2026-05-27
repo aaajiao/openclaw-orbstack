@@ -25,6 +25,9 @@ Run these two checks in parallel to save time:
     | grep -v -e '-beta' -e '-rc' -e '-alpha' \
     | sort -V | tail -1
   ```
+  (The beta/rc/alpha filter here is **only to pick the sync target** — the newest
+  stable. Step 2 still reads the beta/rc notes in between; do not let this filter
+  leak into Step 2.)
 - **Our version**: read the `VERSION` file in the repo root.
 
 Compare them. If already in sync, tell the user and stop — there's nothing to do.
@@ -36,14 +39,38 @@ gh release list -R openclaw/openclaw --limit 5
 
 ## Step 2 — Read upstream release notes
 
-Fetch the release notes for every version we're behind on:
+We sync **to the latest stable** (Step 1's target), but stable release notes are
+**cumulative summaries** — they roll up several beta/rc cycles and **omit per-PR
+detail that only appears in the beta/rc release notes**. (Example: v2026.5.26 folded
+in the skipped 5.23–5.25 betas as one rolled-up section.) So read the full range,
+betas included — not just the stable tags.
+
+First enumerate every release between our version and the target stable, **keeping
+beta/rc tags** (do NOT reuse Step 1's `grep -v` filter here):
+
+```bash
+git ls-remote --tags https://github.com/openclaw/openclaw.git 'v*' \
+  | awk '{print $2}' | sed 's|refs/tags/||' | grep -v '\^{}' \
+  | sort -V
+```
+
+If `git ls-remote` fails here, fall back to `gh` and keep the beta/rc rows (do NOT
+filter them out):
+```bash
+gh release list -R openclaw/openclaw --limit 30
+```
+
+Take every tag greater than our `VERSION` up to and including the target stable —
+**keep the beta/rc entries**. Then read each one's notes, oldest to newest:
 
 ```bash
 gh release view <tag> -R openclaw/openclaw
 ```
 
-If multiple versions behind, read ALL intermediate releases from oldest to newest.
-Order matters because later releases may revert or supersede earlier changes.
+Read ALL intermediate releases (stable **and** beta/rc) from oldest to newest.
+Order matters: later releases may revert or supersede earlier changes, and a change
+first shipped in a beta is often documented **only** in that beta's notes even when
+the stable rollup glosses over it.
 
 Classify each change into one of these categories. This classification drives
 Step 3 — it tells you which of our files to inspect:
@@ -85,8 +112,12 @@ service repair, security audit).
 
 **For each flagged change, perform an explicit verification step in Step 3:**
 
-1. **Read `scripts/commands/update.sh`** lines around the two doctor invocations
-   (currently pipe `yes n |` for non-interactive answer).
+1. **Read `scripts/commands/update.sh`** around the two `doctor --fix` invocations
+   (grep for `doctor --fix` — their line numbers move as the file grows). The
+   wrapper has a **two-layer non-interactive defense**: (a) primary — orphan
+   transcripts are pre-archived just above the doctor calls so doctor sees zero
+   orphans and never raises the v2026.4.29 confirm; (b) defense-in-depth — both
+   calls pipe `yes n |` in case a new or shifted prompt slips through.
 2. **Classify the new prompt type:**
    - **Yes/No confirm** — `yes n` answers "No". Verify "No" is the **safe / non-destructive** default
      (e.g., "Archive orphan transcripts? No" → preserves files, ✅ safe). If "No"
@@ -97,18 +128,20 @@ service repair, security audit).
      upstream `--non-interactive` flag.
    - **Free-text input** — `yes n` will inject "n" as the answer. Almost always wrong.
      Plan a wrapper fix.
-3. **Add the doctor change to the impact table** with explicit "verify
-   `scripts/commands/update.sh:276` and `:285` still complete" in the action column,
-   even if no other file needs touching. Treat it as a blocker until verified.
+3. **Add the doctor change to the impact table** with explicit "verify both
+   `doctor --fix` invocations in `scripts/commands/update.sh` still complete" in
+   the action column, even if no other file needs touching. Treat it as a blocker
+   until verified.
 4. **If a wrapper fix is needed**, list it as a separate impact-table row so the
    user can approve the script change alongside the version bump.
 
 **Reference incident**: v2026.4.29 #73106 added the
 `Archive N orphan transcript files?` confirm. Our update.sh hit `Setup cancelled`
 right after plugin registry refresh, leaving systemd service repair on the floor.
-Fixed in commit `33434d7` by piping `yes n` to both doctor invocations. Whenever
-release notes mention doctor + interactivity, **assume the same regression class
-until proven otherwise**.
+First fixed in commit `33434d7` by piping `yes n` to both doctor invocations; later
+hardened by pre-archiving orphan transcripts before the doctor calls (so the prompt
+never fires), with `yes n` kept as the fallback. Whenever release notes mention
+doctor + interactivity, **assume the same regression class until proven otherwise**.
 
 ## Step 3 — Impact analysis
 
@@ -126,8 +159,9 @@ Use Grep and Read to find the specific locations. For example:
   any model config sections (e.g., `videoGenerationModel`, `musicGenerationModel`).
 - A removed feature → grep across docs and templates to find stale references.
 - A version bump → read `VERSION` and grep `CLAUDE.md` for the version string.
-- **A doctor / interactive-prompt change** → read `scripts/commands/update.sh:266-285`
-  and verify the existing `yes n |` pipe still answers safely (see the "Doctor /
+- **A doctor / interactive-prompt change** → read `scripts/commands/update.sh`
+  around the two `doctor --fix` invocations (grep for `doctor --fix`) and verify
+  the pre-archive + `yes n |` defense still answers safely (see the "Doctor /
   non-interactive flow scan" section above). If a new prompt type (select,
   free-text) would break the pipe, propose a wrapper fix as a separate impact-table row.
 
@@ -205,8 +239,11 @@ Covers changes from vA.B.C through vX.Y.Z.
 
 ## Step 8 — Stop
 
-Do not push, tag, or create a release. The user needs to test locally first
-(e.g., reinstall the VM, verify config changes work). Remind them of this:
+Changes are committed locally. **Do not** push, tag, create a release, or upgrade
+the VM on your own. The remaining steps — push, tag, GitHub release, and VM upgrade
+— have no fixed order; the user decides the sequence each time (sometimes VM-first
+to validate, sometimes wrapper-release-first with the VM upgrade waiting on
+community feedback). Report the committed state and wait for explicit direction:
 
-> Changes committed locally. Please test before pushing. When ready, I can help
-> push and create a release.
+> Changes committed locally. Push / release / VM upgrade are up to you — tell me
+> what to do and in what order.

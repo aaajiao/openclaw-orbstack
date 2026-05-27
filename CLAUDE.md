@@ -131,7 +131,7 @@ Before declaring a task done, verify all applicable items:
 |------|-------|
 | Edit shell script | Edit file → hook auto-runs `bash -n` + `shellcheck` |
 | Edit JSON config | Check upstream docs → Edit → hook auto-runs `jq .` (strict JSON) |
-| Sync upstream | `/sync-upstream` → review → approve → commit → user tests → push |
+| Sync upstream | `/sync-upstream` → review → approve → commit; push/release/VM-upgrade only on explicit user direction (order is the user's call) |
 | Add i18n string | Add `$MSG_*` to both `lang/en.sh` and `lang/zh-CN.sh` (hook reminds) |
 | Need VM state | Ask user to provide it — never access VM directly |
 
@@ -185,11 +185,14 @@ GitHub Actions runs shellcheck on shell scripts (`.github/workflows/shellcheck.y
 ## Release Workflow
 
 1. Use `/sync-upstream` to check for new upstream OpenClaw releases and apply changes
-2. Implement changes and commit
-3. Let user test locally before proceeding
-4. Only after user confirms: push, tag, and create GitHub release
+2. Implement changes and commit locally
+3. The remaining steps — push, tag, GitHub release, and upgrading the local VM —
+   have **no fixed order**. The user decides the sequence each time: sometimes the
+   VM is upgraded first to validate, sometimes the wrapper release goes out first
+   and the VM upgrade waits for community feedback.
 
-Never push or create releases without explicit user approval after testing.
+Never push, tag, create a release, or upgrade the VM autonomously — wait for explicit
+user direction on what to do and in which order.
 
 ## Config Editing Rules
 
