@@ -375,6 +375,7 @@
         // provider: "auto",  // "auto" | "openai" | "gemini" | "local" | "ollama"
         // auto 模式会按顺序尝试: local → openai → gemini
         // 如果没有可用的 embedding provider，memory search 会被静默禁用
+        // v2026.5.27+ (#85269): OpenAI 兼容 embedding provider 转为 core（本地/托管 OpenAI-style endpoint 直接可用，无需插件；旧 memory-specific embedding 插件注册已 deprecated #85072）
         //
         // 本地 embedding 上下文大小 (v2026.4.23+, #70544)
         // local: {
@@ -1465,6 +1466,7 @@
       mode: "token",      // "token" | "none"
       token: ""           // 留空则自动生成
       // allowTailscale: true
+      // v2026.5.27+: 经 Tailscale 暴露 gateway 时必须配置 auth（mode:"token"），否则被拒绝（no-auth Tailscale exposure rejected）
       // v2026.5.26+ (#87148): rateLimit 未设置时，自动对远程非浏览器 / HTTP 认证失败启用限流（loopback 豁免）
       // rateLimit: { windowMs: 60000, max: 10 },
     },
