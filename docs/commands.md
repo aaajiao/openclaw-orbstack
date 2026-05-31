@@ -164,6 +164,7 @@ openclaw status --json             # JSON 格式输出
 # 如 codex (acp/acpx) / gemini (acp/acpx))；fast mode 启用时显示 `Fast` 字段
 # v2026.5.20: /status 在 session 被 pin 到非默认模型时显示配置默认、当前 pinned model、
 # 切回 hint 和 docs 链接（不再静默处理 pinned-model 偏移）
+# v2026.5.28: status 输出新增当前活跃 subagent 详情（active subagent details）
 
 openclaw doctor                    # 健康检查 + 报告问题 (不自动修复)
 openclaw doctor --fix              # 自动修复: config 迁移、systemd 修复、plugin 依赖、stale lock 清理
