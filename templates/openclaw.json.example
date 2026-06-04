@@ -1470,6 +1470,14 @@
       // v2026.5.26+ (#87148): rateLimit 未设置时，自动对远程非浏览器 / HTTP 认证失败启用限流（loopback 豁免）
       // rateLimit: { windowMs: 60000, max: 10 },
     },
+
+    // Tailscale Serve 命名服务暴露 (可选, v2026.5.31+)
+    // 设了 serviceName 后，OpenClaw 会以 `tailscale serve --service <name>` 把 Control UI
+    // 暴露成一个具名 Tailscale Service（而不是设备 hostname）；启动日志会打印派生的 Service URL。
+    // 值必须是 Tailscale 的 `svc:<dns-label>` 格式。留空 / 不配则沿用设备 hostname 暴露方式。
+    // tailscale: {
+    //   serviceName: "svc:openclaw",
+    // },
     
     // 远程访问 (可选)
     // remote: {

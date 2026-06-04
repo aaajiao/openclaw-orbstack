@@ -336,7 +336,7 @@ openclaw models auth list --json           # v2026.5.4+: JSON 格式输出
 ```bash
 openclaw agents list               # 列出 Agent
 openclaw agents list --bindings    # 包含路由绑定
-openclaw agents add <name>         # 添加新 Agent
+openclaw agents add <name>         # 添加新 Agent (v2026.6.1+ 不再依赖 provider catalog 在线，离线也能加)
 openclaw agents add --workspace <dir>
 openclaw agents set-identity       # 更新身份
 openclaw agents delete <id>        # 删除 Agent
@@ -885,6 +885,37 @@ openclaw meeting-notes             # 只读访问已捕获的会议记录
 v5.22 引入的会议记录功能,实现在一个 **source-only 外部插件**里(不打包进 core npm),提供 auto-start 捕获配置、手动 transcript 导入、以及只读的 `openclaw meeting-notes` CLI;首个 live source 是 Discord voice。
 
 注:这是 **opt-in 外部插件**,默认不安装。本 OrbStack wrapper 不预装它——只有显式安装该插件后 `openclaw meeting-notes` 才可用。
+
+#### Skill Workshop (v2026.5.31+)
+
+让 agent 从聊天里**受管地创建/更新 workspace skill**——不是直接写活的 `SKILL.md`,而是先生成一份 **proposal(`PROPOSAL.md` 草案)**,只有 `apply` 才会落成正式 skill。只动 workspace `skills/` 根,不碰 bundled / plugin / ClawHub / system skill。
+
+生命周期:`create/update → pending`,`revise → pending`,`apply → applied`,`reject → rejected`,`quarantine → quarantined`,目标 skill 在 apply 前被改则 `→ stale`(hash 绑定失效)。只有 `pending` 能 revise/apply/reject/quarantine。
+
+聊天里直接说需求即可(agent 调 `skill_workshop` 工具,返回 proposal id):
+
+```text
+做一个叫 morning-catchup 的 skill，跑我周一收件箱例程。
+给我看 morning-catchup 这个 proposal。
+应用 morning-catchup proposal。
+```
+
+对应 CLI:
+
+```bash
+openclaw skills workshop propose-create --name <name> --description "..." --proposal ./PROPOSAL.md
+openclaw skills workshop propose-update <skill> --proposal ./PROPOSAL.md
+openclaw skills workshop list                       # 列出 proposal
+openclaw skills workshop inspect <proposal-id>      # 查看细节
+openclaw skills workshop revise <proposal-id> --proposal ./PROPOSAL.md
+openclaw skills workshop apply <proposal-id>        # 唯一会写活 skill 的动作
+openclaw skills workshop reject <proposal-id> --reason "..."
+openclaw skills workshop quarantine <proposal-id> --reason "..."
+```
+
+附带支持文件用 `--proposal-dir <dir>`(目录须含 `PROPOSAL.md`,支持文件只能放 `assets/` `examples/` `references/` `scripts/` `templates/`)。
+
+配置在 `skills.workshop`:`autonomous.enabled`(默认 `false`,关掉 agent 自主从对话信号生成 proposal)、`approvalPolicy`(`"pending"` = agent 发起的 apply/reject/quarantine 前要审批 prompt,`"auto"` = 跳过)、`maxPending: 50`、`maxSkillBytes: 40000`。默认很保守——非 `apply` 不会改活文件,且 apply 前会重跑 scanner、写 rollback 元数据,可恢复。
 
 ---
 
