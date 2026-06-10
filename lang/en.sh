@@ -71,6 +71,7 @@ MSG_BUILD_FALLBACK_FAIL="  ✗ Source build also failed"
 MSG_PKG_INSTALL_LOG_HINT="    log: ~/.openclaw/.update-npm.log (run: openclaw-shell, then cat it)"
 MSG_PKG_INSTALL_ABORT="  Update aborted — npm install failed. Retry: openclaw-update --force"
 MSG_BUILD_LOG_HINT="    log: ~/.openclaw/.update-build.log (run: openclaw-shell, then cat it)"
+MSG_SANDBOX_BUILD_LOG_HINT="    log: %s (run: openclaw-shell, then cat it)"
 
 # --- Step 6: Sandbox ---
 MSG_BUILD_PATIENCE="    ⏳ This may take a few minutes, please wait"

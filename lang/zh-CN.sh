@@ -71,6 +71,7 @@ MSG_BUILD_FALLBACK_FAIL="  ✗ 源码编译也失败了"
 MSG_PKG_INSTALL_LOG_HINT="    日志: ~/.openclaw/.update-npm.log (openclaw-shell 进 VM 后 cat 查看)"
 MSG_PKG_INSTALL_ABORT="  更新已中止 —— npm 安装失败。重试: openclaw-update --force"
 MSG_BUILD_LOG_HINT="    日志: ~/.openclaw/.update-build.log (openclaw-shell 进 VM 后 cat 查看)"
+MSG_SANDBOX_BUILD_LOG_HINT="    日志: %s (openclaw-shell 进 VM 后 cat 查看)"
 
 # --- Step 6: Sandbox ---
 MSG_BUILD_PATIENCE="    ⏳ 这可能需要几分钟，请耐心等待"

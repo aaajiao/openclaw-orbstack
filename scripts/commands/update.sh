@@ -58,7 +58,10 @@ echo "$MSG_CMD_UPDATE_PULLING"
 # --prune is required: upstream openclaw has many force-pushed and renamed branches
 # (e.g. clawsweeper/* automerge bots), which create refname conflicts on plain fetch.
 # Without --prune, fetch fails with "some local refs could not be updated".
-orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git remote prune origin && git fetch --prune --tags --force"
+# --quiet + prune>/dev/null: openclaw has hundreds of bot branches, so a plain
+# fetch floods the terminal with "-> origin/... (forced update)" lines that
+# interleave with the wrapper's spinner/echo ("花屏"). Real errors still hit stderr.
+orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git remote prune origin >/dev/null && git fetch --quiet --prune --tags --force"
 
 if [ -n "$TARGET_VERSION" ]; then
     # Explicit version pin: validate tag exists upstream; allow beta/rc/alpha.
@@ -114,7 +117,9 @@ else
     # shellcheck disable=SC2059
     printf "$MSG_UPDATE_CODEX_CLI_UPGRADING\n" "$CODEX_OLD"
 fi
-if orb -m "$OPENCLAW_VM_NAME" bash -lc 'sudo npm install -g @openai/codex' 2>/dev/null; then
+# Redirect inside bash -lc so npm's "added/changed N packages" + allow-scripts
+# banner (stdout) is suppressed too, not just stderr — keeps the output clean.
+if orb -m "$OPENCLAW_VM_NAME" bash -lc 'sudo npm install -g @openai/codex >/dev/null 2>&1'; then
     CODEX_NEW=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'codex --version 2>/dev/null' || echo "unknown")
     if [ -z "$CODEX_OLD" ]; then
         # shellcheck disable=SC2059
@@ -191,14 +196,18 @@ if [ "$CURRENT_HEAD" = "$TAG_COMMIT" ] && [ "$BUILT_VERSION" = "$LATEST_TAG" ] &
 fi
 
 echo "$MSG_CMD_UPDATE_STOPPING"
-orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway stop"
+# Suppress the openclaw CLI startup banner/tagline (stdout) so it doesn't
+# interleave with the wrapper's progress output. Same for the two gateway starts.
+orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway stop >/dev/null 2>&1"
 GATEWAY_STOPPED=true
 trap 'if [ "$GATEWAY_STOPPED" = true ]; then
     echo "$MSG_CMD_UPDATE_RECOVER"
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start" 2>/dev/null || true
+    orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start >/dev/null 2>&1" || true
 fi' EXIT
 
-orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git checkout -- . 2>/dev/null; git checkout '$LATEST_TAG'"
+# -q on both checkouts suppresses the "detached HEAD" advisory + "HEAD is now at"
+# lines (noise that interleaves with the spinner). Real errors still hit stderr.
+orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git checkout -q -- . 2>/dev/null; git checkout -q '$LATEST_TAG'"
 
 # Derive npm package version from git tag (v2026.3.13 -> 2026.3.13)
 NPM_VERSION="${LATEST_TAG#v}"
@@ -306,12 +315,16 @@ if [ "$SANDBOX" = true ]; then
         echo "$MSG_CMD_UPDATE_SANDBOX_BASE"
         echo "$MSG_BUILD_PATIENCE"
         start_progress
-        if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
+        # Capture docker build output to a per-image log (not the terminal) so it
+        # doesn't interleave with the spinner. On failure the log path is surfaced.
+        if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh' > ~/.openclaw/.update-sandbox-base.log 2>&1"; then
             stop_progress
             save_sandbox_hash base scripts/docker/sandbox/Dockerfile Dockerfile.sandbox scripts/sandbox-setup.sh
         else
             stop_progress
             BUILD_COMMON=false  # cascade: skip common if base failed
+            # shellcheck disable=SC2059,SC2088
+            printf "$MSG_SANDBOX_BUILD_LOG_HINT\n" "~/.openclaw/.update-sandbox-base.log"
         fi
     else
         echo "$MSG_CMD_UPDATE_SANDBOX_BASE_SKIP"
@@ -323,12 +336,14 @@ if [ "$SANDBOX" = true ]; then
         echo "$MSG_CMD_UPDATE_SANDBOX_COMMON"
         echo "$MSG_BUILD_PATIENCE"
         start_progress
-        if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
+        if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh' > ~/.openclaw/.update-sandbox-common.log 2>&1"; then
             stop_progress
             save_sandbox_hash common scripts/docker/sandbox/Dockerfile.common Dockerfile.sandbox-common scripts/sandbox-common-setup.sh
         else
             stop_progress
             echo "$MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL"
+            # shellcheck disable=SC2059,SC2088
+            printf "$MSG_SANDBOX_BUILD_LOG_HINT\n" "~/.openclaw/.update-sandbox-common.log"
         fi
     else
         echo "$MSG_CMD_UPDATE_SANDBOX_COMMON_SKIP"
@@ -339,12 +354,14 @@ if [ "$SANDBOX" = true ]; then
         echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER"
         echo "$MSG_BUILD_PATIENCE"
         start_progress
-        if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
+        if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh' > ~/.openclaw/.update-sandbox-browser.log 2>&1"; then
             stop_progress
             save_sandbox_hash browser scripts/docker/sandbox/Dockerfile.browser Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh
         else
             stop_progress
             echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL"
+            # shellcheck disable=SC2059,SC2088
+            printf "$MSG_SANDBOX_BUILD_LOG_HINT\n" "~/.openclaw/.update-sandbox-browser.log"
         fi
     else
         echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER_SKIP"
@@ -489,7 +506,7 @@ systemctl --user daemon-reload
 ' 2>/dev/null || true
 
 echo "$MSG_CMD_UPDATE_STARTING"
-orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start"
+orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start >/dev/null 2>&1"
 
 # Refresh Mac commands (picks up any wrapper changes)
 OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
