@@ -110,7 +110,16 @@ fi
 # Codex CLI on every update so the file format stays aligned with OpenAI's
 # current auth contract. Failure is non-fatal — gpt-5.* still works via api-key.
 echo "$MSG_UPDATE_CODEX_CLI_CHECK"
-CODEX_OLD=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'codex --version 2>/dev/null' || true)
+# `setsid` detaches codex from the controlling terminal. The codex CLI is a Rust
+# TUI that initializes the terminal (alt-screen, mouse modes, bg-color + cursor
+# queries) even for `--version`, writing those control sequences to /dev/tty —
+# which bypasses 2>/dev/null AND the $() stdout capture, and (via orb's PTY) leaks
+# back to the Mac terminal, garbling the screen / jumping the cursor at this step
+# (this is the ONLY step that runs the codex binary; npm/git/docker aren't TUIs).
+# setsid makes /dev/tty unavailable so nothing leaks; stdout (the version string)
+# still reaches the capture. </dev/null detaches stdin as well. Verified in-VM:
+# `setsid codex --version 2>/dev/null </dev/null` still returns "codex-cli X.Y.Z".
+CODEX_OLD=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'setsid codex --version 2>/dev/null </dev/null' || true)
 if [ -z "$CODEX_OLD" ]; then
     echo "$MSG_UPDATE_CODEX_CLI_INSTALLING"
 else
@@ -121,7 +130,7 @@ fi
 # + allow-scripts banner would otherwise stream and garble). On failure the real
 # error is surfaced from the log instead of vanishing into /dev/null.
 if orb -m "$OPENCLAW_VM_NAME" bash -lc 'sudo npm install -g @openai/codex > ~/.openclaw/.update-codex.log 2>&1'; then
-    CODEX_NEW=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'codex --version 2>/dev/null' || echo "unknown")
+    CODEX_NEW=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'setsid codex --version 2>/dev/null </dev/null' || echo "unknown")
     if [ -z "$CODEX_OLD" ]; then
         # shellcheck disable=SC2059
         printf "$MSG_UPDATE_CODEX_CLI_INSTALLED\n" "$CODEX_NEW"
