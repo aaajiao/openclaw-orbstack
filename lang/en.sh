@@ -72,6 +72,9 @@ MSG_PKG_INSTALL_LOG_HINT="    log: ~/.openclaw/.update-npm.log (run: openclaw-sh
 MSG_PKG_INSTALL_ABORT="  Update aborted — npm install failed. Retry: openclaw-update --force"
 MSG_BUILD_LOG_HINT="    log: ~/.openclaw/.update-build.log (run: openclaw-shell, then cat it)"
 MSG_SANDBOX_BUILD_LOG_HINT="    log: %s (run: openclaw-shell, then cat it)"
+# Failure-tail surfacing (vm_log_tail in _common.sh) — shows the real error inline
+MSG_LOG_TAIL_HEADER="last lines of the log (full log below):"
+MSG_LOG_FULL_HINT="    full log: %s (run: openclaw-shell, then cat it)"
 
 # --- Step 6: Sandbox ---
 MSG_BUILD_PATIENCE="    ⏳ This may take a few minutes, please wait"
@@ -137,6 +140,9 @@ MSG_CMD_UPDATE_SANDBOX_CHANGED="  📦 Sandbox build files changed, rebuilding i
 MSG_CMD_UPDATE_SANDBOX_BASE="    Building base image..."
 MSG_CMD_UPDATE_SANDBOX_COMMON="    Building common image..."
 MSG_CMD_UPDATE_SANDBOX_BROWSER="    Building browser image..."
+MSG_CMD_UPDATE_SANDBOX_BASE_OK="    ✓ base image built"
+MSG_CMD_UPDATE_SANDBOX_COMMON_OK="    ✓ common image built"
+MSG_CMD_UPDATE_SANDBOX_BROWSER_OK="    ✓ browser image built"
 MSG_CMD_UPDATE_SANDBOX_BASE_SKIP="    ✓ base image unchanged, skipping"
 MSG_CMD_UPDATE_SANDBOX_COMMON_SKIP="    ✓ common image unchanged, skipping"
 MSG_CMD_UPDATE_SANDBOX_BROWSER_SKIP="    ✓ browser image unchanged, skipping"
@@ -152,6 +158,7 @@ MSG_CMD_UPDATE_DOCTOR_REAUTH_HINT="Run: openclaw-codex-login   (then: openclaw-r
 MSG_CMD_UPDATE_SANDBOX_HINT="💡 To rebuild sandbox images: openclaw-update --sandbox"
 MSG_CMD_UPDATE_NPM_REINSTALL="npm missing, reinstalling Node.js package..."
 MSG_CMD_UPDATE_RECOVER="  ⚠ Build failed, restarting service with previous version..."
+MSG_CMD_UPDATE_SANDBOX_BASE_FAIL="    ✗ base image build failed"
 MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL="    ✗ common image build failed"
 MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL="    ✗ browser image build failed"
 MSG_CMD_UPDATE_SANDBOX_PARTIAL="  ⚠ Some sandbox images failed to build. Next update will retry."

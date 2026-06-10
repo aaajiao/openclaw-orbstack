@@ -117,9 +117,10 @@ else
     # shellcheck disable=SC2059
     printf "$MSG_UPDATE_CODEX_CLI_UPGRADING\n" "$CODEX_OLD"
 fi
-# Redirect inside bash -lc so npm's "added/changed N packages" + allow-scripts
-# banner (stdout) is suppressed too, not just stderr — keeps the output clean.
-if orb -m "$OPENCLAW_VM_NAME" bash -lc 'sudo npm install -g @openai/codex >/dev/null 2>&1'; then
+# Capture npm output to a log (not the terminal — npm's "added/changed N packages"
+# + allow-scripts banner would otherwise stream and garble). On failure the real
+# error is surfaced from the log instead of vanishing into /dev/null.
+if orb -m "$OPENCLAW_VM_NAME" bash -lc 'sudo npm install -g @openai/codex > ~/.openclaw/.update-codex.log 2>&1'; then
     CODEX_NEW=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'codex --version 2>/dev/null' || echo "unknown")
     if [ -z "$CODEX_OLD" ]; then
         # shellcheck disable=SC2059
@@ -133,6 +134,7 @@ if orb -m "$OPENCLAW_VM_NAME" bash -lc 'sudo npm install -g @openai/codex >/dev/
     fi
 else
     echo "$MSG_UPDATE_CODEX_CLI_FAIL"
+    vm_log_tail ".update-codex.log"
 fi
 
 # --- Migrate old single hash → per-image hashes (no rebuild) ---
@@ -223,8 +225,9 @@ printf "$MSG_PKG_INSTALL_VERSION\n" "$NPM_VERSION"
 # fired here because of the completeness-check bug fixed below, not because npm
 # actually failed).
 # npm output is captured to ~/.openclaw/.update-npm.log (not streamed) so a
-# failure is diagnosable afterwards. A spinner stands in for the (multi-minute,
-# ~100MB native-dep) install.
+# failure is diagnosable afterwards — nothing reaches the terminal during the
+# (multi-minute, ~100MB native-dep) install, so npm's \r progress bars can't
+# garble. The step prints elapsed on success and the real npm error tail on fail.
 # Completeness is checked against `sudo npm root -g` (root's global prefix,
 # /usr/lib/node_modules) to MATCH the `sudo npm install -g` above. A bare
 # `npm root -g` resolves the *user's* prefix instead
@@ -234,24 +237,25 @@ printf "$MSG_PKG_INSTALL_VERSION\n" "$NPM_VERSION"
 # (confirmed in-VM: root prefix has dist/{index.js,control-ui,extensions}; user
 # prefix has no openclaw at all).
 NPM_OK=false
-start_progress
+_t0=$(date +%s)
 if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo npm install -g openclaw@$NPM_VERSION > ~/.openclaw/.update-npm.log 2>&1"; then
-    stop_progress
     # Verify package completeness (e.g. npm tarball may ship without dist/control-ui/)
     # against root's prefix (sudo npm root -g) — must expand inside the VM, not on Mac.
     # Check both index.js (canonical since ≤v2026.3.x) and entry.js (legacy reference).
     # shellcheck disable=SC2016
     if orb -m "$OPENCLAW_VM_NAME" bash -lc 'R=$(sudo npm root -g); { test -f "$R/openclaw/dist/index.js" || test -f "$R/openclaw/dist/entry.js"; } && test -d "$R/openclaw/dist/control-ui" && test -d "$R/openclaw/dist/extensions"'; then
         NPM_OK=true
-        echo "$MSG_PKG_INSTALL_OK"
+        printf '%s (%s)\n' "$MSG_PKG_INSTALL_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
     else
+        # npm exited 0 but the package is missing files — the log holds the install
+        # transcript (pointer, not a tail: there's no error to surface here).
         echo "$MSG_PKG_INSTALL_INCOMPLETE"
         echo "$MSG_PKG_INSTALL_LOG_HINT"
     fi
 else
-    stop_progress
+    # npm errored — surface the real failure from the captured log.
     echo "$MSG_PKG_INSTALL_FAIL"
-    echo "$MSG_PKG_INSTALL_LOG_HINT"
+    vm_log_tail ".update-npm.log"
 fi
 
 if [ "$NPM_OK" = false ]; then
@@ -313,18 +317,16 @@ if [ "$SANDBOX" = true ]; then
     # --- Base ---
     if [ "$BUILD_BASE" = true ]; then
         echo "$MSG_CMD_UPDATE_SANDBOX_BASE"
-        echo "$MSG_BUILD_PATIENCE"
-        start_progress
-        # Capture docker build output to a per-image log (not the terminal) so it
-        # doesn't interleave with the spinner. On failure the log path is surfaced.
+        # Docker build output → per-image VM log (never the terminal). Show elapsed
+        # on success; show the real docker error tail on failure.
+        _t0=$(date +%s)
         if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh' > ~/.openclaw/.update-sandbox-base.log 2>&1"; then
-            stop_progress
             save_sandbox_hash base scripts/docker/sandbox/Dockerfile Dockerfile.sandbox scripts/sandbox-setup.sh
+            printf '%s (%s)\n' "$MSG_CMD_UPDATE_SANDBOX_BASE_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
         else
-            stop_progress
             BUILD_COMMON=false  # cascade: skip common if base failed
-            # shellcheck disable=SC2059,SC2088
-            printf "$MSG_SANDBOX_BUILD_LOG_HINT\n" "~/.openclaw/.update-sandbox-base.log"
+            echo "$MSG_CMD_UPDATE_SANDBOX_BASE_FAIL"
+            vm_log_tail ".update-sandbox-base.log"
         fi
     else
         echo "$MSG_CMD_UPDATE_SANDBOX_BASE_SKIP"
@@ -334,16 +336,13 @@ if [ "$SANDBOX" = true ]; then
     if [ "$BUILD_COMMON" = true ]; then
         [ "$BUILD_BASE" = true ] && [ "$OLD_COMMON" = "$NEW_COMMON" ] && echo "$MSG_CMD_UPDATE_SANDBOX_COMMON_CASCADE"
         echo "$MSG_CMD_UPDATE_SANDBOX_COMMON"
-        echo "$MSG_BUILD_PATIENCE"
-        start_progress
+        _t0=$(date +%s)
         if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh' > ~/.openclaw/.update-sandbox-common.log 2>&1"; then
-            stop_progress
             save_sandbox_hash common scripts/docker/sandbox/Dockerfile.common Dockerfile.sandbox-common scripts/sandbox-common-setup.sh
+            printf '%s (%s)\n' "$MSG_CMD_UPDATE_SANDBOX_COMMON_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
         else
-            stop_progress
             echo "$MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL"
-            # shellcheck disable=SC2059,SC2088
-            printf "$MSG_SANDBOX_BUILD_LOG_HINT\n" "~/.openclaw/.update-sandbox-common.log"
+            vm_log_tail ".update-sandbox-common.log"
         fi
     else
         echo "$MSG_CMD_UPDATE_SANDBOX_COMMON_SKIP"
@@ -352,16 +351,13 @@ if [ "$SANDBOX" = true ]; then
     # --- Browser (independent) ---
     if [ "$BUILD_BROWSER" = true ]; then
         echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER"
-        echo "$MSG_BUILD_PATIENCE"
-        start_progress
+        _t0=$(date +%s)
         if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh' > ~/.openclaw/.update-sandbox-browser.log 2>&1"; then
-            stop_progress
             save_sandbox_hash browser scripts/docker/sandbox/Dockerfile.browser Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh
+            printf '%s (%s)\n' "$MSG_CMD_UPDATE_SANDBOX_BROWSER_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
         else
-            stop_progress
             echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL"
-            # shellcheck disable=SC2059,SC2088
-            printf "$MSG_SANDBOX_BUILD_LOG_HINT\n" "~/.openclaw/.update-sandbox-browser.log"
+            vm_log_tail ".update-sandbox-browser.log"
         fi
     else
         echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER_SKIP"

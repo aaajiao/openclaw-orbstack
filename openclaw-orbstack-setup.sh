@@ -107,35 +107,38 @@ vm_exec() {
     orb -m "$VM_NAME" bash -lc "$1"
 }
 
-# --- Progress indicator for long-running commands ---
-_progress_pid=""
-_progress_flag=""
-start_progress() {
-    _progress_flag="$(mktemp)"
-    (
-        trap 'exit 0' TERM
-        frames="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
-        while [ -e "$_progress_flag" ]; do
-            for f in $frames; do
-                [ -e "$_progress_flag" ] || break
-                printf "\r  %s " "$f"
-                sleep 0.08
-            done
-        done
-    ) &
-    _progress_pid=$!
+# --- Progress model: synchronous, newline-only (garble-proof by construction) ---
+# The old start_progress/stop_progress printed "\r <braille>" from a BACKGROUND
+# subshell, which raced with any foreground output on the same TTY = "花屏" (screen
+# garble). Removed: no async writer, no \r → garble is impossible. Long steps now
+# redirect fully to a per-step VM log, print elapsed on success, and surface the
+# real error tail on failure. (Same model as scripts/commands/_common.sh; kept
+# inline here because this installer is standalone and doesn't source it.)
+# start_progress/stop_progress are no-op stubs so any stray call site is harmless.
+start_progress() { :; }
+stop_progress() { :; }
+
+# Lines of a failing step's VM-side log to surface inline (the real error).
+OPENCLAW_LOG_TAIL_LINES="${OPENCLAW_LOG_TAIL_LINES:-12}"
+
+# fmt_elapsed <seconds> -> "Xm Ys" or "Ys"  (BSD/macOS integer math only)
+fmt_elapsed() {
+    if [ "$1" -ge 60 ]; then
+        printf '%dm %ds' "$(($1 / 60))" "$(($1 % 60))"
+    else
+        printf '%ds' "$1"
+    fi
 }
-stop_progress() {
-    if [ -n "$_progress_flag" ]; then
-        rm -f "$_progress_flag"
-        _progress_flag=""
-    fi
-    if [ -n "$_progress_pid" ]; then
-        kill "$_progress_pid" 2>/dev/null || true
-        wait "$_progress_pid" 2>/dev/null || true
-        _progress_pid=""
-        printf "\r    \r"
-    fi
+
+# vm_log_tail <log-basename>
+#   On a step failure, surface the real cause from the VM log at
+#   ~/.openclaw/<basename> (read via orb). \$HOME is escaped so the VM expands it
+#   (avoids a literal ~ in quotes). Never aborts (set -e safe).
+vm_log_tail() {
+    printf '    %s\n' "$MSG_LOG_TAIL_HEADER"
+    orb -m "$VM_NAME" bash -lc "tail -n $OPENCLAW_LOG_TAIL_LINES \"\$HOME/.openclaw/$1\" 2>/dev/null | tr -d '\r'" 2>/dev/null | sed 's/^/      /' || true
+    # shellcheck disable=SC2059,SC2088
+    printf "$MSG_LOG_FULL_HINT\n" "~/.openclaw/$1"
 }
 
 # ============================================================================
@@ -315,42 +318,34 @@ ok "$MSG_OK_BUILD_DONE"
 step 6 "$MSG_STEP_6"
 
 info "$MSG_INFO_SANDBOX_BASE"
-echo "$MSG_BUILD_PATIENCE"
-start_progress
-if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
-    stop_progress
-    ok "$MSG_OK_SANDBOX_BASE"
-elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox:bookworm-slim -f scripts/docker/sandbox/Dockerfile .'" 2>/dev/null; then
-    stop_progress
-    ok "$MSG_OK_SANDBOX_BASE_DF"
+_t0=$(date +%s)
+if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh' > ~/.openclaw/.setup-sandbox-base.log 2>&1"; then
+    ok "$MSG_OK_SANDBOX_BASE ($(fmt_elapsed "$(($(date +%s) - _t0))"))"
+elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox:bookworm-slim -f scripts/docker/sandbox/Dockerfile .' >> ~/.openclaw/.setup-sandbox-base.log 2>&1"; then
+    ok "$MSG_OK_SANDBOX_BASE_DF ($(fmt_elapsed "$(($(date +%s) - _t0))"))"
 else
-    stop_progress
     warn "$MSG_WARN_SANDBOX_BASE_FAIL"
+    vm_log_tail ".setup-sandbox-base.log"
 fi
 
 info "$MSG_INFO_SANDBOX_COMMON"
-echo "$MSG_BUILD_PATIENCE"
-start_progress
-if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
-    stop_progress
-    ok "$MSG_OK_SANDBOX_COMMON"
+_t0=$(date +%s)
+if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh' > ~/.openclaw/.setup-sandbox-common.log 2>&1"; then
+    ok "$MSG_OK_SANDBOX_COMMON ($(fmt_elapsed "$(($(date +%s) - _t0))"))"
 else
-    stop_progress
     warn "$MSG_WARN_SANDBOX_COMMON_FAIL"
+    vm_log_tail ".setup-sandbox-common.log"
 fi
 
 info "$MSG_INFO_SANDBOX_BROWSER"
-echo "$MSG_BUILD_PATIENCE"
-start_progress
-if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
-    stop_progress
-    ok "$MSG_OK_SANDBOX_BROWSER"
-elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox-browser:bookworm-slim -f scripts/docker/sandbox/Dockerfile.browser .'" 2>/dev/null; then
-    stop_progress
-    ok "$MSG_OK_SANDBOX_BROWSER_DF"
+_t0=$(date +%s)
+if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh' > ~/.openclaw/.setup-sandbox-browser.log 2>&1"; then
+    ok "$MSG_OK_SANDBOX_BROWSER ($(fmt_elapsed "$(($(date +%s) - _t0))"))"
+elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox-browser:bookworm-slim -f scripts/docker/sandbox/Dockerfile.browser .' >> ~/.openclaw/.setup-sandbox-browser.log 2>&1"; then
+    ok "$MSG_OK_SANDBOX_BROWSER_DF ($(fmt_elapsed "$(($(date +%s) - _t0))"))"
 else
-    stop_progress
     warn "$MSG_WARN_SANDBOX_BROWSER_FAIL"
+    vm_log_tail ".setup-sandbox-browser.log"
 fi
 
 # Save per-image sandbox build hashes for staleness detection during updates.

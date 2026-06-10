@@ -72,6 +72,9 @@ MSG_PKG_INSTALL_LOG_HINT="    日志: ~/.openclaw/.update-npm.log (openclaw-shel
 MSG_PKG_INSTALL_ABORT="  更新已中止 —— npm 安装失败。重试: openclaw-update --force"
 MSG_BUILD_LOG_HINT="    日志: ~/.openclaw/.update-build.log (openclaw-shell 进 VM 后 cat 查看)"
 MSG_SANDBOX_BUILD_LOG_HINT="    日志: %s (openclaw-shell 进 VM 后 cat 查看)"
+# 失败日志末尾(_common.sh 的 vm_log_tail)—— 把真实报错直接显示出来
+MSG_LOG_TAIL_HEADER="日志末尾(完整日志见下方):"
+MSG_LOG_FULL_HINT="    完整日志: %s (openclaw-shell 进 VM 后 cat 查看)"
 
 # --- Step 6: Sandbox ---
 MSG_BUILD_PATIENCE="    ⏳ 这可能需要几分钟，请耐心等待"
@@ -137,6 +140,9 @@ MSG_CMD_UPDATE_SANDBOX_CHANGED="  📦 检测到沙箱构建文件变化，自�
 MSG_CMD_UPDATE_SANDBOX_BASE="    构建基础镜像..."
 MSG_CMD_UPDATE_SANDBOX_COMMON="    构建 common 镜像..."
 MSG_CMD_UPDATE_SANDBOX_BROWSER="    构建浏览器镜像..."
+MSG_CMD_UPDATE_SANDBOX_BASE_OK="    ✓ base 镜像已构建"
+MSG_CMD_UPDATE_SANDBOX_COMMON_OK="    ✓ common 镜像已构建"
+MSG_CMD_UPDATE_SANDBOX_BROWSER_OK="    ✓ 浏览器镜像已构建"
 MSG_CMD_UPDATE_SANDBOX_BASE_SKIP="    ✓ 基础镜像无变化，跳过"
 MSG_CMD_UPDATE_SANDBOX_COMMON_SKIP="    ✓ common 镜像无变化，跳过"
 MSG_CMD_UPDATE_SANDBOX_BROWSER_SKIP="    ✓ 浏览器镜像无变化，跳过"
@@ -152,6 +158,7 @@ MSG_CMD_UPDATE_DOCTOR_REAUTH_HINT="重新登录: openclaw-codex-login  （然后
 MSG_CMD_UPDATE_SANDBOX_HINT="💡 如需重建沙箱镜像: openclaw-update --sandbox"
 MSG_CMD_UPDATE_NPM_REINSTALL="npm 缺失，正在重新安装 Node.js 软件包..."
 MSG_CMD_UPDATE_RECOVER="  ⚠ 构建失败，正在使用上一版本重启服务..."
+MSG_CMD_UPDATE_SANDBOX_BASE_FAIL="    ✗ base 镜像构建失败"
 MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL="    ✗ common 镜像构建失败"
 MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL="    ✗ 浏览器镜像构建失败"
 MSG_CMD_UPDATE_SANDBOX_PARTIAL="  ⚠ 部分沙箱镜像构建失败，下次更新将重试。"

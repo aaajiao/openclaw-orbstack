@@ -11,19 +11,16 @@ COMMON_OK=false
 BROWSER_OK=false
 
 echo "$MSG_CMD_REBUILD_BASE"
-echo "$MSG_BUILD_PATIENCE"
-start_progress
-if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh'" 2>/dev/null; then
-    stop_progress
+_t0=$(date +%s)
+if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh' > ~/.openclaw/.rebuild-sandbox-base.log 2>&1"; then
     BASE_OK=true
-    echo "$MSG_CMD_REBUILD_BASE_OK"
-elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox:bookworm-slim -f scripts/docker/sandbox/Dockerfile .'" 2>/dev/null; then
-    stop_progress
+    printf '%s (%s)\n' "$MSG_CMD_REBUILD_BASE_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
+elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox:bookworm-slim -f scripts/docker/sandbox/Dockerfile .' >> ~/.openclaw/.rebuild-sandbox-base.log 2>&1"; then
     BASE_OK=true
-    echo "$MSG_CMD_REBUILD_BASE_OK_DF"
+    printf '%s (%s)\n' "$MSG_CMD_REBUILD_BASE_OK_DF" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
 else
-    stop_progress
     echo "$MSG_CMD_REBUILD_BASE_FAIL"
+    vm_log_tail ".rebuild-sandbox-base.log"
 fi
 
 # Save base hash on success.
@@ -37,15 +34,13 @@ fi
 # Skip common if base failed (common depends on base)
 if [ "$BASE_OK" = true ]; then
     echo "$MSG_CMD_REBUILD_COMMON"
-    echo "$MSG_BUILD_PATIENCE"
-    start_progress
-    if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh'" 2>/dev/null; then
-        stop_progress
+    _t0=$(date +%s)
+    if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh' > ~/.openclaw/.rebuild-sandbox-common.log 2>&1"; then
         COMMON_OK=true
-        echo "$MSG_CMD_REBUILD_COMMON_OK"
+        printf '%s (%s)\n' "$MSG_CMD_REBUILD_COMMON_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
     else
-        stop_progress
         echo "$MSG_CMD_REBUILD_COMMON_FAIL"
+        vm_log_tail ".rebuild-sandbox-common.log"
     fi
 else
     echo "$MSG_CMD_REBUILD_COMMON_FAIL"
@@ -57,19 +52,16 @@ if [ "$COMMON_OK" = true ]; then
 fi
 
 echo "$MSG_CMD_REBUILD_BROWSER"
-echo "$MSG_BUILD_PATIENCE"
-start_progress
-if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh'" 2>/dev/null; then
-    stop_progress
+_t0=$(date +%s)
+if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh' > ~/.openclaw/.rebuild-sandbox-browser.log 2>&1"; then
     BROWSER_OK=true
-    echo "$MSG_CMD_REBUILD_BROWSER_OK"
-elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox-browser:bookworm-slim -f scripts/docker/sandbox/Dockerfile.browser .'" 2>/dev/null; then
-    stop_progress
+    printf '%s (%s)\n' "$MSG_CMD_REBUILD_BROWSER_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
+elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox-browser:bookworm-slim -f scripts/docker/sandbox/Dockerfile.browser .' >> ~/.openclaw/.rebuild-sandbox-browser.log 2>&1"; then
     BROWSER_OK=true
-    echo "$MSG_CMD_REBUILD_BROWSER_OK_DF"
+    printf '%s (%s)\n' "$MSG_CMD_REBUILD_BROWSER_OK_DF" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
 else
-    stop_progress
     echo "$MSG_CMD_REBUILD_BROWSER_FAIL"
+    vm_log_tail ".rebuild-sandbox-browser.log"
 fi
 
 # Save browser hash on success

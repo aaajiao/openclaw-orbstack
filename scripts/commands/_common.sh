@@ -5,35 +5,48 @@
 
 set -e
 
-# Progress spinner for long-running commands (braille animation)
-_progress_pid=""
-_progress_flag=""
-start_progress() {
-    _progress_flag="$(mktemp)"
-    (
-        trap 'exit 0' TERM
-        frames="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
-        while [ -e "$_progress_flag" ]; do
-            for f in $frames; do
-                [ -e "$_progress_flag" ] || break
-                printf "\r  %s " "$f"
-                sleep 0.08
-            done
-        done
-    ) &
-    _progress_pid=$!
+# --- Progress model: synchronous, newline-only (garble-proof by construction) ---
+# The old start_progress/stop_progress printed "\r  <braille> " from a BACKGROUND
+# subshell every 0.08s. That second writer raced with any foreground echo /
+# streaming orb output on the same TTY → interleaved on one line = "花屏" (screen
+# garble). It is removed: with no async writer and no carriage returns anywhere,
+# garble is impossible in TTY, pipe, log, and over the orb transport — not merely
+# improbable. Each long step now prints a plain start line, runs FULLY redirected
+# to a per-step log inside the VM, then prints its existing ✓/✗ result line (with
+# elapsed) and, on failure, the real error tail read back from the VM log.
+#
+# start_progress/stop_progress are kept as no-op stubs so any stray/未迁移 call
+# site is harmless (calling an undefined function would abort under `set -e`).
+start_progress() { :; }
+stop_progress() { :; }
+
+# Lines of a failing step's VM-side log to surface inline (the real error).
+OPENCLAW_LOG_TAIL_LINES="${OPENCLAW_LOG_TAIL_LINES:-12}"
+
+# fmt_elapsed <seconds> -> "Xm Ys" or "Ys"  (BSD/macOS integer math only)
+fmt_elapsed() {
+    if [ "$1" -ge 60 ]; then
+        printf '%dm %ds' "$(($1 / 60))" "$(($1 % 60))"
+    else
+        printf '%ds' "$1"
+    fi
 }
-stop_progress() {
-    if [ -n "$_progress_flag" ]; then
-        rm -f "$_progress_flag"
-        _progress_flag=""
-    fi
-    if [ -n "$_progress_pid" ]; then
-        kill "$_progress_pid" 2>/dev/null || true
-        wait "$_progress_pid" 2>/dev/null || true
-        _progress_pid=""
-        printf "\r    \r"
-    fi
+
+# vm_log_tail <log-basename>
+#   On a step failure, surface the real cause: tail the last
+#   $OPENCLAW_LOG_TAIL_LINES of a log that lives INSIDE the VM at
+#   ~/.openclaw/<basename> (read via orb — a Mac-side tail would hit the wrong
+#   filesystem), strip any stray \r the tool wrote, indent, then print the
+#   full-log hint. Never aborts (set -e safe). Pass just the basename:
+#     vm_log_tail ".update-sandbox-base.log"
+vm_log_tail() {
+    printf '    %s\n' "$MSG_LOG_TAIL_HEADER"
+    # \$HOME is escaped so the VM shell (not the Mac) expands it — avoids a literal
+    # ~ in quotes (SC2088) while still resolving the VM home correctly.
+    orb -m "$OPENCLAW_VM_NAME" bash -lc "tail -n $OPENCLAW_LOG_TAIL_LINES \"\$HOME/.openclaw/$1\" 2>/dev/null | tr -d '\r'" 2>/dev/null | sed 's/^/      /' || true
+    # ~ is intentional display text the user types; %s is the basename.
+    # shellcheck disable=SC2059,SC2088
+    printf "$MSG_LOG_FULL_HINT\n" "~/.openclaw/$1"
 }
 
 # Resolve repo root (scripts/commands/ -> repo root)
