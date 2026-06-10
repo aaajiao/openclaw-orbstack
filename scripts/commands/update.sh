@@ -126,10 +126,19 @@ else
     # shellcheck disable=SC2059
     printf "$MSG_UPDATE_CODEX_CLI_UPGRADING\n" "$CODEX_OLD"
 fi
-# Capture npm output to a log (not the terminal — npm's "added/changed N packages"
-# + allow-scripts banner would otherwise stream and garble). On failure the real
-# error is surfaced from the log instead of vanishing into /dev/null.
-if orb -m "$OPENCLAW_VM_NAME" bash -lc 'sudo npm install -g @openai/codex > ~/.openclaw/.update-codex.log 2>&1'; then
+# `sudo setsid -w` detaches the install from the controlling terminal. Capturing
+# npm's stdout/stderr to a log isn't enough: @openai/codex's postinstall runs the
+# codex binary (a Rust TUI) which initializes the terminal — enters the alternate
+# screen, homes the cursor, queries it — by opening /dev/tty DIRECTLY, bypassing
+# the `> log 2>&1` redirect; orb's PTY then forwards it to the Mac terminal,
+# garbling the screen and pushing later output to the top. setsid removes the
+# controlling terminal so /dev/tty is unavailable and nothing leaks. `-w` makes
+# setsid WAIT for npm and propagate its exit code — the install is multi-second,
+# and without -w setsid returns immediately, racing the completeness/version
+# checks against a still-running install. `sudo setsid` order (not `setsid sudo`)
+# lets sudo keep its tty so a `requiretty` sudoers policy wouldn't break it. On
+# failure the real error is surfaced from the log.
+if orb -m "$OPENCLAW_VM_NAME" bash -lc 'sudo setsid -w npm install -g @openai/codex > ~/.openclaw/.update-codex.log 2>&1'; then
     CODEX_NEW=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'setsid codex --version 2>/dev/null </dev/null' || echo "unknown")
     if [ -z "$CODEX_OLD" ]; then
         # shellcheck disable=SC2059
