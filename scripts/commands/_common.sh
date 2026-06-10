@@ -60,6 +60,32 @@ if [ -f "$HOME/bin/.openclaw-vm" ]; then
     OPENCLAW_VM_NAME="${OPENCLAW_VM:-$OPENCLAW_VM_NAME}"
 fi
 
+# vm_exec <script>  — run one non-interactive command inside the VM via orb.
+#
+# OrbStack #2519: when `orb <cmd>` runs with its Mac-side stdout attached to a
+# TTY, orb allocates a PTY and enters the alternate screen buffer; on command
+# exit it emits rmcup (ESC[?1049l), which discards the command's output AND homes
+# the cursor to the TOP of the terminal ("光标跳到最上方"). It is terminal-agnostic
+# (reproduced in Ghostty, Terminal.app, iTerm2) and has no orb flag to disable it.
+# The upstream workaround is `orb <cmd> | cat`: detaching stdout from the TTY keeps
+# orb in pipe mode — no PTY, no alt-screen, no jump. Redirecting the command INSIDE
+# the VM (bash -lc "... > log") does NOT help, because orb's *Mac-side* stdout is
+# still the TTY; the redirect has to be on the Mac side.
+#
+# So: when stdout is a TTY, send orb's Mac-side stdout to /dev/null (stderr stays on
+# the TTY so real errors still surface). The `[ -t 1 ]` guard keeps $(vm_exec ...)
+# capture working — inside a command substitution fd 1 is a pipe, not a TTY, so the
+# else branch runs and stdout flows to the capture. Heavy steps already route their
+# real output to a per-step VM log (surfaced by vm_log_tail on failure), so dropping
+# the Mac-side stdout of a bare statement loses nothing.
+vm_exec() {
+    if [ -t 1 ]; then
+        orb -m "$OPENCLAW_VM_NAME" bash -lc "$1" >/dev/null
+    else
+        orb -m "$OPENCLAW_VM_NAME" bash -lc "$1"
+    fi
+}
+
 # Language loading
 _OPENCLAW_LANG="en"
 if [ -f "$HOME/bin/.openclaw-lang" ]; then
@@ -71,7 +97,7 @@ fi
 # Usage: save_sandbox_hash <image_name> <file1> [file2 ...]
 save_sandbox_hash() {
     local name="$1"; shift
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && cat $* 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-$name"
+    vm_exec "cd ~/openclaw && cat $* 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-$name"
 }
 
 _LANG_FILE="$OPENCLAW_REPO_DIR/lang/${_OPENCLAW_LANG}.sh"

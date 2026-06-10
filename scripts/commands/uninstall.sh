@@ -68,9 +68,7 @@ confirm() {
     done
 }
 
-vm_exec() {
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "$1"
-}
+# vm_exec is provided by _common.sh (with the OrbStack #2519 stdout-detach guard).
 
 vm_running() {
     orb list 2>/dev/null | grep -F "$OPENCLAW_VM_NAME" | grep -q "running"

@@ -34,11 +34,11 @@ done
 if grep -q "systemctl status openclaw" ~/bin/openclaw-status 2>/dev/null; then
     echo "$MSG_UPDATE_AUTO_UPGRADE"
     # VM: migrate from system-level to user-level service
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo systemctl stop openclaw 2>/dev/null || true"
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo systemctl disable openclaw 2>/dev/null || true"
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -f /etc/systemd/system/openclaw.service && sudo systemctl daemon-reload"
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo loginctl enable-linger \$(whoami)"
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "systemctl --user enable openclaw-gateway.service 2>/dev/null || true"
+    vm_exec "sudo systemctl stop openclaw 2>/dev/null || true"
+    vm_exec "sudo systemctl disable openclaw 2>/dev/null || true"
+    vm_exec "sudo rm -f /etc/systemd/system/openclaw.service && sudo systemctl daemon-reload"
+    vm_exec "sudo loginctl enable-linger \$(whoami)"
+    vm_exec "systemctl --user enable openclaw-gateway.service 2>/dev/null || true"
     # Mac: regenerate all commands
     OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
         bash "$OPENCLAW_REPO_DIR/scripts/refresh-mac-commands.sh" 2>/dev/null || true
@@ -46,8 +46,8 @@ if grep -q "systemctl status openclaw" ~/bin/openclaw-status 2>/dev/null; then
 fi
 
 # Ensure .env exists with at least Bonjour vars
-if ! orb -m "$OPENCLAW_VM_NAME" bash -lc 'test -f ~/.openclaw/.env' 2>/dev/null; then
-    orb -m "$OPENCLAW_VM_NAME" bash -lc 'mkdir -p ~/.openclaw && printf "# OpenClaw Environment Variables\nOPENCLAW_DISABLE_BONJOUR=1\n" > ~/.openclaw/.env && chmod 600 ~/.openclaw/.env'
+if ! vm_exec 'test -f ~/.openclaw/.env' 2>/dev/null; then
+    vm_exec 'mkdir -p ~/.openclaw && printf "# OpenClaw Environment Variables\nOPENCLAW_DISABLE_BONJOUR=1\n" > ~/.openclaw/.env && chmod 600 ~/.openclaw/.env'
     echo "  $MSG_UPDATE_ENV_CREATED"
 fi
 
@@ -61,11 +61,11 @@ echo "$MSG_CMD_UPDATE_PULLING"
 # --quiet + prune>/dev/null: openclaw has hundreds of bot branches, so a plain
 # fetch floods the terminal with "-> origin/... (forced update)" lines that
 # interleave with the wrapper's spinner/echo ("花屏"). Real errors still hit stderr.
-orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git remote prune origin >/dev/null && git fetch --quiet --prune --tags --force"
+vm_exec "cd ~/openclaw && git remote prune origin >/dev/null && git fetch --quiet --prune --tags --force"
 
 if [ -n "$TARGET_VERSION" ]; then
     # Explicit version pin: validate tag exists upstream; allow beta/rc/alpha.
-    if ! orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git rev-parse --verify '$TARGET_VERSION^{commit}' >/dev/null 2>&1"; then
+    if ! vm_exec "cd ~/openclaw && git rev-parse --verify '$TARGET_VERSION^{commit}' >/dev/null 2>&1"; then
         # shellcheck disable=SC2059
         printf "$MSG_ERR_VERSION_NOT_FOUND\n" "$TARGET_VERSION"
         exit 1
@@ -74,7 +74,7 @@ if [ -n "$TARGET_VERSION" ]; then
     # shellcheck disable=SC2059
     printf "$MSG_UPDATE_VERSION_USING\n" "$LATEST_TAG"
 else
-    LATEST_TAG=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
+    LATEST_TAG=$(vm_exec "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
     if [ -z "$LATEST_TAG" ]; then
         echo "$MSG_ERR_NO_VERSION"
         exit 1
@@ -84,7 +84,7 @@ fi
 
 # --- Ensure Node.js >= 24 (upstream recommends 24.x LTS) ---
 echo "$MSG_UPDATE_NODE_CHECK"
-NODE_VERSION=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'node --version 2>/dev/null' || echo "")
+NODE_VERSION=$(vm_exec 'node --version 2>/dev/null' || echo "")
 NODE_MAJOR="${NODE_VERSION#v}"
 NODE_MAJOR="${NODE_MAJOR%%.*}"
 if [ -n "$NODE_MAJOR" ] && [ "$NODE_MAJOR" -ge 24 ] 2>/dev/null; then
@@ -94,8 +94,8 @@ else
     # shellcheck disable=SC2059
     printf "$MSG_UPDATE_NODE_UPGRADING\n" "$NODE_VERSION"
     # Unhold first in case a previous version was pinned, then install + re-hold at 24
-    if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo apt-mark unhold nodejs 2>/dev/null; curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo apt-mark hold nodejs"; then
-        NEW_NODE=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'node --version')
+    if vm_exec "sudo apt-mark unhold nodejs 2>/dev/null; curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo apt-mark hold nodejs"; then
+        NEW_NODE=$(vm_exec 'node --version')
         # shellcheck disable=SC2059
         printf "$MSG_UPDATE_NODE_UPGRADED\n" "$NEW_NODE"
     else
@@ -119,7 +119,7 @@ echo "$MSG_UPDATE_CODEX_CLI_CHECK"
 # setsid makes /dev/tty unavailable so nothing leaks; stdout (the version string)
 # still reaches the capture. </dev/null detaches stdin as well. Verified in-VM:
 # `setsid codex --version 2>/dev/null </dev/null` still returns "codex-cli X.Y.Z".
-CODEX_OLD=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'setsid codex --version 2>/dev/null </dev/null' || true)
+CODEX_OLD=$(vm_exec 'setsid codex --version 2>/dev/null </dev/null' || true)
 if [ -z "$CODEX_OLD" ]; then
     echo "$MSG_UPDATE_CODEX_CLI_INSTALLING"
 else
@@ -138,8 +138,8 @@ fi
 # checks against a still-running install. `sudo setsid` order (not `setsid sudo`)
 # lets sudo keep its tty so a `requiretty` sudoers policy wouldn't break it. On
 # failure the real error is surfaced from the log.
-if orb -m "$OPENCLAW_VM_NAME" bash -lc 'sudo setsid -w npm install -g @openai/codex > ~/.openclaw/.update-codex.log 2>&1'; then
-    CODEX_NEW=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'setsid codex --version 2>/dev/null </dev/null' || echo "unknown")
+if vm_exec 'sudo setsid -w npm install -g @openai/codex > ~/.openclaw/.update-codex.log 2>&1'; then
+    CODEX_NEW=$(vm_exec 'setsid codex --version 2>/dev/null </dev/null' || echo "unknown")
     if [ -z "$CODEX_OLD" ]; then
         # shellcheck disable=SC2059
         printf "$MSG_UPDATE_CODEX_CLI_INSTALLED\n" "$CODEX_NEW"
@@ -159,7 +159,7 @@ fi
 # Hash inputs list both new (≥ v2026.5.3 scripts/docker/sandbox/) and legacy
 # (≤ v2026.5.2 root) Dockerfile paths; cat skips missing files via 2>/dev/null
 # so the hash reflects whichever layout the current upstream checkout has.
-orb -m "$OPENCLAW_VM_NAME" bash -lc '
+vm_exec '
     if [ -f ~/.openclaw/.sandbox-build-hash ] && [ ! -f ~/.openclaw/.sandbox-hash-base ]; then
         cd ~/openclaw
         cat scripts/docker/sandbox/Dockerfile Dockerfile.sandbox scripts/sandbox-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-base
@@ -186,12 +186,12 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc '
 # (matching what this fixed wrapper would compute) and skip the cosmetic
 # rebuild that the bare hash mismatch would otherwise trigger. A marker file
 # prevents rerunning the migration on subsequent updates.
-LAST_BUILT=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'cat ~/.openclaw/.build-version 2>/dev/null' || echo "")
+LAST_BUILT=$(vm_exec 'cat ~/.openclaw/.build-version 2>/dev/null' || echo "")
 case "$LAST_BUILT" in
     v2026.5.*)
-        if ! orb -m "$OPENCLAW_VM_NAME" bash -lc 'test -f ~/.openclaw/.sandbox-hash-format-v54' 2>/dev/null; then
+        if ! vm_exec 'test -f ~/.openclaw/.sandbox-hash-format-v54' 2>/dev/null; then
             echo "$MSG_UPDATE_SANDBOX_HASH_MIGRATE"
-            orb -m "$OPENCLAW_VM_NAME" bash -lc '
+            vm_exec '
                 cd ~/openclaw
                 cat scripts/docker/sandbox/Dockerfile         Dockerfile.sandbox          scripts/sandbox-setup.sh          2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-base
                 cat scripts/docker/sandbox/Dockerfile.common  Dockerfile.sandbox-common   scripts/sandbox-common-setup.sh   2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-common
@@ -204,9 +204,9 @@ case "$LAST_BUILT" in
 esac
 
 # Check if already on the latest tag AND build succeeded previously
-CURRENT_HEAD=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git rev-parse HEAD 2>/dev/null")
-TAG_COMMIT=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git rev-parse '$LATEST_TAG^{commit}' 2>/dev/null")
-BUILT_VERSION=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cat ~/.openclaw/.build-version 2>/dev/null" || echo "")
+CURRENT_HEAD=$(vm_exec "cd ~/openclaw && git rev-parse HEAD 2>/dev/null")
+TAG_COMMIT=$(vm_exec "cd ~/openclaw && git rev-parse '$LATEST_TAG^{commit}' 2>/dev/null")
+BUILT_VERSION=$(vm_exec "cat ~/.openclaw/.build-version 2>/dev/null" || echo "")
 if [ "$CURRENT_HEAD" = "$TAG_COMMIT" ] && [ "$BUILT_VERSION" = "$LATEST_TAG" ] && [ "$FORCE" = false ] && [ "$SANDBOX" = false ]; then
     echo -e "$MSG_CMD_UPDATE_ALREADY_CURRENT"
     # Still refresh Mac commands in case openclaw-orbstack repo changed
@@ -218,22 +218,22 @@ fi
 echo "$MSG_CMD_UPDATE_STOPPING"
 # Suppress the openclaw CLI startup banner/tagline (stdout) so it doesn't
 # interleave with the wrapper's progress output. Same for the two gateway starts.
-orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway stop >/dev/null 2>&1"
+vm_exec "openclaw gateway stop >/dev/null 2>&1"
 GATEWAY_STOPPED=true
 trap 'if [ "$GATEWAY_STOPPED" = true ]; then
     echo "$MSG_CMD_UPDATE_RECOVER"
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start >/dev/null 2>&1" || true
+    vm_exec "openclaw gateway start >/dev/null 2>&1" || true
 fi' EXIT
 
 # -q on both checkouts suppresses the "detached HEAD" advisory + "HEAD is now at"
 # lines (noise that interleaves with the spinner). Real errors still hit stderr.
-orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && git checkout -q -- . 2>/dev/null; git checkout -q '$LATEST_TAG'"
+vm_exec "cd ~/openclaw && git checkout -q -- . 2>/dev/null; git checkout -q '$LATEST_TAG'"
 
 # Derive npm package version from git tag (v2026.3.13 -> 2026.3.13)
 NPM_VERSION="${LATEST_TAG#v}"
 
 # Clear build marker so a failed build won't be skipped next time
-orb -m "$OPENCLAW_VM_NAME" bash -lc "rm -f ~/.openclaw/.build-version" 2>/dev/null || true
+vm_exec "rm -f ~/.openclaw/.build-version" 2>/dev/null || true
 
 # shellcheck disable=SC2059
 printf "$MSG_PKG_INSTALL_VERSION\n" "$NPM_VERSION"
@@ -256,12 +256,12 @@ printf "$MSG_PKG_INSTALL_VERSION\n" "$NPM_VERSION"
 # prefix has no openclaw at all).
 NPM_OK=false
 _t0=$(date +%s)
-if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo npm install -g openclaw@$NPM_VERSION > ~/.openclaw/.update-npm.log 2>&1"; then
+if vm_exec "sudo npm install -g openclaw@$NPM_VERSION > ~/.openclaw/.update-npm.log 2>&1"; then
     # Verify package completeness (e.g. npm tarball may ship without dist/control-ui/)
     # against root's prefix (sudo npm root -g) — must expand inside the VM, not on Mac.
     # Check both index.js (canonical since ≤v2026.3.x) and entry.js (legacy reference).
     # shellcheck disable=SC2016
-    if orb -m "$OPENCLAW_VM_NAME" bash -lc 'R=$(sudo npm root -g); { test -f "$R/openclaw/dist/index.js" || test -f "$R/openclaw/dist/entry.js"; } && test -d "$R/openclaw/dist/control-ui" && test -d "$R/openclaw/dist/extensions"'; then
+    if vm_exec 'R=$(sudo npm root -g); { test -f "$R/openclaw/dist/index.js" || test -f "$R/openclaw/dist/entry.js"; } && test -d "$R/openclaw/dist/control-ui" && test -d "$R/openclaw/dist/extensions"'; then
         NPM_OK=true
         printf '%s (%s)\n' "$MSG_PKG_INSTALL_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
     else
@@ -287,7 +287,7 @@ if [ "$NPM_OK" = false ]; then
 fi
 
 # Mark build as successful
-orb -m "$OPENCLAW_VM_NAME" bash -lc "echo '$LATEST_TAG' > ~/.openclaw/.build-version"
+vm_exec "echo '$LATEST_TAG' > ~/.openclaw/.build-version"
 
 # --- Per-image sandbox hash detection ---
 BUILD_BASE=false
@@ -302,7 +302,7 @@ else
     # Hash inputs list both new (≥ v2026.5.3 scripts/docker/sandbox/) and legacy
     # (≤ v2026.5.2 root) paths; cat skips missing files so this works whether
     # the just-checked-out tag uses the new layout or the old one.
-    HASH_DATA=$(orb -m "$OPENCLAW_VM_NAME" bash -lc '
+    HASH_DATA=$(vm_exec '
         cat ~/.openclaw/.sandbox-hash-base 2>/dev/null || echo none
         cat ~/.openclaw/.sandbox-hash-common 2>/dev/null || echo none
         cat ~/.openclaw/.sandbox-hash-browser 2>/dev/null || echo none
@@ -338,7 +338,7 @@ if [ "$SANDBOX" = true ]; then
         # Docker build output → per-image VM log (never the terminal). Show elapsed
         # on success; show the real docker error tail on failure.
         _t0=$(date +%s)
-        if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh' > ~/.openclaw/.update-sandbox-base.log 2>&1"; then
+        if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh' > ~/.openclaw/.update-sandbox-base.log 2>&1"; then
             save_sandbox_hash base scripts/docker/sandbox/Dockerfile Dockerfile.sandbox scripts/sandbox-setup.sh
             printf '%s (%s)\n' "$MSG_CMD_UPDATE_SANDBOX_BASE_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
         else
@@ -355,7 +355,7 @@ if [ "$SANDBOX" = true ]; then
         [ "$BUILD_BASE" = true ] && [ "$OLD_COMMON" = "$NEW_COMMON" ] && echo "$MSG_CMD_UPDATE_SANDBOX_COMMON_CASCADE"
         echo "$MSG_CMD_UPDATE_SANDBOX_COMMON"
         _t0=$(date +%s)
-        if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh' > ~/.openclaw/.update-sandbox-common.log 2>&1"; then
+        if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh' > ~/.openclaw/.update-sandbox-common.log 2>&1"; then
             save_sandbox_hash common scripts/docker/sandbox/Dockerfile.common Dockerfile.sandbox-common scripts/sandbox-common-setup.sh
             printf '%s (%s)\n' "$MSG_CMD_UPDATE_SANDBOX_COMMON_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
         else
@@ -370,7 +370,7 @@ if [ "$SANDBOX" = true ]; then
     if [ "$BUILD_BROWSER" = true ]; then
         echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER"
         _t0=$(date +%s)
-        if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh' > ~/.openclaw/.update-sandbox-browser.log 2>&1"; then
+        if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh' > ~/.openclaw/.update-sandbox-browser.log 2>&1"; then
             save_sandbox_hash browser scripts/docker/sandbox/Dockerfile.browser Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh
             printf '%s (%s)\n' "$MSG_CMD_UPDATE_SANDBOX_BROWSER_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
         else
@@ -383,7 +383,7 @@ if [ "$SANDBOX" = true ]; then
 
     echo "$MSG_CMD_UPDATE_SANDBOX_NOTE"
     # Clean up old monolithic hash file
-    orb -m "$OPENCLAW_VM_NAME" bash -lc "rm -f ~/.openclaw/.sandbox-build-hash" 2>/dev/null || true
+    vm_exec "rm -f ~/.openclaw/.sandbox-build-hash" 2>/dev/null || true
 fi
 
 GATEWAY_STOPPED=false
@@ -400,7 +400,7 @@ echo "$MSG_CMD_UPDATE_DOCTOR"
 # Defensive cleanup: absorb any /root ghost state left behind by a prior bare
 # `sudo openclaw doctor --fix` (without --preserve-env=HOME) that would otherwise
 # keep re-polluting subsequent sudo runs.
-orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/systemd/user/openclaw-gateway.service* 2>/dev/null" || true
+vm_exec "sudo rm -rf /root/.openclaw /root/.config/systemd/user/openclaw-gateway.service* 2>/dev/null" || true
 # 1) Bundled plugin runtime deps need root for global npm prefix — run sudo FIRST
 #    to avoid non-sudo run leaving partial npm state that blocks the sudo install.
 #    --preserve-env=HOME ensures doctor reads the correct user config (~/.openclaw/)
@@ -428,7 +428,7 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 # (nothing sits between `.update-doctor.` and the final `.log`), and the second glob
 # clears legacy numbered `.update-doctor.log.{1..5}` files.
 # shellcheck disable=SC2016
-orb -m "$OPENCLAW_VM_NAME" bash -lc '
+vm_exec '
 mkdir -p ~/.openclaw
 rm -f ~/.openclaw/.update-doctor.*.log ~/.openclaw/.update-doctor.log.[0-9]*
 ' 2>/dev/null || true
@@ -449,7 +449,7 @@ rm -f ~/.openclaw/.update-doctor.*.log ~/.openclaw/.update-doctor.log.[0-9]*
 # We use bash `date -u +%Y-%m-%dT%H-%M-%SZ` which produces a regex-compliant
 # (without ms suffix) timestamp.
 # shellcheck disable=SC2016
-orb -m "$OPENCLAW_VM_NAME" bash -lc '
+vm_exec '
 TS=$(date -u +%Y-%m-%dT%H-%M-%SZ)
 shopt -s nullglob
 for SESSION_DIR in ~/.openclaw/agents/*/sessions; do
@@ -464,7 +464,7 @@ for SESSION_DIR in ~/.openclaw/agents/*/sessions; do
 done
 ' 2>/dev/null || true
 
-orb -m "$OPENCLAW_VM_NAME" bash -lc "mkdir -p ~/.openclaw && echo '=== sudo doctor --fix (plugin deps) ===' > ~/.openclaw/.update-doctor.log && yes n | sudo --preserve-env=HOME openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
+vm_exec "mkdir -p ~/.openclaw && echo '=== sudo doctor --fix (plugin deps) ===' > ~/.openclaw/.update-doctor.log && yes n | sudo --preserve-env=HOME openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 # 2) Restore file ownership in case sudo created/modified files under ~/.openclaw/
 #    or left root-owned systemd user service files under ~/.config/systemd/user/.
 #    ~/.npm/ MUST be chowned too: with --preserve-env=HOME, sudo npm writes into
@@ -478,17 +478,17 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "mkdir -p ~/.openclaw && echo '=== sudo doct
 #    subsequent user passes rebuild the cache with correct ownership.
 #    Surfaced 2026-05-15 on v2026.5.14-beta.1: codex plugin failed to load 5×
 #    during one update run, leaving Codex harness unregistered until next restart.
-orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/ ~/.npm/ 2>/dev/null; sudo chown \$(id -u):\$(id -g) ~/.config/systemd/user/openclaw-*.service* 2>/dev/null; sudo rm -rf /tmp/jiti 2>/dev/null" || true
+vm_exec "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/ ~/.npm/ 2>/dev/null; sudo chown \$(id -u):\$(id -g) ~/.config/systemd/user/openclaw-*.service* 2>/dev/null; sudo rm -rf /tmp/jiti 2>/dev/null" || true
 # 3) Config migration + systemd user service fix (as regular user, after chown).
 #    Same `yes n` rationale as above — keeps the @clack/prompts orphan-archive
 #    confirm from cancelling the whole doctor pass.
-orb -m "$OPENCLAW_VM_NAME" bash -lc "echo '=== doctor --fix (config migration) ===' >> ~/.openclaw/.update-doctor.log && yes n | openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
+vm_exec "echo '=== doctor --fix (config migration) ===' >> ~/.openclaw/.update-doctor.log && yes n | openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 
 # --- Startup optimization drop-in (upstream recommended for VM/ARM: docs/vps.md) ---
 # Bridge pattern: if the main service already has NODE_COMPILE_CACHE, upstream has taken
 # over — remove our drop-in. Otherwise, ensure it exists for older service files.
 # shellcheck disable=SC2016
-orb -m "$OPENCLAW_VM_NAME" bash -lc '
+vm_exec '
 DROPIN_DIR=~/.config/systemd/user/openclaw-gateway.service.d
 DROPIN=$DROPIN_DIR/openclaw-orbstack.conf
 SERVICE=~/.config/systemd/user/openclaw-gateway.service
@@ -511,7 +511,7 @@ systemctl --user daemon-reload
 # wins, so this overrides anything upstream sets. The 99- prefix also wins lexicographic
 # ordering against any later drop-ins openclaw or third parties might ship.
 # shellcheck disable=SC2016
-orb -m "$OPENCLAW_VM_NAME" bash -lc '
+vm_exec '
 DROPIN_DIR=~/.config/systemd/user/openclaw-gateway.service.d
 DROPIN=$DROPIN_DIR/99-openclaw-orbstack-path.conf
 mkdir -p "$DROPIN_DIR"
@@ -520,7 +520,7 @@ systemctl --user daemon-reload
 ' 2>/dev/null || true
 
 echo "$MSG_CMD_UPDATE_STARTING"
-orb -m "$OPENCLAW_VM_NAME" bash -lc "openclaw gateway start >/dev/null 2>&1"
+vm_exec "openclaw gateway start >/dev/null 2>&1"
 
 # Refresh Mac commands (picks up any wrapper changes)
 OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
@@ -536,7 +536,7 @@ echo "$MSG_CMD_UPDATE_DONE"
 # user sees a clean "Update complete!" and only notices later when /status
 # shows the wrong auth label.
 # shellcheck disable=SC2016
-REAUTH_HITS=$(orb -m "$OPENCLAW_VM_NAME" bash -lc 'grep -F "re-authenticate this profile" ~/.openclaw/.update-doctor.log 2>/dev/null | head -5' || true)
+REAUTH_HITS=$(vm_exec 'grep -F "re-authenticate this profile" ~/.openclaw/.update-doctor.log 2>/dev/null | head -5' || true)
 if [ -n "$REAUTH_HITS" ]; then
     printf "\n\033[1;33m%s\033[0m\n" "$MSG_CMD_UPDATE_DOCTOR_REAUTH_HEADER"
     # shellcheck disable=SC2001  # sed is clearer than the bash builtin for per-line indent

@@ -103,8 +103,21 @@ err()     { echo -e "${RED}  ✗ $1${NC}"; }
 info()    { echo -e "  $1"; }
 
 # --- VM Command Execution ---
+# OrbStack #2519: `orb <cmd>` enters the alternate screen buffer when its Mac-side
+# stdout is a TTY and emits rmcup on exit — discarding output and homing the cursor
+# to the TOP of the terminal (terminal-agnostic; no orb flag disables it). Detach
+# orb's Mac-side stdout from the TTY (the `orb ... | cat` workaround) so it stays in
+# pipe mode: no PTY, no alt-screen, no cursor jump. stderr stays on the TTY so real
+# errors still surface. The `[ -t 1 ]` guard keeps $(vm_exec ...) capture working —
+# in a command substitution fd 1 is a pipe (not a TTY), so the else branch runs and
+# stdout reaches the capture. Long steps route real output to a per-step VM log
+# (surfaced by vm_log_tail on failure), so dropping a bare statement's stdout is safe.
 vm_exec() {
-    orb -m "$VM_NAME" bash -lc "$1"
+    if [ -t 1 ]; then
+        orb -m "$VM_NAME" bash -lc "$1" >/dev/null
+    else
+        orb -m "$VM_NAME" bash -lc "$1"
+    fi
 }
 
 # --- Progress model: synchronous, newline-only (garble-proof by construction) ---

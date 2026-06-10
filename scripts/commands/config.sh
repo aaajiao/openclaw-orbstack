@@ -14,7 +14,13 @@ case "$ACTION" in
         echo "$MSG_CMD_CONFIG_SAVED"
         ;;
     show)
-        orb -m "$OPENCLAW_VM_NAME" bash -lc "cat ~/.openclaw/openclaw.json"
+        # OrbStack #2519: a bare `orb ... cat` enters the alt-screen buffer and
+        # discards the output on exit (cursor jumps to the top). Capturing first
+        # (fd 1 = pipe, so orb stays in pipe mode — no PTY, no alt-screen) then
+        # printing keeps the config on screen. The assignment also propagates a
+        # read failure (missing file / unreachable VM) under set -e.
+        CONFIG_JSON=$(orb -m "$OPENCLAW_VM_NAME" bash -lc "cat ~/.openclaw/openclaw.json")
+        printf '%s\n' "$CONFIG_JSON"
         ;;
     backup)
         BACKUP="openclaw-config-$(date +%Y%m%d-%H%M%S).json"

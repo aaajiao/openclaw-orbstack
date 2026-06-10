@@ -12,10 +12,10 @@ BROWSER_OK=false
 
 echo "$MSG_CMD_REBUILD_BASE"
 _t0=$(date +%s)
-if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh' > ~/.openclaw/.rebuild-sandbox-base.log 2>&1"; then
+if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh' > ~/.openclaw/.rebuild-sandbox-base.log 2>&1"; then
     BASE_OK=true
     printf '%s (%s)\n' "$MSG_CMD_REBUILD_BASE_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
-elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox:bookworm-slim -f scripts/docker/sandbox/Dockerfile .' >> ~/.openclaw/.rebuild-sandbox-base.log 2>&1"; then
+elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox:bookworm-slim -f scripts/docker/sandbox/Dockerfile .' >> ~/.openclaw/.rebuild-sandbox-base.log 2>&1"; then
     BASE_OK=true
     printf '%s (%s)\n' "$MSG_CMD_REBUILD_BASE_OK_DF" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
 else
@@ -35,7 +35,7 @@ fi
 if [ "$BASE_OK" = true ]; then
     echo "$MSG_CMD_REBUILD_COMMON"
     _t0=$(date +%s)
-    if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh' > ~/.openclaw/.rebuild-sandbox-common.log 2>&1"; then
+    if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh' > ~/.openclaw/.rebuild-sandbox-common.log 2>&1"; then
         COMMON_OK=true
         printf '%s (%s)\n' "$MSG_CMD_REBUILD_COMMON_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
     else
@@ -53,10 +53,10 @@ fi
 
 echo "$MSG_CMD_REBUILD_BROWSER"
 _t0=$(date +%s)
-if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh' > ~/.openclaw/.rebuild-sandbox-browser.log 2>&1"; then
+if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh' > ~/.openclaw/.rebuild-sandbox-browser.log 2>&1"; then
     BROWSER_OK=true
     printf '%s (%s)\n' "$MSG_CMD_REBUILD_BROWSER_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
-elif orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox-browser:bookworm-slim -f scripts/docker/sandbox/Dockerfile.browser .' >> ~/.openclaw/.rebuild-sandbox-browser.log 2>&1"; then
+elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox-browser:bookworm-slim -f scripts/docker/sandbox/Dockerfile.browser .' >> ~/.openclaw/.rebuild-sandbox-browser.log 2>&1"; then
     BROWSER_OK=true
     printf '%s (%s)\n' "$MSG_CMD_REBUILD_BROWSER_OK_DF" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
 else
@@ -70,7 +70,7 @@ if [ "$BROWSER_OK" = true ]; then
 fi
 
 # Clean up old monolithic hash file
-orb -m "$OPENCLAW_VM_NAME" bash -lc "rm -f ~/.openclaw/.sandbox-build-hash" 2>/dev/null || true
+vm_exec "rm -f ~/.openclaw/.sandbox-build-hash" 2>/dev/null || true
 
 if [ "$BASE_OK" = false ] || [ "$COMMON_OK" = false ] || [ "$BROWSER_OK" = false ]; then
     echo "$MSG_CMD_REBUILD_PARTIAL"
