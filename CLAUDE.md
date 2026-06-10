@@ -103,10 +103,12 @@ No automated test suite. Validation is syntax checks + shellcheck + manual testi
 
 ### Install Strategy
 
-Both the installer and updater use the same two-tier approach:
+**Installer** (`openclaw-orbstack-setup.sh`) — two-tier, for fresh installs:
 
 1. **Primary**: `npm install -g openclaw@<version>` (prebuilt npm package — fast, reliable)
-2. **Fallback**: `pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .` (source build — only if npm registry fails)
+2. **Fallback**: `pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .` (source build — only if the npm package fails on a first install, where there's no working openclaw to fall back on)
+
+**Updater** (`openclaw-update`) — **npm-only** (source-build fallback removed 2026-06-10): if the npm install fails or the package is incomplete, it prints the log hint and aborts (`MSG_PKG_INSTALL_ABORT`, retry with `openclaw-update --force`) instead of dropping to a multi-minute, screen-garbling source build. Package completeness is checked against **`sudo npm root -g`** (root's prefix, `/usr/lib/node_modules`) to match where `sudo npm install -g` actually installs — a bare `npm root -g` resolves the *user's* workspace prefix (`~/.openclaw/workspace/.local/lib/node_modules`), where the package isn't, which previously forced a false-"incomplete" source build on every run.
 
 The git checkout (`~/openclaw`) is always kept at the target tag regardless of install method, because sandbox Docker images are built from the repo's Dockerfiles.
 

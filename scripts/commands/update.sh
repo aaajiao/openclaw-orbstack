@@ -209,22 +209,30 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "rm -f ~/.openclaw/.build-version" 2>/dev/nu
 # shellcheck disable=SC2059
 printf "$MSG_PKG_INSTALL_VERSION\n" "$NPM_VERSION"
 
-# Try prebuilt npm package; fall back to source build on failure.
+# Install the prebuilt npm package. npm-only since 2026-06-10: the source-build
+# fallback was removed now that upstream ships reliable packages (it only ever
+# fired here because of the completeness-check bug fixed below, not because npm
+# actually failed).
 # npm output is captured to ~/.openclaw/.update-npm.log (not streamed) so a
-# primary-install failure is diagnosable afterwards instead of scrolling past /
-# interleaving with the fallback build. A spinner stands in for the (multi-minute,
-# ~100MB native-dep) install. The package itself installs cleanly on this VM
-# (verified 2026-06-10); a `-g` failure is usually transient root/cache/overwrite
-# state — the log tells you which, so the next run isn't a guessing game.
+# failure is diagnosable afterwards. A spinner stands in for the (multi-minute,
+# ~100MB native-dep) install.
+# Completeness is checked against `sudo npm root -g` (root's global prefix,
+# /usr/lib/node_modules) to MATCH the `sudo npm install -g` above. A bare
+# `npm root -g` resolves the *user's* prefix instead
+# (~/.openclaw/workspace/.local/lib/node_modules, the workspace Node), where the
+# just-installed package does NOT exist → false "incomplete". That prefix
+# mismatch is exactly what forced the source build on every run before 2026-06-10
+# (confirmed in-VM: root prefix has dist/{index.js,control-ui,extensions}; user
+# prefix has no openclaw at all).
 NPM_OK=false
 start_progress
 if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo npm install -g openclaw@$NPM_VERSION > ~/.openclaw/.update-npm.log 2>&1"; then
     stop_progress
     # Verify package completeness (e.g. npm tarball may ship without dist/control-ui/)
-    # $(npm root -g) must expand inside the VM, not on Mac
-    # Check both index.js (canonical since ≤v2026.3.x) and entry.js (legacy reference)
+    # against root's prefix (sudo npm root -g) — must expand inside the VM, not on Mac.
+    # Check both index.js (canonical since ≤v2026.3.x) and entry.js (legacy reference).
     # shellcheck disable=SC2016
-    if orb -m "$OPENCLAW_VM_NAME" bash -lc '{ test -f $(npm root -g)/openclaw/dist/index.js || test -f $(npm root -g)/openclaw/dist/entry.js; } && test -d $(npm root -g)/openclaw/dist/control-ui && test -d $(npm root -g)/openclaw/dist/extensions'; then
+    if orb -m "$OPENCLAW_VM_NAME" bash -lc 'R=$(sudo npm root -g); { test -f "$R/openclaw/dist/index.js" || test -f "$R/openclaw/dist/entry.js"; } && test -d "$R/openclaw/dist/control-ui" && test -d "$R/openclaw/dist/extensions"'; then
         NPM_OK=true
         echo "$MSG_PKG_INSTALL_OK"
     else
@@ -238,35 +246,13 @@ else
 fi
 
 if [ "$NPM_OK" = false ]; then
-    echo "$MSG_BUILD_FALLBACK"
-    # Ensure pnpm is available for source build
-    orb -m "$OPENCLAW_VM_NAME" bash -lc '
-if ! command -v pnpm &>/dev/null; then
-    if ! command -v npm &>/dev/null; then
-        echo "  '"$MSG_CMD_UPDATE_NPM_REINSTALL"'"
-        sudo apt-get install --reinstall -y nodejs
-    fi
-    sudo corepack enable 2>/dev/null || sudo npm install -g pnpm
-fi
-'
-    # Source build is noisy (pnpm + tsdown + vite, ~100MB native deps); its
-    # \r-progress + @clack boxes interleave with this wrapper's progress lines on
-    # the same TTY ("花屏" / screen garble). Capture to ~/.openclaw/.update-build.log
-    # + show a spinner instead, and pipe `yes` to auto-answer corepack/pnpm
-    # "Proceed? [Y/n]" prompts (same non-interactive pattern as the `yes n | doctor`
-    # calls below). COREPACK_ENABLE_DOWNLOAD_PROMPT=0 additionally suppresses
-    # corepack's pnpm-download prompt. No pipefail is set (see _common.sh), so the
-    # pipeline's status is orb's exit, not `yes`'s SIGPIPE.
-    start_progress
-    if yes | orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && export COREPACK_ENABLE_DOWNLOAD_PROMPT=0; { pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .; } > ~/.openclaw/.update-build.log 2>&1"; then
-        stop_progress
-        echo "$MSG_BUILD_FALLBACK_OK"
-    else
-        stop_progress
-        echo "$MSG_BUILD_FALLBACK_FAIL"
-        echo "$MSG_BUILD_LOG_HINT"
-        exit 1
-    fi
+    # npm is the only install path (source-build fallback removed 2026-06-10). A
+    # failure here is genuine — registry down, network, or a truly broken published
+    # package — not the old false "incomplete". The FAIL/INCOMPLETE message + npm
+    # log hint were already printed above; abort so the operator can fix and retry
+    # instead of silently dropping to a multi-minute, screen-garbling source build.
+    echo "$MSG_PKG_INSTALL_ABORT"
+    exit 1
 fi
 
 # Mark build as successful
@@ -372,7 +358,13 @@ fi
 GATEWAY_STOPPED=false
 trap - EXIT
 
-# Ensure systemd service matches current install path (npm vs source build)
+# Run doctor to reconcile service + migrate state after the npm install.
+# NOTE: the updater is npm-only now, but a VM upgraded before 2026-06-10 may still
+# have a systemd ExecStart pointing at the source checkout (~/openclaw/dist/index.js)
+# from a past source-build run. Doctor's service-rewrite prompt is answered "no"
+# (yes n, see below) to preserve the operator file, so it is NOT auto-repointed to
+# the package install. To move the service onto the npm package, run
+# `openclaw gateway install --force` once (manual, intentional).
 echo "$MSG_CMD_UPDATE_DOCTOR"
 # Defensive cleanup: absorb any /root ghost state left behind by a prior bare
 # `sudo openclaw doctor --fix` (without --preserve-env=HOME) that would otherwise
