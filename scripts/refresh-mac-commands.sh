@@ -149,7 +149,8 @@ EOF
 # verification URL + user code, the user opens that URL in their Mac browser
 # and enters the code. codex polls and writes the token to ~/.codex/auth.json
 # inside the VM. OpenClaw v2026.5.14+ (PR #82117) reads from that file as a
-# runtime fallback when its own openai-codex OAuth refresh fails.
+# runtime fallback when its own openai OAuth refresh fails (provider 旧名 openai-codex，
+# v2026.6.1 doctor 起统一改名为 openai).
 # We use `orb run` (not `bash -lc`) so the codex TTY stays interactive and
 # the user can see the verification URL/code live.
 cat > ~/bin/openclaw-codex-login << EOF

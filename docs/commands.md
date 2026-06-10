@@ -375,6 +375,8 @@ openclaw skills info <name>        # Skill 详情
 openclaw skills check              # 检查状态摘要
 openclaw skills install <name> --global  # v2026.5.19+ (#74466): 安装到 shared managed skills
 openclaw skills update <name> --global   # v2026.5.19+ (#74466): 同上,对 shared 范围更新
+# v2026.6.5+ (#90478): skills install 支持 ClawHub 上以 GitHub 仓库为后端的 skill
+#   (按 pinned commit 下载 + install-policy 校验 + 安装后上报 telemetry)
 ```
 
 ### 配置管理

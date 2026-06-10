@@ -191,7 +191,9 @@
       // 内置 image_generate 工具，有可用 provider API key 时自动激活
       // 回退顺序: tool call 指定 → primary → fallbacks → 已认证 provider 自动检测
       // v2026.4.23 (#70703): `openai/gpt-image-2` 现在支持 Codex OAuth 路由，
-      //   配置了 `openai-codex:*` auth profile 即自动走该路径，无需 OPENAI_API_KEY
+      //   配置了 `openai:*` auth profile 即自动走该路径，无需 OPENAI_API_KEY
+      //   (v2026.6.1 doctor 把旧 `openai-codex` provider/profile 统一改名为 `openai`；
+      //    `openai-codex` 仍作 legacy 别名保留，v2026.6.5 docs 已澄清 #90250)
       // v2026.4.23: image_generate 工具新增 per-call hints (quality/format/background/
       //   moderation/compression/user/timeoutMs)，通过 agent tool call 参数传递，不在此处配置
       // imageGenerationModel: {
@@ -243,7 +245,7 @@
         // "codex/gpt-5.4": { alias: "GPT 5.4 (Codex)" }
         // v2026.4.23: GPT-5.5 bundled via Pi 0.70.0 (OpenAI + OpenAI Codex 两条路径都可)
         //   ⚠️ GPT-5.5 上下文 400k (vs GPT-5.4 的 1M)，显式设 params.contextTokens 防 overflow
-        // "openai-codex/gpt-5.5": {
+        // "openai/gpt-5.5": {
         //   alias: "Codex GPT 5.5",
         //   params: { contextTokens: 400000 }
         // }
@@ -1101,7 +1103,9 @@
     web: {
       search: {
         // v2026.3.28: provider 细节配置迁移到 plugins.entries.<provider>.config
-        provider: "perplexity",   // "brave" | "exa" | "google" | "perplexity" | "searxng" | "tavily"
+        provider: "perplexity",   // "brave" | "exa" | "google" | "parallel" | "perplexity" | "searxng" | "tavily"
+        // v2026.6.5 (#85158): Parallel 成为 bundled web_search provider (需要 PARALLEL_API_KEY)，
+        //   支持 onboarding picker；endpoint api.parallel.ai/v1/search
         // Brave Search (需要 BRAVE_API_KEY)
         // brave: {
         //   mode: "llm-context"  // "llm-context" = Brave LLM Context endpoint，返回提取的 grounding 片段 (v2026.3.8+)
@@ -1800,7 +1804,7 @@
   //   //         // storage: { mode: "separate" }
   //   //         // v2026.4.26+: Dream Diary 叙事子代理 model 覆盖 (refs #65963)
   //   //         //   走 plugin subagent model-override trust gate
-  //   //         // model: "openai-codex/gpt-5.4"
+  //   //         // model: "openai/gpt-5.4"
   //   //       }
   //   //     }
   //   //   }
