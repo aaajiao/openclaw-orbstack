@@ -209,9 +209,17 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "rm -f ~/.openclaw/.build-version" 2>/dev/nu
 # shellcheck disable=SC2059
 printf "$MSG_PKG_INSTALL_VERSION\n" "$NPM_VERSION"
 
-# Try prebuilt npm package; fall back to source build on failure
+# Try prebuilt npm package; fall back to source build on failure.
+# npm output is captured to ~/.openclaw/.update-npm.log (not streamed) so a
+# primary-install failure is diagnosable afterwards instead of scrolling past /
+# interleaving with the fallback build. A spinner stands in for the (multi-minute,
+# ~100MB native-dep) install. The package itself installs cleanly on this VM
+# (verified 2026-06-10); a `-g` failure is usually transient root/cache/overwrite
+# state — the log tells you which, so the next run isn't a guessing game.
 NPM_OK=false
-if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo npm install -g openclaw@$NPM_VERSION"; then
+start_progress
+if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo npm install -g openclaw@$NPM_VERSION > ~/.openclaw/.update-npm.log 2>&1"; then
+    stop_progress
     # Verify package completeness (e.g. npm tarball may ship without dist/control-ui/)
     # $(npm root -g) must expand inside the VM, not on Mac
     # Check both index.js (canonical since ≤v2026.3.x) and entry.js (legacy reference)
@@ -221,9 +229,12 @@ if orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo npm install -g openclaw@$NPM_VERSIO
         echo "$MSG_PKG_INSTALL_OK"
     else
         echo "$MSG_PKG_INSTALL_INCOMPLETE"
+        echo "$MSG_PKG_INSTALL_LOG_HINT"
     fi
 else
+    stop_progress
     echo "$MSG_PKG_INSTALL_FAIL"
+    echo "$MSG_PKG_INSTALL_LOG_HINT"
 fi
 
 if [ "$NPM_OK" = false ]; then
@@ -238,10 +249,22 @@ if ! command -v pnpm &>/dev/null; then
     sudo corepack enable 2>/dev/null || sudo npm install -g pnpm
 fi
 '
-    if orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && pnpm install && pnpm build && pnpm ui:build && sudo npm install -g ."; then
+    # Source build is noisy (pnpm + tsdown + vite, ~100MB native deps); its
+    # \r-progress + @clack boxes interleave with this wrapper's progress lines on
+    # the same TTY ("花屏" / screen garble). Capture to ~/.openclaw/.update-build.log
+    # + show a spinner instead, and pipe `yes` to auto-answer corepack/pnpm
+    # "Proceed? [Y/n]" prompts (same non-interactive pattern as the `yes n | doctor`
+    # calls below). COREPACK_ENABLE_DOWNLOAD_PROMPT=0 additionally suppresses
+    # corepack's pnpm-download prompt. No pipefail is set (see _common.sh), so the
+    # pipeline's status is orb's exit, not `yes`'s SIGPIPE.
+    start_progress
+    if yes | orb -m "$OPENCLAW_VM_NAME" bash -lc "cd ~/openclaw && export COREPACK_ENABLE_DOWNLOAD_PROMPT=0; { pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .; } > ~/.openclaw/.update-build.log 2>&1"; then
+        stop_progress
         echo "$MSG_BUILD_FALLBACK_OK"
     else
+        stop_progress
         echo "$MSG_BUILD_FALLBACK_FAIL"
+        echo "$MSG_BUILD_LOG_HINT"
         exit 1
     fi
 fi
@@ -358,10 +381,9 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 # 1) Bundled plugin runtime deps need root for global npm prefix — run sudo FIRST
 #    to avoid non-sudo run leaving partial npm state that blocks the sudo install.
 #    --preserve-env=HOME ensures doctor reads the correct user config (~/.openclaw/)
-#    Output captured to ~/.openclaw/.update-doctor.log for post-mortem.
-#    Previous runs archived as .update-doctor.<UTC-timestamp>.log (last 3 kept) so
-#    a failed upgrade can be diff'd against the last successful run, and each
-#    archive's filename tells you exactly which day it came from.
+#    Output captured to ~/.openclaw/.update-doctor.log for post-mortem. The log is
+#    overwritten each run — per operator preference (2026-06-10) we keep only the
+#    current log, not the timestamped archives the wrapper used to rotate.
 #    `yes n` keeps doctor non-interactive past v2026.4.29 #73106 (orphan-archive
 #    confirm) and v2026.5.2 line 310 (Gateway-service-rewrite confirm).
 #    Orphan transcripts are pre-archived below — doctor sees zero orphans and the
@@ -375,29 +397,17 @@ orb -m "$OPENCLAW_VM_NAME" bash -lc "sudo rm -rf /root/.openclaw /root/.config/s
 #    sandbox registry into per-runtime shard files under
 #    ~/.openclaw/state/sandbox/runtimes/*.json. No prompt; nothing to handle here.
 #    Future debugging: don't look for one big sandbox registry JSON — it's sharded.
-# Archive previous .update-doctor.log → .update-doctor.<UTC-timestamp>.log, keeping the last 3 runs.
-# Timestamped filenames make each archive self-describing (no guessing which `.N` was when),
-# and the prune step keeps the directory bounded. Also one-shot-migrates any leftover
-# legacy `.update-doctor.log.{1..5}` from older wrapper versions into the timestamped scheme.
+# Keep only the current doctor log. Older wrapper versions rotated the log into
+# timestamped archives (.update-doctor.<UTC-timestamp>.log, last 3 kept); per
+# operator preference (2026-06-10) a single live ~/.openclaw/.update-doctor.log —
+# truncated + rewritten by the sudo pass below — is enough. Drop any archives left
+# by previous wrappers: the `.*.log` glob can't match the live `.update-doctor.log`
+# (nothing sits between `.update-doctor.` and the final `.log`), and the second glob
+# clears legacy numbered `.update-doctor.log.{1..5}` files.
 # shellcheck disable=SC2016
 orb -m "$OPENCLAW_VM_NAME" bash -lc '
-LOG=~/.openclaw/.update-doctor.log
-PREFIX=${LOG%.log}
 mkdir -p ~/.openclaw
-# One-time migration: legacy numbered archives → timestamped using their own mtime
-for i in 1 2 3 4 5; do
-  if [ -f "$LOG.$i" ]; then
-    TS=$(date -u -r "$LOG.$i" +%Y-%m-%dT%H-%M-%SZ 2>/dev/null || date -u +%Y-%m-%dT%H-%M-%SZ)
-    mv -f "$LOG.$i" "$PREFIX.$TS.log"
-  fi
-done
-# Archive current log with its own mtime as the timestamp (= when that run finished)
-if [ -f "$LOG" ]; then
-  TS=$(date -u -r "$LOG" +%Y-%m-%dT%H-%M-%SZ)
-  mv -f "$LOG" "$PREFIX.$TS.log"
-fi
-# Prune: keep the 3 newest archives by mtime, delete the rest
-ls -t "$PREFIX".*.log 2>/dev/null | tail -n +4 | xargs -r rm -f
+rm -f ~/.openclaw/.update-doctor.*.log ~/.openclaw/.update-doctor.log.[0-9]*
 ' 2>/dev/null || true
 
 # Pre-archive orphan transcripts so doctor's "Archive N orphan transcripts?" prompt

@@ -68,6 +68,8 @@ MSG_PKG_INSTALL_FAIL="  ⚠ Package install failed"
 MSG_BUILD_FALLBACK="  Falling back to source build..."
 MSG_BUILD_FALLBACK_OK="  ✓ Source build succeeded"
 MSG_BUILD_FALLBACK_FAIL="  ✗ Source build also failed"
+MSG_PKG_INSTALL_LOG_HINT="    log: ~/.openclaw/.update-npm.log (run: openclaw-shell, then cat it)"
+MSG_BUILD_LOG_HINT="    log: ~/.openclaw/.update-build.log (run: openclaw-shell, then cat it)"
 
 # --- Step 6: Sandbox ---
 MSG_BUILD_PATIENCE="    ⏳ This may take a few minutes, please wait"

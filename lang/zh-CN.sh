@@ -68,6 +68,8 @@ MSG_PKG_INSTALL_FAIL="  ⚠ 预编译包安装失败"
 MSG_BUILD_FALLBACK="  回退到源码编译..."
 MSG_BUILD_FALLBACK_OK="  ✓ 源码编译成功"
 MSG_BUILD_FALLBACK_FAIL="  ✗ 源码编译也失败了"
+MSG_PKG_INSTALL_LOG_HINT="    日志: ~/.openclaw/.update-npm.log (openclaw-shell 进 VM 后 cat 查看)"
+MSG_BUILD_LOG_HINT="    日志: ~/.openclaw/.update-build.log (openclaw-shell 进 VM 后 cat 查看)"
 
 # --- Step 6: Sandbox ---
 MSG_BUILD_PATIENCE="    ⏳ 这可能需要几分钟，请耐心等待"
