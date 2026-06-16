@@ -1106,6 +1106,9 @@
         provider: "perplexity",   // "brave" | "exa" | "google" | "parallel" | "perplexity" | "searxng" | "tavily"
         // v2026.6.5 (#85158): Parallel 成为 bundled web_search provider (需要 PARALLEL_API_KEY)，
         //   支持 onboarding picker；endpoint api.parallel.ai/v1/search
+        // v2026.6.8 (#93616): 免密钥 provider (Parallel Free / DuckDuckGo / Ollama / Codex Hosted Search)
+        //   不再在未配置 API provider 时自动启用，需在此显式 opt-in (如 provider: "duckduckgo")。
+        //   我们显式设了 perplexity，不受该变化影响。
         // Brave Search (需要 BRAVE_API_KEY)
         // brave: {
         //   mode: "llm-context"  // "llm-context" = Brave LLM Context endpoint，返回提取的 grounding 片段 (v2026.3.8+)
