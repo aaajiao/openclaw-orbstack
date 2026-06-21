@@ -1,7 +1,7 @@
 # CLAUDE.md - Project Guide for Claude Code
 
 **Project:** OpenClaw OrbStack — one-click OpenClaw AI chatbot deployment on macOS via OrbStack VM.
-**Version:** v2026.6.8 | **License:** MIT
+**Version:** v2026.6.9 | **License:** MIT
 
 ## Architecture
 

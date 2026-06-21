@@ -477,9 +477,11 @@ openclaw cron status               # 定时任务状态
 openclaw cron list                 # 列出任务
 openclaw cron list --json          # v2026.5.7+: 含 status 字段 (disabled/running/ok/error/skipped/idle, #78701)
 openclaw cron show <id> --json     # v2026.5.7+: 同上 status 字段
+# v2026.6.9: cron list 输出更紧凑 (#93395); cron list/show 人类可读输出也解析 lastRunStatus (#93245)
 openclaw cron get <id>             # v2026.5.12+ (#75117): 按 id 查看单个 job (优先用这个而非 show)
 openclaw cron add                  # 添加任务
 openclaw cron edit <id>            # 编辑任务
+openclaw cron edit <id> --clear-model  # v2026.6.9 (#91625): 清除某 job 的 model override (回落到默认模型)
 openclaw cron enable <id>          # 启用任务
 openclaw cron disable <id>         # 禁用任务
 openclaw cron rm <id>              # 删除任务 (也可能是 cron delete，待实测确认)
