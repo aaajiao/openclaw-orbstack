@@ -216,14 +216,23 @@ if [ "$CURRENT_HEAD" = "$TAG_COMMIT" ] && [ "$BUILT_VERSION" = "$LATEST_TAG" ] &
 fi
 
 echo "$MSG_CMD_UPDATE_STOPPING"
-# Suppress the openclaw CLI startup banner/tagline (stdout) so it doesn't
-# interleave with the wrapper's progress output. Same for the two gateway starts.
-vm_exec "openclaw gateway stop >/dev/null 2>&1"
+# Arm the recovery trap and mark the gateway stopped BEFORE issuing the stop.
+# If the stop itself exits non-zero — e.g. an invalid on-disk config makes
+# `openclaw gateway stop` fail to load and bail — set -e must not kill the update
+# before the trap is even set, or the run dies with no recover message and a
+# half-handled gateway (observed 2026-06-24: a 6.9-only `channels.telegram.
+# richMessages` key in a 6.8 config aborted the run right at the stop, before the
+# trap below). With the trap armed first, a failed stop still triggers recovery;
+# the trailing `|| true` lets the run continue so the npm install + doctor +
+# final restart reconcile both the version and the (now-valid) config.
 GATEWAY_STOPPED=true
 trap 'if [ "$GATEWAY_STOPPED" = true ]; then
     echo "$MSG_CMD_UPDATE_RECOVER"
     vm_exec "openclaw gateway start >/dev/null 2>&1" || true
 fi' EXIT
+# Suppress the openclaw CLI startup banner/tagline (stdout) so it doesn't
+# interleave with the wrapper's progress output. Same for the two gateway starts.
+vm_exec "openclaw gateway stop >/dev/null 2>&1" || true
 
 # -q on both checkouts suppresses the "detached HEAD" advisory + "HEAD is now at"
 # lines (noise that interleaves with the spinner). Real errors still hit stderr.
