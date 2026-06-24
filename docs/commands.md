@@ -165,6 +165,7 @@ openclaw status --json             # JSON 格式输出
 # v2026.5.20: /status 在 session 被 pin 到非默认模型时显示配置默认、当前 pinned model、
 # 切回 hint 和 docs 链接（不再静默处理 pinned-model 偏移）
 # v2026.5.28: status 输出新增当前活跃 subagent 详情（active subagent details）
+# v2026.6.9: /status footer 新增 session duration 段 (如 "duration 2h 14m")，sessionStartedAt 可用时显示 (#88988)
 
 openclaw doctor                    # 健康检查 + 报告问题 (不自动修复)
 openclaw doctor --fix              # 自动修复: config 迁移、systemd 修复、plugin 依赖、stale lock 清理
@@ -364,6 +365,7 @@ openclaw agent -m "local" --local  # 本地运行
 | `/side <message>` | `/btw` 的别名 | v2026.5.3+ (#76934 同 PR) |
 | `/steer <message>` | 在当前 session 跑动时打断/引导，不开新 turn；session idle 时直接走普通流程 | v2026.5.3+ (#76934) |
 | `/context map` | 发送当前 session context contributors 的 treemap 图（直观看谁占多少 token） | v2026.5.12+ (#79867) |
+| `/name [<title>]` | 重命名当前 session（写 label，trim/非空/≤512 字符，跨 store 唯一）；无参数显示当前名 + 本地推导建议（不修改）；仅授权发送者 | v2026.6.9 (#88581) |
 
 ### Skills 管理
 
@@ -508,6 +510,9 @@ openclaw message read              # 读取消息
 openclaw message edit              # 编辑消息
 openclaw message delete            # 删除消息
 openclaw message search            # 搜索消息
+
+# 预演 (dry-run) — send/broadcast/poll 支持，不实际发送
+openclaw message send --target <dest> --message "内容" --dry-run   # v2026.6.9 (#94684): 打印 "[dry-run] would run send via <channel>"；--json 输出含 dryRun:true
 
 # 置顶
 openclaw message pin               # 置顶消息
