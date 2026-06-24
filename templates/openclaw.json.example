@@ -389,7 +389,9 @@
         },
         fallback: "openai",     // 主 provider 失败时的后备
         store: {
-          path: "~/.openclaw/memory/{agentId}.sqlite",
+          // ⚠️ store.path 自 v2026.6.9 (PR #94646) 起废弃：索引改存 per-agent DB
+          //    (agents/<id>/agent/openclaw-agent.sqlite)，runtime 忽略此字段，doctor --fix 会 strip。
+          //    正确写法：只保留 store.vector，不要写 path（详见 #95495）。
           vector: {
             enabled: true
           }
