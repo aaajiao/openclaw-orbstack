@@ -353,6 +353,7 @@ openclaw agent -m "hello" --to +86...
 openclaw agent -m "test" --agent <id>
 openclaw agent -m "think" --thinking high
 openclaw agent -m "local" --local  # 本地运行
+openclaw agent --message-file <path>  # v2026.6.11 (#93351): 从文件读取消息内容（长文/多行）
 ```
 
 > 多 Agent 路由配置详见 [官方文档](https://docs.openclaw.ai/gateway/configuration)。
@@ -731,6 +732,7 @@ openclaw infer image generate --output-format png|jpeg           # fal/兼容 pr
 openclaw infer image edit --size <WxH>                           # 编辑尺寸
 openclaw infer image edit --aspect-ratio <比例>                  # 比例覆盖
 openclaw infer image edit --resolution <分辨率>                  # 分辨率覆盖
+openclaw infer image edit --count <n>                            # v2026.6.11 (#95300): 生成 n 张，与 image generate 对齐
 
 # v2026.4.27+ image describe 透传 prompt + 超时 (#63700)
 openclaw infer image describe --prompt "..."        # 自定义视觉指令传给 Ollama/OpenAI/Google/OpenRouter
