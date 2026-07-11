@@ -137,7 +137,7 @@ EOF
 # Fields: name|deprecated(yes/no)|replacement_text
 DISPATCH_CMDS=(
     "update|no|"
-    "selfupdate|no|"
+    "selfupdate|yes|openclaw-update (--pre / --stable / --version=<tag>)"
     "config|no|"
     "telegram|yes|openclaw channels add --channel telegram --token <token> / openclaw pairing approve telegram <code>"
     "sandbox-rebuild|no|"
@@ -192,7 +192,6 @@ echo "$MSG_REFRESH_CMD_RESTART"
 echo "$MSG_REFRESH_CMD_SHELL"
 echo "$MSG_REFRESH_CMD_CONFIG"
 echo "$MSG_REFRESH_CMD_UPDATE"
-echo "$MSG_REFRESH_CMD_SELFUPDATE"
 echo "$MSG_REFRESH_CMD_REBUILD"
 echo "$MSG_REFRESH_CMD_CODEX_LOGIN"
 echo "$MSG_REFRESH_CMD_UNINSTALL"

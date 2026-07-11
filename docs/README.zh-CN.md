@@ -69,55 +69,32 @@ Web 控制台: `http://openclaw-vm.orb.local:18789`
 
 ## 更新
 
-有**两条**更新命令，它们**互相配合（compose）**。`openclaw-selfupdate` 负责选**通道（channel）**——即你处在哪个 wrapper release（stable，或用 `--pre` 切到经验证的 beta）；`openclaw-update` 再把这个 wrapper 对齐的 OpenClaw 版本装进 VM。通常按顺序连用：先选通道，再把它应用到 VM。
-
-| 命令 | 更新什么 | 运行在 | 角色 |
-|------|---------|--------|------|
-| `openclaw-selfupdate` | **本 wrapper**（openclaw-orbstack —— `openclaw-*` 命令与脚本） | Mac 本机 | 选**通道**——把 wrapper 移到 stable tag、经验证的 beta（`--pre`）、或钉住/回滚的 tag |
-| `openclaw-update` | **OpenClaw 本身**（VM 里的 AI 大脑） | VM 内 | 安装**当前 wrapper 对齐的** OpenClaw 版本 |
-
-`openclaw-selfupdate` 不直接碰 VM——但它落到的那个 wrapper tag **决定了下一次 `openclaw-update` 会装哪个 OpenClaw 版本**。所以两条命令是连用的，不是各干各的。
-
-### `openclaw-update` —— 把 OpenClaw 装进 VM
+`openclaw-update` 是**唯一**的更新命令。它先更新 wrapper（本仓库，重新生成 `~/bin/openclaw-*` 命令），再把 wrapper 对齐的 OpenClaw 版本装进 VM——一条命令搞定，老用户的肌肉记忆重新生效。
 
 ```bash
-openclaw-update                     # 安装当前 wrapper 对齐的 OpenClaw 版本
-openclaw-update --version=<tag>     # 安装 / 回滚到指定 OpenClaw 版本
+openclaw-update                     # 跟随当前通道（见下表）
+openclaw-update --pre               # 切到 beta 通道（会记住）
+openclaw-update --stable            # 切回 stable 通道（会记住）
+openclaw-update --version=<tag>     # 把 wrapper + OpenClaw 一起钉到指定 tag（可回滚）
 openclaw-update --sandbox           # 同时重建沙箱 Docker 镜像
-openclaw-update --force             # 即使已是最新也强制重建
+openclaw-update --force             # 强制重建 / 允许降级
 ```
 
-- **跟随 wrapper 的版本**。默认它装的是当前 wrapper *对齐*的 OpenClaw 版本——即 wrapper 的 `VERSION`（镜像一个真实的上游 OpenClaw 版本），而**不是**简单的“上游最新 stable”。所以当 `openclaw-selfupdate --pre` 把你切到 beta wrapper 后，直接跑 `openclaw-update` 装的就是对应的 OpenClaw beta。
-- **不会静默降级**。若 wrapper 对齐的目标版本比 VM 里已构建的**更旧**，除非加 `--force`，否则拒绝执行。要有意回滚就用 `--version=<tag>`（该路径豁免降级保护）。
+| 参数 | wrapper 通道 | 说明 |
+|------|-------------|------|
+| *(默认)* | 跟随**当前**通道 | 分支检出 → `git pull`（过渡期做法，见下方说明）；检出在 stable tag 上 → 跟随最新 stable tag；检出在 beta tag 上 → 跟随含 pre-release 的最新 tag |
+| `--pre` | **beta** 通道，会记住 | 切到含经验证 pre-release 的最新 tag，之后一直停留在这条线，直到 `--stable` |
+| `--stable` | **stable** 通道，会记住 | 切回最新 stable tag；由此触发的 VM 侧 OpenClaw 降级通常仍需要 `--force`（或等下一个 stable） |
+| `--version=<tag>` | **钉版本（pinned）** | 若存在对应的 wrapper tag `<tag>`，会把 wrapper 与 OpenClaw **一起**钉住——之后再跑一次不带参数的 `openclaw-update` 会保持这个钉住状态并提示；`--pre`/`--stable` 会恢复跟随通道。若没有匹配的 wrapper tag，则只钉 OpenClaw 版本（与旧行为一致） |
+
+- **不会静默降级 OpenClaw**。若目标版本比 VM 里已构建的**更旧**，除非加 `--force`，否则拒绝执行（`--version=` 钉版本路径豁免）。
 - **基于 npm、诚实**。装完预编译 npm 包后会**轮询确认 Gateway 真正启动成功**；包不完整就停下报错（给日志提示），而不是悄悄掉进又长又花屏的源码编译。
 - **自愈**。自动检测并修复旧版安装——比如把老的系统级服务迁到当前用户级服务，或重建丢失的插件目录。
 - **保持 git checkout 同步**。`~/openclaw` 检出始终对齐目标 tag，因为沙箱 Docker 镜像就是从这个仓库构建的。
 
-### `openclaw-selfupdate` —— 选通道（更新 wrapper 本身）
-
-```bash
-openclaw-selfupdate                 # 切到最新的 stable wrapper release
-openclaw-selfupdate --pre           # 切到最新版本，含经验证的 pre-release（beta/rc/alpha）
-openclaw-selfupdate --version=<tag> # 钉到指定 wrapper tag —— 例如 v2026.6.6（可回滚）
-```
-
-- **按 release 锁定的通道选择器**。默认检出最新 **stable** tag；`--pre` 切到最新版本（含经验证的 beta）；`--version=` 精确钉任意 tag，可回滚。
-- **默认 / `--pre` 从不降级**。若当前检出已包含目标版本就是 no-op；只有显式 `--version=` 才能切到更旧的 tag。
-- **只跑在 Mac 上，但并非与 OpenClaw 无关**。它只操作本地仓库检出、重新生成 `~/bin/openclaw-*` 命令，**从不直接碰 VM 本身**——但你落到的那个 tag **决定了下一次 `openclaw-update` 跟随哪个通道**。
-
-### 组合用法
-
-```bash
-# 切到 beta 线 —— VM 里的 OpenClaw 会走到对应的 beta：
-openclaw-selfupdate --pre
-openclaw-update
-
-# 留在 / 回到 stable：
-openclaw-selfupdate
-openclaw-update
-```
-
-> **说明**：`openclaw-selfupdate` 目前是**可选（opt-in）**命令。当你的检出在分支上时，`refresh-mac-commands.sh` 仍会自动 `git pull` wrapper 仓库的 `main` 分支，所以分支用户会自动保持最新。用 `openclaw-selfupdate` 钉某个 tag 会让仓库进入 detached HEAD，这个自动 pull 会尊重这一点、不会把你的锁定改掉。把 `openclaw-selfupdate` 变成**唯一**的 wrapper 分发方式（即彻底移除这段 auto-pull 逻辑），这个完整切换推迟到 v2026.7.1 line 的**第一个 stable release**。
+> **说明**：当你的检出在分支上时，`refresh-mac-commands.sh` 仍会自动 `git pull` wrapper 仓库的 `main` 分支，让分支用户在两次运行之间自动保持最新。钉某个 tag 会让仓库进入 detached HEAD，这个自动 pull 会尊重这一点、不会把你的锁定改掉。彻底移除这段 auto-pull 逻辑（因为 `openclaw-update` 现在已经内含 wrapper 更新）这个完整切换推迟到 v2026.7.1 line 的**第一个 stable release**。
+>
+> `openclaw-selfupdate` 仍可用，但是**已弃用别名**——它只转发执行 `openclaw-update` 中"更新 wrapper"那一段（同样支持 `--pre`/`--stable`/`--version=`），并打印一行提示。之后请优先直接用 `openclaw-update`。
 
 ### 版本 & 发布模型
 
@@ -125,8 +102,8 @@ wrapper 版本始终**镜像一个真实的上游 OpenClaw 版本**——我们�
 
 | 上游 OpenClaw | wrapper release | 如何获取 |
 |--------------|-----------------|---------|
-| stable 版本 | 发布为 **Latest** | `openclaw-selfupdate` |
-| 经验证 / 测试过的 **beta** | 发布为 **pre-release** | `openclaw-selfupdate --pre` |
+| stable 版本 | 发布为 **Latest** | `openclaw-update --stable` |
+| 经验证 / 测试过的 **beta** | 发布为 **pre-release** | `openclaw-update --pre` |
 
 当前状态（示意，实时对照见 [GitHub Releases](https://github.com/aaajiao/openclaw-orbstack/releases)）：wrapper stable 为 **v2026.6.11**（Latest）；**v2026.7.1-beta.5** 作为 pre-release 提供。
 
@@ -160,7 +137,7 @@ openclaw doctor
 
 ## Mac 端命令
 
-共 16 个命令，由 `scripts/refresh-mac-commands.sh` 中的统一命令表生成；其中 5 个已弃用为兼容别名——仍可正常使用，但会在 stderr 打印一行 `[deprecated]` 提示并指向原生替代命令，移除推迟到未来某个 stable release。
+共 16 个命令，由 `scripts/refresh-mac-commands.sh` 中的统一命令表生成；其中 6 个已弃用为兼容别名——仍可正常使用，但会在 stderr 打印一行 `[deprecated]` 提示并指向原生替代命令，移除推迟到未来某个 stable release。
 
 | 命令 | 功能 |
 |------|------|
@@ -174,8 +151,8 @@ openclaw doctor
 | `openclaw-stop/start` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw gateway stop` / `openclaw gateway start` |
 | `openclaw-shell` | 进入 VM |
 | `openclaw-doctor` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw doctor` |
-| `openclaw-update` | 更新 **VM 内上游 OpenClaw** (`--sandbox` 重建镜像，`--force` 强制重建，`--version=<tag>` 装指定版本) |
-| `openclaw-selfupdate` | 更新 **wrapper 本身** (`--pre` 收 pre-release，`--version=<tag>` 锁定/回滚) |
+| `openclaw-update` | **更新一切：wrapper + OpenClaw**（通道：`--pre`/`--stable`；另有 `--version=<tag>`、`--sandbox`、`--force`） |
+| `openclaw-selfupdate` | 已弃用（兼容别名，仍可用）→ `openclaw-update`（仅 wrapper 阶段；`--pre`/`--stable`/`--version=<tag>`） |
 | `openclaw-sandbox-rebuild` | 重建沙箱镜像 |
 | `openclaw-codex-login` | 绑定 ChatGPT 订阅（Codex CLI device-code 登录，可选） |
 | `openclaw-uninstall` | 完全卸载 |
@@ -207,7 +184,7 @@ openclaw-shell         # 进入 VM 排查
 
 ### 已安装用户升级
 
-两条更新命令**互相配合**：`openclaw-selfupdate` 选通道（哪个 wrapper release），`openclaw-update` 再把该 wrapper 对齐的 OpenClaw 装进 VM。完整说明见上方 [「## 更新」](#更新) 一节，或 [commands.md 更新命令详情](commands.md#更新命令详情)。
+`openclaw-update` 一条命令搞定：先更新 wrapper（选通道），再把对齐的 OpenClaw 装进 VM。完整说明见上方 [「## 更新」](#更新) 一节，或 [commands.md 更新命令详情](commands.md#更新命令详情)。
 
 ### 常见问题速查
 
@@ -217,7 +194,7 @@ openclaw-shell         # 进入 VM 排查
 | Port 18789 already in use | `openclaw-restart` 或 `openclaw-update` |
 | Memory 目录错误 | `mkdir -p ~/.openclaw/memory` |
 | Memory search 无法使用 | 在 agent auth-profiles.json 中添加 OpenAI/Google key |
-| Wrapper 命令过期/需刷新 | `openclaw-selfupdate` |
+| Wrapper 命令过期/需刷新 | `openclaw-update` |
 
 ### Memory 目录问题
 

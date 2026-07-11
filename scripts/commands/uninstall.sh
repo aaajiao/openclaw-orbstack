@@ -180,7 +180,7 @@ info "$MSG_CMD_UNINSTALL_REMOVE_COMMANDS"
 
 # Remove all openclaw-* commands and openclaw itself
 rm -f ~/bin/openclaw ~/bin/openclaw-*
-rm -f ~/bin/.openclaw-vm ~/bin/.openclaw-lang ~/bin/.openclaw-repo
+rm -f ~/bin/.openclaw-vm ~/bin/.openclaw-lang ~/bin/.openclaw-repo ~/bin/.openclaw-pin
 
 # Remove empty ~/bin if we created it
 if [ -d ~/bin ] && [ -z "$(ls -A ~/bin 2>/dev/null)" ]; then

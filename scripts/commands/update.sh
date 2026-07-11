@@ -1,6 +1,18 @@
 #!/bin/bash
-# openclaw-update: Update OpenClaw to the version this wrapper's VERSION file is
-# aligned with (override via --version=<tag>)
+# openclaw-update: single command that updates BOTH layers.
+#
+# STAGE 1 (Mac-side only, no vm_exec anywhere — works without a VM): update the
+# openclaw-orbstack WRAPPER (this repo checkout) on its current release
+# channel. The channel is inferred from the repo checkout state, or switched
+# explicitly via --pre / --stable / --version=<tag>. See the CHANNEL MODEL
+# comment below for the full state machine. Because this stage never touches
+# the VM, `openclaw-update --wrapper-only` (used by the deprecated
+# `openclaw-selfupdate` alias) works even without one.
+#
+# STAGE 2 (VM-side, unchanged from the previous single-purpose openclaw-update):
+# update OpenClaw inside the VM to the version this wrapper's VERSION file is
+# now aligned with (override via --version=<tag>).
+#
 # Called via thin wrapper: ~/bin/openclaw-update -> this script
 
 # SC1091: Dynamic source of _common.sh
@@ -10,20 +22,37 @@ source "$(dirname "$0")/_common.sh"
 SANDBOX=false
 FORCE=false
 TARGET_VERSION=""
+PRE=false
+STABLE=false
+WRAPPER_ONLY=false
+AFTER_SELF=false
 for arg in "$@"; do
     case "$arg" in
         --sandbox) SANDBOX=true ;;
         --force) FORCE=true ;;
         --version=*) TARGET_VERSION="${arg#--version=}" ;;
+        --pre) PRE=true ;;
+        --stable) STABLE=true ;;
+        # Hidden flags (not documented in --help):
+        #   --wrapper-only : run stage 1 only, then exit — the compatibility
+        #                    path for the deprecated `openclaw-selfupdate` alias.
+        #                    Never touches the VM.
+        #   --after-self   : set by stage 1's own re-exec after it moves the
+        #                    wrapper, so the freshly checked-out script skips
+        #                    stage 1 and runs stage 2 directly.
+        --wrapper-only) WRAPPER_ONLY=true ;;
+        --after-self) AFTER_SELF=true ;;
         --help|-h)
             echo "$MSG_CMD_UPDATE_USAGE"
             echo ""
             echo "$MSG_CMD_UPDATE_DESC"
             echo ""
             echo "$MSG_CMD_UPDATE_OPTIONS"
+            echo "$MSG_CMD_UPDATE_PRE_OPT"
+            echo "$MSG_CMD_UPDATE_STABLE_OPT"
+            echo "$MSG_CMD_UPDATE_VERSION_OPT"
             echo "$MSG_CMD_UPDATE_SANDBOX_OPT"
             echo "$MSG_CMD_UPDATE_FORCE_OPT"
-            echo "$MSG_CMD_UPDATE_VERSION_OPT"
             echo ""
             echo "$MSG_CMD_UPDATE_TIP"
             exit 0
@@ -39,6 +68,180 @@ for arg in "$@"; do
             ;;
     esac
 done
+
+if [ "$PRE" = true ] && [ "$STABLE" = true ]; then
+    echo "$MSG_UPDATE_CHANNEL_CONFLICT"
+    exit 1
+fi
+
+# ============================================================================
+# STAGE 1: wrapper self-update (100% Mac-side git, no vm_exec — works without
+# a VM). Ported from the former standalone `openclaw-selfupdate` command.
+#
+# CHANNEL MODEL (inferred from the repo checkout, plus one pin marker file
+# ~/bin/.openclaw-pin):
+#   - Pin marker present            => wrapper is pinned; do NOT move it.
+#   - BRANCH checkout, no flag      => do nothing (the ~/bin shim's auto-pull
+#                                      already updated the branch).
+#   - DETACHED on a prerelease tag  => channel pre: target = newest tag overall.
+#   - DETACHED otherwise            => channel stable: target = newest
+#                                      non-prerelease tag.
+#   Explicit --pre / --stable / --version=<tag> override all of the above.
+#
+# Skipped entirely when re-invoked via --after-self (stage 1 already ran in
+# the parent process before the re-exec below).
+# ============================================================================
+if [ "$AFTER_SELF" = false ]; then
+    WRAPPER_MOVED=false
+    PIN_FILE="$HOME/bin/.openclaw-pin"
+
+    GIT_OK=false
+    if git -C "$OPENCLAW_REPO_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+        GIT_OK=true
+    fi
+
+    if [ "$GIT_OK" = true ]; then
+        OLD_VERSION=$(git -C "$OPENCLAW_REPO_DIR" describe --tags --always 2>/dev/null || echo "unknown")
+
+        # Mirror the old selfupdate.sh's fetch hygiene (--force --prune tolerate
+        # rewritten refs — upstream openclaw has many force-pushed/renamed
+        # branches; this repo's own tags are far fewer but the same flags are
+        # harmless and keep behavior identical to before the merge).
+        echo "$MSG_CMD_SELFUPDATE_FETCHING"
+        git -C "$OPENCLAW_REPO_DIR" fetch --tags --quiet --force --prune 2>/dev/null || true
+
+        WRAPPER_TARGET_TAG=""
+        SKIP_ANCESTOR_CHECK=false
+        RESOLVE_ATTEMPTED=false
+
+        if [ -n "$TARGET_VERSION" ]; then
+            # --version=<tag>: pin the WRAPPER too, but only if the wrapper repo
+            # actually has this tag. If not, leave the wrapper (and any existing
+            # pin) untouched and let stage 2 apply the tag to OpenClaw only —
+            # today's --version behavior, preserved exactly.
+            if git -C "$OPENCLAW_REPO_DIR" rev-parse --verify "$TARGET_VERSION^{commit}" >/dev/null 2>&1; then
+                WRAPPER_TARGET_TAG="$TARGET_VERSION"
+                SKIP_ANCESTOR_CHECK=true
+                # shellcheck disable=SC2059
+                printf "$MSG_UPDATE_VERSION_WRAPPER_MATCH\n" "$TARGET_VERSION"
+            else
+                # shellcheck disable=SC2059
+                printf "$MSG_UPDATE_VERSION_OPENCLAW_ONLY\n" "$TARGET_VERSION"
+            fi
+        elif [ "$PRE" = true ]; then
+            echo "$MSG_UPDATE_CHANNEL_PRE"
+            rm -f "$PIN_FILE"
+            RESOLVE_ATTEMPTED=true
+            # Newest tag overall (includes pre-releases). sort -V is NOT semver-
+            # prerelease-aware — it ranks `X.Y.Z-beta.N` ABOVE `X.Y.Z`, the
+            # opposite of semver. Translate the semver `-` separator to `~`
+            # (which GNU/Apple sort -V both order BEFORE the release) so a
+            # stable release outranks its own prerelease, then translate back.
+            WRAPPER_TARGET_TAG=$(git -C "$OPENCLAW_REPO_DIR" tag -l 'v*' | sed 's/-/~/g' | sort -V | tail -1 | sed 's/~/-/g')
+        elif [ "$STABLE" = true ]; then
+            echo "$MSG_UPDATE_CHANNEL_STABLE"
+            rm -f "$PIN_FILE"
+            RESOLVE_ATTEMPTED=true
+            # Latest NON-prerelease tag.
+            WRAPPER_TARGET_TAG=$(git -C "$OPENCLAW_REPO_DIR" tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1)
+            # EXEMPT from the ancestor no-op check below: an explicit channel
+            # return is intentional — a beta user moving BACK to the stable tag
+            # would otherwise find that tag is an ancestor of their beta HEAD
+            # and see a false "already up to date". (The VM-side OpenClaw
+            # downgrade that follows in stage 2 is still refused without
+            # --force by its own existing guard — that stays correct.)
+            SKIP_ANCESTOR_CHECK=true
+        elif [ -f "$PIN_FILE" ]; then
+            PINNED_TAG=$(tr -d '[:space:]' < "$PIN_FILE")
+            # shellcheck disable=SC2059
+            printf "$MSG_UPDATE_WRAPPER_PINNED\n" "$PINNED_TAG"
+        elif git -C "$OPENCLAW_REPO_DIR" symbolic-ref -q HEAD >/dev/null 2>&1; then
+            : # branch checkout — the ~/bin shim's auto-pull already updated it
+        else
+            # Detached HEAD, no channel flag: infer the channel from the
+            # currently checked-out tag.
+            RESOLVE_ATTEMPTED=true
+            CURRENT_TAG=$(git -C "$OPENCLAW_REPO_DIR" describe --tags --exact-match 2>/dev/null || echo "")
+            case "$CURRENT_TAG" in
+                *-beta*|*-rc*|*-alpha*)
+                    WRAPPER_TARGET_TAG=$(git -C "$OPENCLAW_REPO_DIR" tag -l 'v*' | sed 's/-/~/g' | sort -V | tail -1 | sed 's/~/-/g')
+                    ;;
+                *)
+                    WRAPPER_TARGET_TAG=$(git -C "$OPENCLAW_REPO_DIR" tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1)
+                    ;;
+            esac
+        fi
+
+        if [ "$RESOLVE_ATTEMPTED" = true ] && [ -z "$WRAPPER_TARGET_TAG" ]; then
+            echo "$MSG_ERR_NO_VERSION"
+            exit 1
+        fi
+
+        # --- Never downgrade (inferred paths + --pre; --stable and a wrapper-
+        # matched --version=<tag> are EXEMPT, see above) -----------------------
+        # If the target commit is already an ancestor of HEAD, the current
+        # checkout already includes it -> no-op. This makes a branch user who
+        # is AHEAD of the latest stable tag a safe no-op on the default path,
+        # and lets --pre still move them onto a newer pre-release tag.
+        if [ -n "$WRAPPER_TARGET_TAG" ]; then
+            DO_MOVE=true
+            if [ "$SKIP_ANCESTOR_CHECK" = false ] && git -C "$OPENCLAW_REPO_DIR" merge-base --is-ancestor "$WRAPPER_TARGET_TAG" HEAD 2>/dev/null; then
+                # shellcheck disable=SC2059
+                printf "$MSG_CMD_SELFUPDATE_ALREADY\n" "$WRAPPER_TARGET_TAG"
+                DO_MOVE=false
+            fi
+            if [ "$DO_MOVE" = true ]; then
+                # -q suppresses the "detached HEAD" advisory (refresh-mac-commands.sh
+                # skips its silent self-update pull when HEAD is detached, so the
+                # wrapper regeneration below will NOT undo this checkout).
+                # shellcheck disable=SC2059
+                printf "$MSG_CMD_SELFUPDATE_CHECKOUT\n" "$WRAPPER_TARGET_TAG"
+                if ! git -C "$OPENCLAW_REPO_DIR" -c advice.detachedHead=false checkout -q "$WRAPPER_TARGET_TAG" 2>/dev/null; then
+                    # shellcheck disable=SC2059
+                    printf "$MSG_CMD_SELFUPDATE_CHECKOUT_FAIL\n" "$WRAPPER_TARGET_TAG"
+                    exit 1
+                fi
+                if [ -n "$TARGET_VERSION" ]; then
+                    # Explicit --version=<tag> pin: record it so a later plain
+                    # `openclaw-update` leaves the wrapper alone until --stable/--pre.
+                    mkdir -p "$HOME/bin"
+                    printf '%s' "$WRAPPER_TARGET_TAG" > "$PIN_FILE"
+                fi
+                WRAPPER_MOVED=true
+            fi
+        fi
+    fi
+
+    if [ "$WRAPPER_MOVED" = true ]; then
+        NEW_VERSION=$(git -C "$OPENCLAW_REPO_DIR" describe --tags --always 2>/dev/null || echo "unknown")
+        # shellcheck disable=SC2059
+        printf "$MSG_CMD_SELFUPDATE_DONE\n" "$OLD_VERSION" "$NEW_VERSION"
+        # Regenerate ~/bin/openclaw-* from the freshly checked-out tag. Pass
+        # through language + VM name like the old selfupdate.sh did so
+        # refresh-mac-commands.sh stays non-interactive.
+        OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
+            bash "$OPENCLAW_REPO_DIR/scripts/refresh-mac-commands.sh" 2>/dev/null || true
+        if [ "$WRAPPER_ONLY" = true ]; then
+            exit 0
+        fi
+        # Re-exec the just-installed script so stage 2 always runs the target
+        # version's own logic, not the (possibly stale) in-memory copy.
+        # EXCEPT for an explicit --version=<tag> pin: that may have checked out
+        # a tag OLDER than this merge, whose update.sh doesn't know --after-self
+        # (v2026.6.11's loud unknown-flag catch-all would abort the run). The
+        # pin's stage-2 target comes from --version anyway, so the current
+        # in-memory script handles it correctly — no re-exec needed. (Safe even
+        # though the on-disk file just changed: git checkout unlinks+recreates,
+        # so the running bash keeps reading the old inode.)
+        if [ -z "$TARGET_VERSION" ]; then
+            exec bash "$0" --after-self "$@"
+        fi
+    fi
+
+    if [ "$WRAPPER_ONLY" = true ]; then
+        exit 0
+    fi
+fi
 
 # Auto-detect stale system-level service and self-repair
 if grep -q "systemctl status openclaw" ~/bin/openclaw-status 2>/dev/null; then
@@ -88,12 +291,12 @@ else
     # Project policy: the wrapper's VERSION mirrors the upstream OpenClaw version it
     # is aligned with. Reading it here (instead of the old "latest stable upstream
     # tag", which filtered out betas and ignored the wrapper entirely) is what makes
-    # the two commands compose: `openclaw-selfupdate` picks the CHANNEL (which wrapper
-    # tag you're on — stable, or a beta via --pre), and `openclaw-update` then installs
-    # the OpenClaw version that wrapper is aligned with. Without this, selfupdate --pre
-    # moved the wrapper onto a beta tag but the matching OpenClaw beta never reached the
-    # VM. The --version=* branch above stays the explicit escape hatch (any tag, incl.
-    # rollback).
+    # the two STAGES of this same command compose: stage 1 (above) picks the wrapper's
+    # CHANNEL (stable, or a beta via --pre) and moves the repo checkout onto that tag;
+    # this stage then installs the OpenClaw version that (possibly just-moved) wrapper
+    # is aligned with. Without this, --pre moving the wrapper onto a beta tag would
+    # never get the matching OpenClaw beta onto the VM. The --version=* branch above
+    # stays the explicit escape hatch (any tag, incl. rollback).
     # Guard the read so a MISSING VERSION file yields the friendly error too: a bare
     # `< file` redirection failure aborts the command substitution under set -e
     # (active via _common.sh) before the [ -z ] check below is ever reached.

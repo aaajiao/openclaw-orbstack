@@ -196,7 +196,7 @@ Gateway 还支持以下扩展能力：
 
 ### Mac 端 (~/bin/)
 
-由 `scripts/refresh-mac-commands.sh` 中的统一命令表生成，共 16 个命令，其中 5 个标注 `[已弃用]` 的是仍可用的兼容别名（stderr 打印 `[deprecated]` 提示并指向原生替代）：
+由 `scripts/refresh-mac-commands.sh` 中的统一命令表生成，共 16 个命令，其中 6 个标注 `[已弃用]` 的是仍可用的兼容别名（stderr 打印 `[deprecated]` 提示并指向原生替代）：
 
 ```
 ~/bin/
@@ -209,8 +209,8 @@ Gateway 还支持以下扩展能力：
   ├── openclaw-start         # [已弃用，兼容别名] → openclaw gateway start
   ├── openclaw-shell         # 进入 VM
   ├── openclaw-doctor        # [已弃用，兼容别名] → openclaw doctor
-  ├── openclaw-update        # 更新 VM 内上游 OpenClaw (--sandbox 重建镜像，--force 强制重建，--version=<tag> 装指定版本)
-  ├── openclaw-selfupdate    # 更新 wrapper 本身 (--pre 收 pre-release，--version=<tag> 锁定/回滚)
+  ├── openclaw-update        # 更新一切：wrapper + OpenClaw (通道：--pre/--stable；--sandbox 重建镜像，--force 强制重建/降级，--version=<tag> 钉版本)
+  ├── openclaw-selfupdate    # [已弃用，兼容别名] → openclaw-update (仅 wrapper 阶段)
   ├── openclaw-sandbox-rebuild # 重建沙箱镜像
   ├── openclaw-telegram      # [已弃用，兼容别名] → openclaw channels add --channel telegram --token <token> / openclaw pairing approve telegram <code>
   ├── openclaw-whatsapp      # [已弃用，兼容别名] → openclaw channels login --channel whatsapp

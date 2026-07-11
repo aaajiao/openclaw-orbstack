@@ -115,18 +115,19 @@ The git checkout (`~/openclaw`) is always kept at the target tag regardless of i
 
 A `.build-version` marker (`~/.openclaw/.build-version`) tracks successful installs. `openclaw-update` checks this marker to avoid skipping a version whose previous install attempt failed.
 
-### Two-Command Update Model (added on the v2026.7.1-beta.5 line)
+### Single-Command Update Model
 
-Two independent commands update two layers — see memory `[[wrapper-versioning-and-distribution]]`:
+`openclaw-update` is the **one** update command — see memory `[[wrapper-versioning-and-distribution]]`. It first updates **the wrapper itself** (this repo — same logic that used to live in a separate `openclaw-selfupdate`), regenerates `~/bin/openclaw-*`, then installs the resulting wrapper-aligned **OpenClaw** into the VM. Two internal stages, one user-facing command; a hidden `--wrapper-only` flag runs stage 1 alone (used by the deprecated `openclaw-selfupdate` alias to forward its calls).
 
-- **`openclaw-update`** updates **OpenClaw in the VM**. Default target = **this wrapper's own `VERSION`** (which mirrors a real upstream OpenClaw version), NOT "latest upstream stable"; `--version=<tag>` overrides (explicit pin/rollback). It refuses to downgrade OpenClaw without `--force` (`--version=` path is exempt). Version compare translates the semver `-` prerelease separator to `~` before `sort -V` (which is not prerelease-aware), so a stable release outranks its own prerelease.
-- **`openclaw-selfupdate`** (`scripts/commands/selfupdate.sh`) updates **the wrapper itself** (this repo), release-pinned: default = latest stable tag, `--pre` = latest tag incl. validated betas, `--version=` = pin/rollback. Mac-only (detached checkout of the tag + regenerate `~/bin/openclaw-*`), never downgrades on default/`--pre` (git-ancestor check). The tag it lands on selects the CHANNEL the next `openclaw-update` follows.
+- **Channel inference (default, no flags)**: follows whatever channel the repo checkout is already on. Branch checkout → `git pull` (interim behavior, unchanged — see deferred cutover below). Checkout pinned on a stable tag → follows the latest stable tag. Checkout on a beta tag → follows the newest tag including pre-releases.
+- **`--pre`** switches to the beta channel and it's sticky (stays there across future plain runs until `--stable`).
+- **`--stable`** switches back to the stable channel, sticky. Note the VM-side OpenClaw downgrade this often implies still needs `--force` (or wait for the next stable release).
+- **`--version=<tag>`** pins. If a wrapper tag `<tag>` exists, it pins **wrapper and OpenClaw together** — a marker at `~/bin/.openclaw-pin` records this, so a later plain `openclaw-update` keeps the pin and says so instead of silently resuming a channel; `--pre`/`--stable` clears the marker and resumes following that channel. If no matching wrapper tag exists, it falls back to pinning only the OpenClaw version, same as legacy behavior.
+- Stage 2 (OpenClaw) still refuses to downgrade without `--force` (`--version=` path exempt). Version compare translates the semver `-` prerelease separator to `~` before `sort -V` (not prerelease-aware on its own), so a stable release outranks its own prerelease.
 
-Compose: `openclaw-selfupdate --pre && openclaw-update` → moves both onto the beta line; without `--pre` → stable.
+**Deferred cutover (unchanged)**: `refresh-mac-commands.sh` still auto-`git pull`s wrapper `main` on a branch checkout (skipped on a detached HEAD, so a pin/channel switch is respected). Removing that auto-pull entirely is deferred to the **v2026.7.1 stable** `/sync-upstream` (the latest stable tag must first carry this single-command model, else a default run would strand users on a tag that predates it).
 
-**Deferred cutover**: `refresh-mac-commands.sh` still auto-`git pull`s wrapper `main` on a branch checkout (skipped on a detached HEAD, so a selfupdate pin is respected). Removing that auto-pull and making `openclaw-selfupdate` the sole delivery path is deferred to the **v2026.7.1 stable** `/sync-upstream` (the latest stable tag must first carry `openclaw-selfupdate`, else default selfupdate would strand users on a tag that predates it).
-
-`~/bin/openclaw-*` wrappers are generated from a single command table in `scripts/refresh-mac-commands.sh` (16 commands total). Five are deprecated compatibility aliases (`openclaw-stop`, `openclaw-start`, `openclaw-doctor`, `openclaw-whatsapp`, `openclaw-telegram`) that still work but print a one-line `[deprecated]` stderr notice pointing at the native replacement (`openclaw gateway stop|start`, `openclaw doctor`, `openclaw channels login --channel whatsapp`, `openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>`); their removal is deferred to a future stable release alongside the deferred cutover above.
+`~/bin/openclaw-*` wrappers are generated from a single command table in `scripts/refresh-mac-commands.sh` (16 commands total). Six are deprecated compatibility aliases (`openclaw-stop`, `openclaw-start`, `openclaw-doctor`, `openclaw-whatsapp`, `openclaw-telegram`, `openclaw-selfupdate`) that still work but print a one-line `[deprecated]` stderr notice pointing at the native replacement (`openclaw gateway stop|start`, `openclaw doctor`, `openclaw channels login --channel whatsapp`, `openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>`, and `openclaw-update --wrapper-only` for `openclaw-selfupdate`); their removal is deferred to a future stable release alongside the deferred cutover above.
 
 ## Verification Checklist
 
@@ -148,6 +149,7 @@ Before declaring a task done, verify all applicable items:
 | Edit shell script | Edit file → hook auto-runs `bash -n` + `shellcheck` |
 | Edit JSON config | Check upstream docs → Edit → hook auto-runs `jq .` (strict JSON) |
 | Sync upstream | `/sync-upstream` → review → approve → commit; push/release/VM-upgrade only on explicit user direction (order is the user's call) |
+| Update wrapper + OpenClaw | `openclaw-update` (default follows current channel; `--pre`/`--stable` switch channel; `--version=<tag>` pins both) |
 | Add i18n string | Add `$MSG_*` to both `lang/en.sh` and `lang/zh-CN.sh` (hook reminds) |
 | Need VM state | Ask user to provide it — never access VM directly |
 
@@ -212,7 +214,7 @@ user direction on what to do and in which order.
 
 **Release channels** (versioning policy): the wrapper version always mirrors a real
 upstream OpenClaw version — never invented. Upstream **stable** → GitHub **Latest**
-release; a **validated** upstream **beta** → GitHub **pre-release** (`openclaw-selfupdate
+release; a **validated** upstream **beta** → GitHub **pre-release** (`openclaw-update
 --pre`). Until the deferred cutover (above), updates flow via `git pull` of `main`, so
 keep `main`'s `VERSION` at the last **stable** and cut a beta pre-release as a tag **one
 commit ahead of `main`** (that extra commit only stamps `VERSION`/`CLAUDE.md` to the

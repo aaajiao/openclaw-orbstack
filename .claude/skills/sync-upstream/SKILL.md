@@ -178,13 +178,13 @@ sync:
 
 | # | Cutover item | File(s) | What to update |
 |---|---------------|---------|-----------------|
-| a | Remove the auto-pull block | `scripts/refresh-mac-commands.sh` | Delete the `git pull` block in the generated `openclaw-update` wrapper (marked with a `DEFERRED CUTOVER` comment — grep for it). After removal, `openclaw-selfupdate` becomes the **sole** wrapper-delivery path; branch checkouts no longer auto-update themselves. |
+| a | Remove the auto-pull block | `scripts/refresh-mac-commands.sh` | Delete the `git pull` block in the generated `openclaw-update` wrapper (marked with a `DEFERRED CUTOVER` comment — grep for it). After removal, the wrapper-update stage inside `openclaw-update` (the same logic the deprecated `openclaw-selfupdate` alias forwards to) becomes the **sole** wrapper-delivery path; branch checkouts no longer auto-update themselves. |
 | b | Update README auto-pull note | `README.md` | Rewrite the auto-pull/cutover note (near the update-commands section) to say the cutover has happened — no more silent `git pull` on branch checkouts. |
-| c | Update CLAUDE.md deferred-cutover paragraphs | `CLAUDE.md` | Update the "Deferred cutover" paragraph under Two-Command Update Model to state it's done, not pending — remove the "deferred to v2026.7.1 stable" language. |
-| d | Consider retiring the deprecated aliases | `scripts/refresh-mac-commands.sh`, `docs/commands.md`, `README.md`, `docs/README.zh-CN.md`, `docs/architecture.md` | `openclaw-stop`, `openclaw-start`, `openclaw-doctor`, `openclaw-whatsapp`, `openclaw-telegram` were kept as deprecated compatibility aliases pending this cutover. Ask the user whether to remove them now or keep them another cycle — don't remove unilaterally. |
+| c | Update CLAUDE.md deferred-cutover paragraphs | `CLAUDE.md` | Update the "Deferred cutover" paragraph under Single-Command Update Model to state it's done, not pending — remove the "deferred to v2026.7.1 stable" language. |
+| d | Consider retiring the deprecated aliases | `scripts/refresh-mac-commands.sh`, `docs/commands.md`, `README.md`, `docs/README.zh-CN.md`, `docs/architecture.md` | `openclaw-stop`, `openclaw-start`, `openclaw-doctor`, `openclaw-whatsapp`, `openclaw-telegram`, `openclaw-selfupdate` (replacement: `openclaw-update --pre`/`--stable`, wrapper-only stage) were kept as deprecated compatibility aliases pending this cutover. Ask the user whether to remove them now or keep them another cycle — don't remove unilaterally. |
 
 Only skip this checklist if the sync target is still below v2026.7.1, or if a
-prior sync already executed it (check `CLAUDE.md`'s Two-Command Update Model
+prior sync already executed it (check `CLAUDE.md`'s Single-Command Update Model
 section — if it no longer says "deferred", the cutover already happened).
 
 Present a numbered table so the user can cherry-pick:

@@ -80,55 +80,32 @@ After install, `~/bin` is added to your `PATH` — **open a new terminal window*
 
 ## Updating
 
-There are **two** update commands, and they **compose**. `openclaw-selfupdate` picks your *channel* — which wrapper release you're on (stable, or a validated beta via `--pre`). `openclaw-update` then installs the OpenClaw version that wrapper is aligned with. You normally run them in sequence: select the channel, then apply it to the VM.
-
-| Command | Updates | Runs on | Role |
-|---------|---------|---------|------|
-| `openclaw-selfupdate` | **This wrapper** (openclaw-orbstack — the `openclaw-*` commands & scripts) | Your Mac host | Picks the **channel** — moves the wrapper to a stable tag, a validated beta (`--pre`), or a pinned/rolled-back tag |
-| `openclaw-update` | **OpenClaw itself** (the app inside the VM) | The VM | Installs the OpenClaw version the **current wrapper is aligned with** |
-
-`openclaw-selfupdate` doesn't touch the VM directly — but the wrapper tag it lands on **determines which OpenClaw version the next `openclaw-update` installs**. That's why they're run together, not in isolation.
-
-### `openclaw-update` — install OpenClaw in the VM
+`openclaw-update` is the **one** update command. It updates the wrapper (this repo, regenerating the `~/bin/openclaw-*` commands) first, then installs the wrapper-aligned OpenClaw version into the VM — single command, old muscle memory works again.
 
 ```bash
-openclaw-update                     # Install the OpenClaw version this wrapper is aligned with
-openclaw-update --version=<tag>     # Install / roll back to a specific OpenClaw version
+openclaw-update                     # Follow your current channel (see table below)
+openclaw-update --pre               # Switch to the beta channel (sticky)
+openclaw-update --stable            # Switch back to the stable channel (sticky)
+openclaw-update --version=<tag>     # Pin wrapper+OpenClaw to a specific tag (rollback allowed)
 openclaw-update --sandbox           # Also rebuild the sandbox Docker images
-openclaw-update --force             # Force a rebuild even if already current
+openclaw-update --force             # Force a rebuild / allow a downgrade
 ```
 
-- **Follows the wrapper's version.** By default it installs the OpenClaw release this wrapper is *aligned with* — the wrapper's `VERSION`, which mirrors a real upstream OpenClaw version — not simply "latest upstream stable". So after `openclaw-selfupdate --pre` moves you onto a beta wrapper, a plain `openclaw-update` installs the matching OpenClaw beta.
-- **Won't silently downgrade.** If the wrapper-aligned target is *older* than what's already built in the VM, it refuses unless you pass `--force`. To roll back on purpose, use `--version=<tag>` (that path is exempt from the guard).
+| Flag | Wrapper channel | Notes |
+|------|------------------|-------|
+| *(default)* | Follows your **current** channel | Branch checkout → `git pull` (interim, see note below); tag on stable → latest stable tag; tag on beta → newest tag incl. pre-releases |
+| `--pre` | **Beta** channel, sticky | Moves to the newest tag including validated pre-releases; stays there until `--stable` |
+| `--stable` | **Stable** channel, sticky | Moves back to the latest stable tag; the VM-side OpenClaw downgrade this often implies still needs `--force` (or wait for the next stable) |
+| `--version=<tag>` | **Pinned** | If a wrapper tag `<tag>` exists, pins wrapper **and** OpenClaw together — a later plain `openclaw-update` keeps the pin and says so; `--pre`/`--stable` resumes following a channel. If no matching wrapper tag exists, it pins only the OpenClaw version (unchanged legacy behavior) |
+
+- **Won't silently downgrade OpenClaw.** If the target is *older* than what's already built in the VM, it refuses unless you pass `--force` (the `--version=` pin path is exempt).
 - **npm-based and honest.** It installs the prebuilt npm package, then verifies the Gateway actually boots. If the package is incomplete it stops and tells you (with a log hint) rather than silently dropping into a long, screen-garbling source build.
 - **Self-healing.** It auto-detects and repairs stale installs — for example, migrating an old system-level service to the current user-level service, or recreating a missing plugin directory.
 - **Keeps the git checkout in sync.** The `~/openclaw` checkout is always moved to the target tag, because the sandbox Docker images are built from that repo.
 
-### `openclaw-selfupdate` — pick the channel (update this wrapper)
-
-```bash
-openclaw-selfupdate                 # Move to the latest STABLE wrapper release
-openclaw-selfupdate --pre           # Move to the newest release, including validated pre-releases (beta/rc/alpha)
-openclaw-selfupdate --version=<tag> # Pin to a specific wrapper tag — e.g. v2026.6.6 (allows rollback)
-```
-
-- **Release-pinned channel selector.** By default it checks out the latest **stable** tag. `--pre` moves you to the newest tag overall (including validated betas). `--version=` pins any tag exactly, so you can roll back.
-- **Never downgrades on the default or `--pre` path.** If your checkout already includes the target, it's a no-op. Only an explicit `--version=` can move you to an older tag.
-- **Mac-only, but not unrelated to OpenClaw.** It operates entirely on your local repo clone and regenerates the `~/bin/openclaw-*` commands. It never touches the VM itself — yet the tag you land on **selects the channel that the next `openclaw-update` follows**.
-
-### Composed workflows
-
-```bash
-# Move onto the beta line — the VM's OpenClaw goes to the matching beta:
-openclaw-selfupdate --pre
-openclaw-update
-
-# Stay on / return to stable:
-openclaw-selfupdate
-openclaw-update
-```
-
-> **Note:** `openclaw-selfupdate` is available now as an **opt-in** command. `refresh-mac-commands.sh` also still auto-`git pull`s the wrapper repo's `main` branch when your checkout is on a branch, so branch users stay current automatically. Pinning a tag with `openclaw-selfupdate` puts the repo on a detached HEAD, which the auto-pull respects — it won't undo your pin. The full cutover to `openclaw-selfupdate` as the *sole* wrapper-delivery path (removing the auto-pull block entirely) is deferred to the first v2026.7.1 stable release.
+> **Note:** `refresh-mac-commands.sh` still auto-`git pull`s the wrapper repo's `main` branch when your checkout is on a branch, so branch users stay current automatically between runs. Pinning a tag puts the repo on a detached HEAD, which the auto-pull respects — it won't undo your pin. The full cutover (removing the auto-pull block entirely, since `openclaw-update` now handles the wrapper) is deferred to the first v2026.7.1 stable release.
+>
+> `openclaw-selfupdate` still works as a **deprecated alias** — it forwards to just the wrapper-update stage of `openclaw-update` (same `--pre`/`--stable`/`--version=` flags), printing a one-line notice. Prefer plain `openclaw-update` going forward.
 
 ### Versioning & release model
 
@@ -136,8 +113,8 @@ The wrapper version always **mirrors a real upstream OpenClaw version** — we n
 
 | Upstream OpenClaw | Wrapper release | Get it with |
 |-------------------|-----------------|-------------|
-| Stable release | Published as **Latest** | `openclaw-selfupdate` |
-| Validated / tested **beta** | Published as a **pre-release** | `openclaw-selfupdate --pre` |
+| Stable release | Published as **Latest** | `openclaw-update --stable` |
+| Validated / tested **beta** | Published as a **pre-release** | `openclaw-update --pre` |
 
 Current state (illustrative — see the [GitHub Releases](https://github.com/aaajiao/openclaw-orbstack/releases) page for the live pair): wrapper stable is **v2026.6.11** (Latest); **v2026.7.1-beta.5** is available as a pre-release.
 
@@ -168,7 +145,7 @@ openclaw doctor
 
 ## Mac Commands
 
-All 16 commands are generated into `~/bin` from a single command table in `scripts/refresh-mac-commands.sh`. Re-run `openclaw-selfupdate` (or `bash scripts/refresh-mac-commands.sh`) to regenerate them. Five are deprecated compatibility aliases — they still work today but print a one-line `[deprecated]` notice on stderr pointing at their native replacement; removal is deferred to a future stable release.
+All 16 commands are generated into `~/bin` from a single command table in `scripts/refresh-mac-commands.sh`. Re-run `openclaw-update` (or `bash scripts/refresh-mac-commands.sh`) to regenerate them. Six are deprecated compatibility aliases — they still work today but print a one-line `[deprecated]` notice on stderr pointing at their native replacement; removal is deferred to a future stable release.
 
 | Command | Function |
 |---------|----------|
@@ -183,8 +160,8 @@ All 16 commands are generated into `~/bin` from a single command table in `scrip
 | `openclaw-telegram` | *Deprecated alias, still works* → `openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>` |
 | `openclaw-whatsapp` | *Deprecated alias, still works* → `openclaw channels login --channel whatsapp` |
 | `openclaw-codex-login` | Bind a ChatGPT subscription via Codex device-code login (optional) |
-| `openclaw-update` | **Update OpenClaw in the VM** (`--version=<tag>`, `--sandbox`, `--force`) |
-| `openclaw-selfupdate` | **Update this wrapper** (`--pre`, `--version=<tag>`) |
+| `openclaw-update` | **Update everything: wrapper + OpenClaw** (channels: `--pre`/`--stable`; also `--version=<tag>`, `--sandbox`, `--force`) |
+| `openclaw-selfupdate` | *Deprecated alias, still works* → `openclaw-update` (wrapper-only stage; `--pre`/`--stable`/`--version=<tag>`) |
 | `openclaw-sandbox-rebuild` | Rebuild the sandbox Docker images |
 | `openclaw-uninstall` | Clean uninstall |
 
@@ -221,7 +198,7 @@ Full troubleshooting guide: [docs/troubleshooting.md](docs/troubleshooting.md)
 | Port 18789 in use | `openclaw-restart`, or `openclaw-update` |
 | Memory directory error | `mkdir -p ~/.openclaw/memory` (see below) |
 | Memory search not working | Add an OpenAI / Google key to the agent's `auth-profiles.json` |
-| Wrapper commands out of date | `openclaw-selfupdate` |
+| Wrapper commands out of date | `openclaw-update` |
 
 ### Memory Directory Issue
 
