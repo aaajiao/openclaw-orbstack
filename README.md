@@ -63,7 +63,7 @@ bash openclaw-orbstack-setup.sh
 
 The installer starts with a language prompt (English / 中文), then runs an 8-step flow automatically:
 
-> Create VM → Install Docker & Node.js → Install OpenClaw (npm) → Build sandbox images → Run the setup wizard → Start the service
+> Check OrbStack → Create Ubuntu VM → Install Docker → Install Node.js 24 → Install OpenClaw (npm, source-build fallback) → Build sandbox images → Configuration wizard → Service + Mac commands
 
 OpenClaw is installed from the **prebuilt npm package** by default. On a *first* install, if the npm package fails, the installer falls back to a source build so you're never left without a working Gateway.
 

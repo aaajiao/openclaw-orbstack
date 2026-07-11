@@ -1017,6 +1017,7 @@ orb import -n openclaw-vm backup.tar.zst # 从快照恢复 VM
 | `NODE_ENV` | Node.js 环境 | 主 service (`onboard` 设置) |
 | `NODE_COMPILE_CACHE` | Node 编译缓存，加速重复启动 | drop-in (`openclaw-orbstack.conf`) |
 | `OPENCLAW_NO_RESPAWN` | 跳过 self-respawn，减少启动开销 | drop-in (`openclaw-orbstack.conf`) |
+| `PATH` | 钉死为规范值，防止版本管理器目录污染 Gateway 环境 | drop-in (`99-openclaw-orbstack-path.conf`) |
 
 ### OpenClaw 路径环境变量
 

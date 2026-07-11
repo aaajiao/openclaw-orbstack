@@ -5,6 +5,21 @@
 # shellcheck source=_common.sh
 source "$(dirname "$0")/_common.sh"
 
+for arg in "$@"; do
+    case "$arg" in
+        --help|-h)
+            echo "$MSG_CMD_REBUILD_USAGE"
+            echo ""
+            echo "$MSG_CMD_REBUILD_DESC"
+            exit 0
+            ;;
+        *)
+            echo "$MSG_CMD_REBUILD_USAGE"
+            exit 1
+            ;;
+    esac
+done
+
 echo "$MSG_CMD_REBUILD_START"
 BASE_OK=false
 COMMON_OK=false
@@ -43,7 +58,7 @@ if [ "$BASE_OK" = true ]; then
         vm_log_tail ".rebuild-sandbox-common.log"
     fi
 else
-    echo "$MSG_CMD_REBUILD_COMMON_FAIL"
+    echo "$MSG_CMD_REBUILD_COMMON_SKIP"
 fi
 
 # Save common hash on success

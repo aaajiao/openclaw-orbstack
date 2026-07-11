@@ -181,6 +181,11 @@ Gateway 还支持以下扩展能力：
     - NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache  # Node 编译缓存
     - OPENCLAW_NO_RESPAWN=1                               # 跳过 self-respawn
   - 桥梁模式: 每次更新检查主 service 是否已包含这些变量，是则自动删除 drop-in
+
+~/.config/systemd/user/openclaw-gateway.service.d/99-openclaw-orbstack-path.conf
+  - 由安装/更新脚本创建的另一个 drop-in
+  - 把 `Environment=PATH` 钉死到一个规范值，防止 shell 版本管理器 (nvm/asdf 等)
+    的目录混进 systemd user session 的 PATH、污染 Gateway 进程环境
 ```
 
 **关于 Bonjour**：OrbStack 环境下，macOS 的 mDNSResponder 会与 Gateway 的 Bonjour 服务冲突，
@@ -193,11 +198,11 @@ Gateway 还支持以下扩展能力：
 ~/bin/
   ├── openclaw               # CLI 入口 (透传参数)
   ├── openclaw-config        # 编辑配置
-  ├── openclaw-status        # systemctl status
-  ├── openclaw-logs          # journalctl -f
-  ├── openclaw-restart       # systemctl restart
-  ├── openclaw-stop          # systemctl stop
-  ├── openclaw-start         # systemctl start
+  ├── openclaw-status        # openclaw gateway status
+  ├── openclaw-logs          # openclaw logs --follow
+  ├── openclaw-restart       # openclaw gateway restart
+  ├── openclaw-stop          # openclaw gateway stop
+  ├── openclaw-start         # openclaw gateway start
   ├── openclaw-shell         # 进入 VM
   ├── openclaw-doctor        # 运行诊断
   ├── openclaw-update        # 更新 VM 内上游 OpenClaw (--sandbox 重建镜像，--force 强制重建，--version=<tag> 装指定版本)

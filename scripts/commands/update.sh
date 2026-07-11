@@ -28,6 +28,15 @@ for arg in "$@"; do
             echo "$MSG_CMD_UPDATE_TIP"
             exit 0
             ;;
+        *)
+            # Unknown flag or bare arg (e.g. the space form `--version v...`,
+            # which does not match the `--version=*` glob). Fail loudly instead
+            # of silently falling through to the default version-pin path.
+            # shellcheck disable=SC2059
+            printf "$MSG_CMD_SELFUPDATE_UNKNOWN_OPT\n" "$arg"
+            echo "$MSG_CMD_UPDATE_USAGE"
+            exit 1
+            ;;
     esac
 done
 

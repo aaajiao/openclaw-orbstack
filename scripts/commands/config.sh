@@ -30,5 +30,6 @@ case "$ACTION" in
         ;;
     *)
         echo "$MSG_CMD_CONFIG_USAGE"
+        exit 1
         ;;
 esac

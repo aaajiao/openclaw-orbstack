@@ -81,10 +81,12 @@ fi
 
 ## 安装策略
 
-安装脚本 (`openclaw-orbstack-setup.sh`) 和更新脚本 (`scripts/commands/update.sh`) 采用相同的两级策略：
+**安装脚本** (`openclaw-orbstack-setup.sh`，仅首次全新安装)采用两级策略：
 
 1. **主路径**: `npm install -g openclaw@<version>` — 预编译 npm 包 (快速、可靠)
-2. **兜底**: `pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .` — 源码构建 (仅在 npm registry 不可用或包不完整时)
+2. **兜底**: `pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .` — 源码构建 (仅在首次安装时 npm registry 不可用或包不完整、且此时还没有可回退的现成 openclaw 时触发)
+
+**更新脚本** (`scripts/commands/update.sh`) 自 2026-06-10 起 **npm-only**，已移除源码构建兜底：npm 安装失败或包不完整时，直接打印日志线索（`~/.openclaw/.update-npm.log`）并中止（`MSG_PKG_INSTALL_ABORT`，提示用 `openclaw-update --force` 重试），而不是默默跑一个耗时数分钟、会弄花终端输出的源码构建。
 
 无论安装方式如何，git checkout (`~/openclaw`) 始终保留在目标 tag，因为沙箱 Docker 镜像从 repo 的 Dockerfile 构建。
 

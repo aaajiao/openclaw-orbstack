@@ -280,8 +280,16 @@ else
     vm_exec "git clone https://github.com/openclaw/openclaw.git ~/openclaw"
 fi
 
-# Get latest stable release tag (skip beta/rc/alpha pre-releases)
-OPENCLAW_VERSION=$(vm_exec "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
+# Default install target = this wrapper's own VERSION file (mirrors openclaw-update's
+# policy), NOT "latest upstream stable": a fresh install must land on the version
+# openclaw-update maintains, otherwise openclaw-update's downgrade guard fires on the
+# very first update if upstream has since shipped a newer stable. Fall back to latest
+# upstream stable only if VERSION is empty/missing or doesn't resolve to a real tag.
+OPENCLAW_VERSION=$( [ -f "$SCRIPT_DIR/VERSION" ] && tr -d '[:space:]' < "$SCRIPT_DIR/VERSION" || true )
+if [ -z "$OPENCLAW_VERSION" ] || ! vm_exec "cd ~/openclaw && git rev-parse --verify '$OPENCLAW_VERSION^{commit}' >/dev/null 2>&1"; then
+    # Skip beta/rc/alpha pre-releases when falling back to latest upstream stable
+    OPENCLAW_VERSION=$(vm_exec "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
+fi
 if [ -z "$OPENCLAW_VERSION" ]; then
     err "$MSG_ERR_NO_VERSION"
     exit 1
@@ -299,8 +307,13 @@ info "$(printf "$MSG_PKG_INSTALL_VERSION" "$NPM_VERSION")"
 NPM_OK=false
 if vm_exec "sudo npm install -g openclaw@$NPM_VERSION"; then
     # Verify package completeness (e.g. npm tarball may ship without dist/control-ui/)
-    # Check both index.js (canonical since ≤v2026.3.x) and entry.js (legacy reference)
-    if vm_exec "{ test -f \$(npm root -g)/openclaw/dist/index.js || test -f \$(npm root -g)/openclaw/dist/entry.js; } && test -d \$(npm root -g)/openclaw/dist/control-ui && test -d \$(npm root -g)/openclaw/dist/extensions"; then
+    # Check both index.js (canonical since ≤v2026.3.x) and entry.js (legacy reference).
+    # Checked against `sudo npm root -g` (root's global prefix) to match where
+    # `sudo npm install -g` above actually installs — a bare `npm root -g` resolves
+    # the *user's* workspace prefix instead, where the package doesn't exist, which
+    # forces a false "incomplete" verdict (same bug already fixed in update.sh).
+    # shellcheck disable=SC2016
+    if vm_exec 'R=$(sudo npm root -g); { test -f "$R/openclaw/dist/index.js" || test -f "$R/openclaw/dist/entry.js"; } && test -d "$R/openclaw/dist/control-ui" && test -d "$R/openclaw/dist/extensions"'; then
         NPM_OK=true
         ok "$MSG_PKG_INSTALL_OK"
     else
@@ -782,6 +795,7 @@ echo -e "  ${GREEN}openclaw-status${NC}       $MSG_FINAL_CMD_STATUS"
 echo -e "  ${GREEN}openclaw-logs${NC}         $MSG_FINAL_CMD_LOGS"
 echo -e "  ${GREEN}openclaw-restart${NC}      $MSG_FINAL_CMD_RESTART"
 echo -e "  ${GREEN}openclaw-update${NC}       $MSG_FINAL_CMD_UPDATE"
+echo -e "  ${GREEN}openclaw-selfupdate${NC}   $MSG_FINAL_CMD_SELFUPDATE"
 echo -e "  ${GREEN}openclaw-sandbox-rebuild${NC} $MSG_FINAL_CMD_REBUILD"
 echo -e "  ${GREEN}openclaw-doctor${NC}       $MSG_FINAL_CMD_DOCTOR"
 echo -e "  ${GREEN}openclaw-shell${NC}        $MSG_FINAL_CMD_SHELL"
