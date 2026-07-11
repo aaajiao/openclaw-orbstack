@@ -529,7 +529,55 @@ systemctl --user daemon-reload
 ' 2>/dev/null || true
 
 echo "$MSG_CMD_UPDATE_STARTING"
-vm_exec "openclaw gateway start >/dev/null 2>&1"
+# `|| true`: `gateway start` only dispatches the systemd start and normally exits 0
+# even for a unit that then dies in migration — but if the dispatch itself errors
+# (bad unit, transient systemd hiccup), set -e (active via _common.sh) would abort
+# HERE, before the health-poll + auto-repair block below can self-heal. Swallow the
+# dispatch status so the gateway_healthy poll always governs the outcome.
+vm_exec "openclaw gateway start >/dev/null 2>&1" || true
+
+# --- Verify the gateway actually reached a healthy 'running' state -----------
+# `openclaw gateway start` only asks systemd to start the unit and returns once the
+# start is *dispatched* — it does NOT wait for startup migrations to finish. A boot
+# that then dies during migration would otherwise sail past here and the wrapper would
+# print "Update complete!" over a dead gateway (observed 2026-07-11 on the beta.2 ->
+# beta.5 hop: the `@openclaw/codex` plugin package dir went missing during the core
+# install -> "startup migrations did not complete cleanly" -> exit 1 -> crash loop).
+# Poll for real readiness; if it never comes up, self-heal once with
+# `openclaw update repair` — the only path that re-materializes a missing plugin
+# package dir (`doctor --fix` does not) — then restart and re-check.
+# The poll/sleep loop runs inside vm_exec (Ubuntu side), so GNU seq/sleep are fine.
+gateway_healthy() {
+    # shellcheck disable=SC2016
+    vm_exec '
+        for _i in $(seq 1 6); do
+            openclaw gateway status 2>/dev/null | grep -q "Runtime: running" && exit 0
+            if [ "$_i" -lt 6 ]; then sleep 5; fi
+        done
+        exit 1
+    '
+}
+if ! gateway_healthy; then
+    echo "$MSG_CMD_UPDATE_GATEWAY_UNHEALTHY"
+    vm_exec "openclaw update repair >/dev/null 2>&1" || true
+    vm_exec "openclaw gateway restart >/dev/null 2>&1" || true
+    if gateway_healthy; then
+        echo "$MSG_CMD_UPDATE_GATEWAY_REPAIRED"
+        # `openclaw update repair` re-installs plugins from the STABLE `latest` npm
+        # dist-tag, so on a beta/rc/alpha target it can leave official plugins drifted
+        # below the gateway version. Non-fatal (the gateway runs), but surface a re-pin
+        # hint so the operator can realign them.
+        case "$LATEST_TAG" in
+            *-beta*|*-rc*|*-alpha*)
+                # shellcheck disable=SC2059
+                printf "$MSG_CMD_UPDATE_GATEWAY_REPIN_HINT\n" "$NPM_VERSION"
+                ;;
+        esac
+    else
+        echo "$MSG_CMD_UPDATE_GATEWAY_FAILED"
+        exit 1
+    fi
+fi
 
 # Refresh Mac commands (picks up any wrapper changes)
 OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
