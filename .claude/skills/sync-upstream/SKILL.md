@@ -1,12 +1,12 @@
 ---
 name: sync-upstream
-description: Sync with latest upstream OpenClaw stable release.
+description: Sync with upstream OpenClaw. Scans both channels (stable + beta); after the scan the user chooses whether to sync stable and/or cut a beta pre-release.
 disable-model-invocation: true
 ---
 
 # Upstream Sync
 
-Sync openclaw-orbstack with the latest stable release from `openclaw/openclaw`.
+Sync openclaw-orbstack with the latest release from `openclaw/openclaw`.
 
 The goal is to keep our OrbStack installer, config templates, docs, and CLAUDE.md
 aligned with upstream changes — without blindly copying. Each upstream change needs
@@ -14,38 +14,81 @@ to be evaluated for whether and how it affects our wrapper project.
 
 Upstream repo: https://github.com/openclaw/openclaw
 
-## Step 1 — Version check
+## Channels: one scan, then the user picks the target
 
-Run these two checks in parallel to save time:
+There is one invocation (`/sync-upstream`, no flags), but the wrapper serves TWO
+channels, mirroring `openclaw-update`:
 
-- **Upstream latest stable tag**:
+- **Stable** — upstream latest stable tag → sync `main`, stamp
+  `VERSION`/`CLAUDE.md`, feeds the GitHub **Latest** release. This is the
+  default target when it's behind.
+- **Beta** — newest upstream tag **including pre-releases** → a wrapper
+  **pre-release tag** that `openclaw-update --pre` picks up. This is the beta
+  channel's supply chain — but cutting one is always an **explicit user choice**,
+  made AFTER the Step 1 scan (never assumed from the invocation).
+
+Version ordering across channels must be prerelease-aware: translate the semver
+`-` separator to `~` before `sort -V` and back after (plain `sort -V` mis-orders
+`v2026.7.1-beta.5` vs `v2026.7.1`). A stable release outranks its own
+prereleases — so when the newest upstream tag IS a stable, the beta channel has
+nothing extra to offer and the run is just a stable sync.
+
+**Beta release policy** (matters in Steps 3/7/8): the wrapper only cuts a
+pre-release for a **validated** upstream beta — typically one the user's VM
+already runs, or one the user explicitly wants to validate via this release.
+Confirm which it is before Step 5. Sync **content** lands on `main` as usual,
+but the beta version stamp does **not** — see the beta notes in Steps 3, 7 and 8.
+
+## Step 1 — Scan both channels
+
+Gather all four positions in parallel:
+
+- **Upstream latest stable**:
   ```bash
   git ls-remote --tags https://github.com/openclaw/openclaw.git 'v*' \
     | awk '{print $2}' | sed 's|refs/tags/||' \
     | grep -v -e '-beta' -e '-rc' -e '-alpha' \
     | sort -V | tail -1
   ```
-  (The beta/rc/alpha filter here is **only to pick the sync target** — the newest
-  stable. Step 2 still reads the beta/rc notes in between; do not let this filter
-  leak into Step 2.)
-- **Our version**: read the `VERSION` file in the repo root.
-
-Compare them. If already in sync, tell the user and stop — there's nothing to do.
+  (The beta/rc/alpha filter here is **only to find the stable channel's tip**.
+  Step 2 still reads the beta/rc notes in between; do not let this filter leak
+  into Step 2.)
+- **Upstream newest tag incl. prereleases** (prerelease-aware sort):
+  ```bash
+  git ls-remote --tags https://github.com/openclaw/openclaw.git 'v*' \
+    | awk '{print $2}' | sed 's|refs/tags/||' | grep -v '\^{}' \
+    | sed 's/-/~/g' | sort -V | tail -1 | sed 's/~/-/g'
+  ```
+- **Our stable position**: the `VERSION` file in the repo root.
+- **Our beta position**: `VERSION` on `main` is intentionally pinned to the last
+  stable, so the beta channel's position is our newest wrapper tag:
+  ```bash
+  git tag -l 'v*' | sed 's/-/~/g' | sort -V | tail -1 | sed 's/~/-/g'
+  ```
 
 If `git ls-remote` fails (network issue, repo moved), fall back to:
 ```bash
 gh release list -R openclaw/openclaw --limit 5
 ```
 
+**Then pick the target — the beta option is the user's call:**
+
+| Scan result | What to do |
+|-------------|------------|
+| Both channels in sync | Report and stop — nothing to do. (Exception: if `main` has moved since our newest beta tag was cut, offer a **re-cut** of that tag instead of silently stopping.) |
+| Upstream stable > our `VERSION` | Stable sync is the default target — proceed to Step 2 with it. |
+| Only the beta is ahead (upstream newest prerelease > our newest wrapper tag, stable in sync) | **Ask the user** whether to cut a wrapper beta pre-release for it (mention whether their VM already runs it — validated betas only). Yes → proceed with the beta target; no → stop. |
+| Both ahead (a newer stable AND an even newer prerelease exist) | Stable sync first; after it lands, ask whether to also cut a beta pre-release for the newer prerelease. |
+
 ## Step 2 — Read upstream release notes
 
-We sync **to the latest stable** (Step 1's target), but stable release notes are
+We sync **to Step 1's target**, but stable release notes are
 **cumulative summaries** — they roll up several beta/rc cycles and **omit per-PR
 detail that only appears in the beta/rc release notes**. (Example: v2026.5.26 folded
 in the skipped 5.23–5.25 betas as one rolled-up section.) So read the full range,
 betas included — not just the stable tags.
 
-First enumerate every release between our version and the target stable, **keeping
+First enumerate every release between our version and the target, **keeping
 beta/rc tags** (do NOT reuse Step 1's `grep -v` filter here):
 
 ```bash
@@ -60,7 +103,8 @@ filter them out):
 gh release list -R openclaw/openclaw --limit 30
 ```
 
-Take every tag greater than our `VERSION` up to and including the target stable —
+Take every tag greater than our current position (stable target: `VERSION`;
+beta target: our newest wrapper tag from Step 1) up to and including the target —
 **keep the beta/rc entries**. Then read each one's notes, oldest to newest:
 
 ```bash
@@ -171,10 +215,11 @@ Use Grep and Read to find the specific locations. For example:
 ### v2026.7.1 stable cutover (one-time, mandatory when applicable)
 
 Check this **every sync**, even if it usually doesn't apply: if the sync target
-(Step 1's target stable tag) is the **first stable release `>= v2026.7.1`**, the
+is the **first STABLE release `>= v2026.7.1`**, the
 impact table **MUST** include these rows — this is a one-time structural cutover,
 not an optional cleanup, so don't let it silently fall through a normal version-bump
-sync:
+sync. A **prerelease** target never triggers it — the cutover requires a stable
+tag users can land on:
 
 | # | Cutover item | File(s) | What to update |
 |---|---------------|---------|-----------------|
@@ -195,6 +240,12 @@ Present a numbered table so the user can cherry-pick:
 Always include version bumps as separate line items:
 - `VERSION` file
 - `CLAUDE.md` header (`**Version:** vX.Y.Z`)
+
+**Beta-target exception**: when the target is a prerelease, these two stamps do
+**NOT** land on `main` — `main` stays honestly labeled at the last stable
+(branch checkouts auto-pull `main`, and those users are on the stable channel).
+List the stamps in the table anyway, marked "release-time stamp commit, not on
+main" — they are applied in Step 8's release flow, not in Step 5.
 
 **Do not edit any files yet.** The user needs to review first because some changes
 (especially breaking config changes) may not apply to our use case, or the user
@@ -259,6 +310,11 @@ chore: sync with upstream vX.Y.Z
 Covers changes from vA.B.C through vX.Y.Z.
 ```
 
+**Beta target**: same single content commit on `main`, message
+`chore: sync with upstream vX.Y.Z-beta.N` — but it must NOT touch `VERSION` or
+the `CLAUDE.md` version header (those stay at the last stable; the beta stamp
+happens only in Step 8's tag-only commit).
+
 ## Step 8 — Stop
 
 Changes are committed locally. **Do not** push, tag, create a release, or upgrade
@@ -269,3 +325,18 @@ community feedback). Report the committed state and wait for explicit direction:
 
 > Changes committed locally. Push / release / VM upgrade are up to you — tell me
 > what to do and in what order.
+
+**Beta release flow** (execute only on explicit user direction, but state
+it in the report so the user knows what "release" will do):
+
+1. Push `main` (content commit only, still stamped at the last stable).
+2. Create the **stamp commit** on top of `main`: set `VERSION` and the
+   `CLAUDE.md` version header to `vX.Y.Z-beta.N`, commit message
+   `chore: stamp vX.Y.Z-beta.N pre-release`. Do NOT advance `main` to it —
+   it is reachable only via the tag.
+3. Tag that commit `vX.Y.Z-beta.N` and push the tag. **Re-cut** (same beta,
+   `main` moved): make a fresh stamp commit on the new tip and force-move the
+   tag (`git tag -f` + `git push -f origin <tag>`), then update the existing
+   release to the new tag target.
+4. `gh release create <tag> --prerelease` — release notes in **English only**.
+   Never mark it Latest; the stable release keeps that label.

@@ -148,7 +148,7 @@ Before declaring a task done, verify all applicable items:
 |------|-------|
 | Edit shell script | Edit file → hook auto-runs `bash -n` + `shellcheck` |
 | Edit JSON config | Check upstream docs → Edit → hook auto-runs `jq .` (strict JSON) |
-| Sync upstream | `/sync-upstream` → review → approve → commit; push/release/VM-upgrade only on explicit user direction (order is the user's call) |
+| Sync upstream | `/sync-upstream` (scans stable + beta channels; beta pre-release is a user choice after the scan) → review → approve → commit; push/release/VM-upgrade only on explicit user direction (order is the user's call) |
 | Update wrapper + OpenClaw | `openclaw-update` (default follows current channel; `--pre`/`--stable` switch channel; `--version=<tag>` pins both) |
 | Add i18n string | Add `$MSG_*` to both `lang/en.sh` and `lang/zh-CN.sh` (hook reminds) |
 | Need VM state | Ask user to provide it — never access VM directly |
@@ -202,7 +202,10 @@ GitHub Actions runs shellcheck on shell scripts (`.github/workflows/shellcheck.y
 
 ## Release Workflow
 
-1. Use `/sync-upstream` to check for new upstream OpenClaw releases and apply changes
+1. Use `/sync-upstream` to check for new upstream OpenClaw releases and apply changes.
+   It scans **both channels** (latest stable + newest beta); syncing stable is the
+   default, and after the scan the user chooses whether to also cut a wrapper
+   **pre-release** for a validated beta (feeds the `openclaw-update --pre` channel)
 2. Implement changes and commit locally
 3. The remaining steps — push, tag, GitHub release, and upgrading the local VM —
    have **no fixed order**. The user decides the sequence each time: sometimes the
