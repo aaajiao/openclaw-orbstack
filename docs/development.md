@@ -48,6 +48,10 @@ echo "VM is $VM_NAME"
 EOF
 ```
 
+### 共享 Shell 逻辑
+
+跨脚本复用的 shell 逻辑集中在 `scripts/lib/common.sh`（`vm_exec`/`vm_log_tail`/`fmt_elapsed`、语言加载、PATH 追加、Gateway 健康轮询、systemd drop-in 写入器、沙箱构建与 hash 逻辑等）。安装器、`scripts/commands/` 下的各命令脚本（经由 `scripts/commands/_common.sh` 引入）以及 `~/bin/openclaw-*` wrapper 生成器（`scripts/refresh-mac-commands.sh`）都从这里 source，避免多处重复实现同一段逻辑。新增跨脚本共用的函数应优先放进这个文件，而不是复制到单个命令脚本里。
+
 ### JSON 配置
 
 - 2 空格缩进

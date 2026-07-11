@@ -41,10 +41,11 @@ The sandbox Dockerfile is upstream-controlled, so custom dependencies (bun, pnpm
 
 ## Project Structure
 
-- `openclaw-orbstack-setup.sh` — Main entry point (8-step installer, ~750 lines)
+- `openclaw-orbstack-setup.sh` — Main entry point (8-step installer, ~700 lines)
 - `lang/en.sh`, `lang/zh-CN.sh` — i18n message strings (`$MSG_*` variables)
 - `templates/openclaw.json.example` — Full JSON5 config template (reference only)
-- `scripts/refresh-mac-commands.sh` — Regenerate `~/bin/openclaw-*` wrappers
+- `scripts/lib/common.sh` — Shared shell library (vm_exec, vm_log_tail, fmt_elapsed, language loading, PATH-append, gateway health poll, systemd drop-in writers, sandbox build+hash logic); sourced by the installer, `scripts/commands/_common.sh`, and the wrapper generator
+- `scripts/refresh-mac-commands.sh` — Regenerate `~/bin/openclaw-*` wrappers from a command table
 - `docs/` — Architecture, commands, config guide, troubleshooting, sandbox, dev guide
 - `local/` — **Developer's actual runtime config (gitignored)**, see below
 - `VERSION` — openclaw-orbstack project version (not OpenClaw version)
@@ -124,6 +125,8 @@ Two independent commands update two layers — see memory `[[wrapper-versioning-
 Compose: `openclaw-selfupdate --pre && openclaw-update` → moves both onto the beta line; without `--pre` → stable.
 
 **Deferred cutover**: `refresh-mac-commands.sh` still auto-`git pull`s wrapper `main` on a branch checkout (skipped on a detached HEAD, so a selfupdate pin is respected). Removing that auto-pull and making `openclaw-selfupdate` the sole delivery path is deferred to the **v2026.7.1 stable** `/sync-upstream` (the latest stable tag must first carry `openclaw-selfupdate`, else default selfupdate would strand users on a tag that predates it).
+
+`~/bin/openclaw-*` wrappers are generated from a single command table in `scripts/refresh-mac-commands.sh` (16 commands total). Five are deprecated compatibility aliases (`openclaw-stop`, `openclaw-start`, `openclaw-doctor`, `openclaw-whatsapp`, `openclaw-telegram`) that still work but print a one-line `[deprecated]` stderr notice pointing at the native replacement (`openclaw gateway stop|start`, `openclaw doctor`, `openclaw channels login --channel whatsapp`, `openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>`); their removal is deferred to a future stable release alongside the deferred cutover above.
 
 ## Verification Checklist
 

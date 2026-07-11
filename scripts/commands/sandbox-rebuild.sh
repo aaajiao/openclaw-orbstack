@@ -27,10 +27,12 @@ BROWSER_OK=false
 
 echo "$MSG_CMD_REBUILD_BASE"
 _t0=$(date +%s)
-if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh' > ~/.openclaw/.rebuild-sandbox-base.log 2>&1"; then
+_rc=0
+sandbox_build base .rebuild-sandbox-base.log || _rc=$?
+if [ "$_rc" -eq 0 ]; then
     BASE_OK=true
     printf '%s (%s)\n' "$MSG_CMD_REBUILD_BASE_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
-elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox:bookworm-slim -f scripts/docker/sandbox/Dockerfile .' >> ~/.openclaw/.rebuild-sandbox-base.log 2>&1"; then
+elif [ "$_rc" -eq 2 ]; then
     BASE_OK=true
     printf '%s (%s)\n' "$MSG_CMD_REBUILD_BASE_OK_DF" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
 else
@@ -38,19 +40,13 @@ else
     vm_log_tail ".rebuild-sandbox-base.log"
 fi
 
-# Save base hash on success.
-# Lists both new (≥ v2026.5.3 scripts/docker/sandbox/) and legacy (≤ v2026.5.2 root) paths;
-# cat skips missing files via 2>/dev/null in the helper, so the hash reflects the actual
-# upstream layout.
-if [ "$BASE_OK" = true ]; then
-    save_sandbox_hash base scripts/docker/sandbox/Dockerfile Dockerfile.sandbox scripts/sandbox-setup.sh
-fi
-
 # Skip common if base failed (common depends on base)
 if [ "$BASE_OK" = true ]; then
     echo "$MSG_CMD_REBUILD_COMMON"
     _t0=$(date +%s)
-    if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh' > ~/.openclaw/.rebuild-sandbox-common.log 2>&1"; then
+    _rc=0
+    sandbox_build common .rebuild-sandbox-common.log || _rc=$?
+    if [ "$_rc" -eq 0 ]; then
         COMMON_OK=true
         printf '%s (%s)\n' "$MSG_CMD_REBUILD_COMMON_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
     else
@@ -61,27 +57,19 @@ else
     echo "$MSG_CMD_REBUILD_COMMON_SKIP"
 fi
 
-# Save common hash on success
-if [ "$COMMON_OK" = true ]; then
-    save_sandbox_hash common scripts/docker/sandbox/Dockerfile.common Dockerfile.sandbox-common scripts/sandbox-common-setup.sh
-fi
-
 echo "$MSG_CMD_REBUILD_BROWSER"
 _t0=$(date +%s)
-if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh' > ~/.openclaw/.rebuild-sandbox-browser.log 2>&1"; then
+_rc=0
+sandbox_build browser .rebuild-sandbox-browser.log || _rc=$?
+if [ "$_rc" -eq 0 ]; then
     BROWSER_OK=true
     printf '%s (%s)\n' "$MSG_CMD_REBUILD_BROWSER_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
-elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox-browser:bookworm-slim -f scripts/docker/sandbox/Dockerfile.browser .' >> ~/.openclaw/.rebuild-sandbox-browser.log 2>&1"; then
+elif [ "$_rc" -eq 2 ]; then
     BROWSER_OK=true
     printf '%s (%s)\n' "$MSG_CMD_REBUILD_BROWSER_OK_DF" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
 else
     echo "$MSG_CMD_REBUILD_BROWSER_FAIL"
     vm_log_tail ".rebuild-sandbox-browser.log"
-fi
-
-# Save browser hash on success
-if [ "$BROWSER_OK" = true ]; then
-    save_sandbox_hash browser scripts/docker/sandbox/Dockerfile.browser Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh
 fi
 
 # Clean up old monolithic hash file

@@ -117,7 +117,7 @@ openclaw-selfupdate
 openclaw-update
 ```
 
-> **说明**：`openclaw-selfupdate` 目前是**可选（opt-in）**命令。当你的检出在分支上时，`openclaw-update` 仍会自动拉取 wrapper 仓库，所以分支用户会自动保持最新。用 `openclaw-selfupdate` 钉某个 tag 会让仓库进入 detached HEAD，`openclaw-update` 会尊重这一点、不会把你的锁定改掉。把 `openclaw-selfupdate` 变成**唯一**的 wrapper 分发方式，这个完整切换推迟到 v2026.7.1 stable 线。
+> **说明**：`openclaw-selfupdate` 目前是**可选（opt-in）**命令。当你的检出在分支上时，`refresh-mac-commands.sh` 仍会自动 `git pull` wrapper 仓库的 `main` 分支，所以分支用户会自动保持最新。用 `openclaw-selfupdate` 钉某个 tag 会让仓库进入 detached HEAD，这个自动 pull 会尊重这一点、不会把你的锁定改掉。把 `openclaw-selfupdate` 变成**唯一**的 wrapper 分发方式（即彻底移除这段 auto-pull 逻辑），这个完整切换推迟到 v2026.7.1 line 的**第一个 stable release**。
 
 ### 版本 & 发布模型
 
@@ -160,18 +160,20 @@ openclaw doctor
 
 ## Mac 端命令
 
+共 16 个命令，由 `scripts/refresh-mac-commands.sh` 中的统一命令表生成；其中 5 个已弃用为兼容别名——仍可正常使用，但会在 stderr 打印一行 `[deprecated]` 提示并指向原生替代命令，移除推迟到未来某个 stable release。
+
 | 命令 | 功能 |
 |------|------|
-| `openclaw` | CLI 透传 (所有官方命令) |
-| `openclaw-telegram` | Telegram 管理 (add/approve) |
-| `openclaw-whatsapp` | WhatsApp 登录 |
+| `openclaw` | CLI 透传 (所有官方命令) — 推荐优先用它，而非下面的已弃用别名 |
+| `openclaw-telegram` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>` |
+| `openclaw-whatsapp` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw channels login --channel whatsapp` |
 | `openclaw-config` | 配置管理 |
 | `openclaw-status` | 服务状态 |
 | `openclaw-logs` | 实时日志 |
 | `openclaw-restart` | 重启服务 |
-| `openclaw-stop/start` | 停止/启动服务 |
+| `openclaw-stop/start` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw gateway stop` / `openclaw gateway start` |
 | `openclaw-shell` | 进入 VM |
-| `openclaw-doctor` | 运行诊断 |
+| `openclaw-doctor` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw doctor` |
 | `openclaw-update` | 更新 **VM 内上游 OpenClaw** (`--sandbox` 重建镜像，`--force` 强制重建，`--version=<tag>` 装指定版本) |
 | `openclaw-selfupdate` | 更新 **wrapper 本身** (`--pre` 收 pre-release，`--version=<tag>` 锁定/回滚) |
 | `openclaw-sandbox-rebuild` | 重建沙箱镜像 |

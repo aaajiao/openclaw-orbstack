@@ -4,7 +4,7 @@
 
 在 Mac 上有两类命令可用：
 
-1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 16 个命令
+1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 16 个（其中 5 个为已弃用兼容别名）命令
 2. **官方 CLI 命令** (`openclaw <command>`) - 透传到 VM 的 150+ 官方命令
 
 > **两条更新命令，互相配合**（详见 [更新命令详情](#更新命令详情)）：
@@ -13,15 +13,17 @@
 
 ---
 
-## OrbStack 管理命令 (16 个)
+## OrbStack 管理命令 (16 个，其中 5 个为已弃用兼容别名)
 
-这些命令在 `~/bin/` 目录下，用于管理 OrbStack VM 和服务：
+这些命令在 `~/bin/` 目录下，用于管理 OrbStack VM 和服务，由 `scripts/refresh-mac-commands.sh` 中的命令表统一生成。其中 5 个（`openclaw-stop`、`openclaw-start`、`openclaw-doctor`、`openclaw-whatsapp`、`openclaw-telegram`）已弃用为兼容别名：仍可正常使用，但运行时会在 stderr 打印一行 `[deprecated]` 提示，指向对应的原生命令；移除计划推迟到未来某个 stable release。
 
 ### 核心命令
 
+推荐优先使用通用透传命令 `openclaw <command>`，而非记忆各个专用别名——它直接对应官方 CLI 语义，覆盖面也更广。
+
 | 命令 | 功能 |
 |------|------|
-| **`openclaw`** | **CLI 透传** - 所有参数传到 VM 的官方 CLI |
+| **`openclaw`** | **CLI 透传** - 所有参数传到 VM 的官方 CLI（推荐首选） |
 | **`openclaw-config`** | 配置管理 (edit/show/backup) |
 
 ```bash
@@ -41,16 +43,16 @@ openclaw-config backup   # 备份到本地
 
 | 命令 | 功能 |
 |------|------|
-| `openclaw-telegram` | Telegram Bot 管理 |
-| `openclaw-whatsapp` | WhatsApp 登录 (扫码) |
+| `openclaw-telegram` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>` |
+| `openclaw-whatsapp` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw channels login --channel whatsapp` |
 
 ```bash
-# Telegram Bot 管理
+# Telegram Bot 管理（已弃用别名，仍可用，会打印 [deprecated] 提示）
 openclaw-telegram                      # 查看帮助
 openclaw-telegram add <bot_token>      # 添加 Bot (从 @BotFather 获取)
 openclaw-telegram approve <code>       # 批准配对 (回执验证码)
 
-# WhatsApp 登录
+# WhatsApp 登录（已弃用别名，仍可用，会打印 [deprecated] 提示）
 openclaw-whatsapp                      # 扫码登录
 ```
 
@@ -82,10 +84,10 @@ openclaw-codex-login                   # 启动 device-code OAuth 登录
 | `openclaw-status` | 查看 Gateway 服务状态 (openclaw gateway status) |
 | `openclaw-logs` | 实时日志 (openclaw logs --follow) |
 | `openclaw-restart` | 重启服务 |
-| `openclaw-stop` | 停止服务 |
-| `openclaw-start` | 启动服务 |
+| `openclaw-stop` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw gateway stop` |
+| `openclaw-start` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw gateway start` |
 | `openclaw-shell` | 进入 VM 终端 |
-| `openclaw-doctor` | 运行诊断 (openclaw doctor) |
+| `openclaw-doctor` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw doctor` |
 | `openclaw-update` | 更新 **VM 内上游 OpenClaw** (`--sandbox` 重建镜像，`--force` 强制重建，`--version=<tag>` 装指定版本) |
 | `openclaw-selfupdate` | 更新 **wrapper 本身** (`--pre` 收 pre-release，`--version=<tag>` 锁定/回滚) |
 | `openclaw-sandbox-rebuild` | 重建沙箱 Docker 镜像 |

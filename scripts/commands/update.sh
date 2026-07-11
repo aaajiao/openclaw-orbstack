@@ -400,10 +400,14 @@ if [ "$SANDBOX" = true ]; then
     if [ "$BUILD_BASE" = true ]; then
         echo "$MSG_CMD_UPDATE_SANDBOX_BASE"
         # Docker build output → per-image VM log (never the terminal). Show elapsed
-        # on success; show the real docker error tail on failure.
+        # on success; show the real docker error tail on failure. sandbox_build
+        # (scripts/lib/common.sh) also falls back to a direct `docker build` on a
+        # setup-script failure — we don't have a distinct _DF message here, so
+        # both return 0 (primary) and 2 (fallback) print the same OK line.
         _t0=$(date +%s)
-        if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh' > ~/.openclaw/.update-sandbox-base.log 2>&1"; then
-            save_sandbox_hash base scripts/docker/sandbox/Dockerfile Dockerfile.sandbox scripts/sandbox-setup.sh
+        _rc=0
+        sandbox_build base .update-sandbox-base.log || _rc=$?
+        if [ "$_rc" -eq 0 ] || [ "$_rc" -eq 2 ]; then
             printf '%s (%s)\n' "$MSG_CMD_UPDATE_SANDBOX_BASE_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
         else
             BUILD_COMMON=false  # cascade: skip common if base failed
@@ -419,8 +423,9 @@ if [ "$SANDBOX" = true ]; then
         [ "$BUILD_BASE" = true ] && [ "$OLD_COMMON" = "$NEW_COMMON" ] && echo "$MSG_CMD_UPDATE_SANDBOX_COMMON_CASCADE"
         echo "$MSG_CMD_UPDATE_SANDBOX_COMMON"
         _t0=$(date +%s)
-        if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh' > ~/.openclaw/.update-sandbox-common.log 2>&1"; then
-            save_sandbox_hash common scripts/docker/sandbox/Dockerfile.common Dockerfile.sandbox-common scripts/sandbox-common-setup.sh
+        _rc=0
+        sandbox_build common .update-sandbox-common.log || _rc=$?
+        if [ "$_rc" -eq 0 ]; then
             printf '%s (%s)\n' "$MSG_CMD_UPDATE_SANDBOX_COMMON_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
         else
             echo "$MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL"
@@ -434,8 +439,9 @@ if [ "$SANDBOX" = true ]; then
     if [ "$BUILD_BROWSER" = true ]; then
         echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER"
         _t0=$(date +%s)
-        if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh' > ~/.openclaw/.update-sandbox-browser.log 2>&1"; then
-            save_sandbox_hash browser scripts/docker/sandbox/Dockerfile.browser Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh
+        _rc=0
+        sandbox_build browser .update-sandbox-browser.log || _rc=$?
+        if [ "$_rc" -eq 0 ] || [ "$_rc" -eq 2 ]; then
             printf '%s (%s)\n' "$MSG_CMD_UPDATE_SANDBOX_BROWSER_OK" "$(fmt_elapsed "$(($(date +%s) - _t0))")"
         else
             echo "$MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL"
@@ -548,40 +554,10 @@ vm_exec "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/ ~/.npm/ 2>/dev/null; sud
 #    confirm from cancelling the whole doctor pass.
 vm_exec "echo '=== doctor --fix (config migration) ===' >> ~/.openclaw/.update-doctor.log && yes n | openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 
-# --- Startup optimization drop-in (upstream recommended for VM/ARM: docs/vps.md) ---
-# Bridge pattern: if the main service already has NODE_COMPILE_CACHE, upstream has taken
-# over — remove our drop-in. Otherwise, ensure it exists for older service files.
-# shellcheck disable=SC2016
-vm_exec '
-DROPIN_DIR=~/.config/systemd/user/openclaw-gateway.service.d
-DROPIN=$DROPIN_DIR/openclaw-orbstack.conf
-SERVICE=~/.config/systemd/user/openclaw-gateway.service
-if grep -q NODE_COMPILE_CACHE "$SERVICE" 2>/dev/null; then
-    rm -f "$DROPIN"
-    rmdir "$DROPIN_DIR" 2>/dev/null || true
-elif [ ! -f "$DROPIN" ]; then
-    mkdir -p "$DROPIN_DIR" /var/tmp/openclaw-compile-cache
-    printf "[Service]\nEnvironment=NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache\nEnvironment=OPENCLAW_NO_RESPAWN=1\n" > "$DROPIN"
-fi
-systemctl --user daemon-reload
-' 2>/dev/null || true
-
-# --- Gateway PATH drop-in (Linux only; upstream #75233 fix is macOS LaunchAgent only as of v2026.5.2) ---
-# `openclaw gateway install` on Linux derives PATH from the user shell at install time, so
-# version-manager / package-manager dirs (.bun/bin, .npm-global/bin, .nix-profile/bin,
-# .local/share/pnpm) leak into the gateway service PATH. Functionally harmless (Node lives
-# at /usr/bin/node) but doctor flags it as advisory on every run. We pin a canonical PATH
-# via drop-in. systemd evaluates drop-ins after the main unit; the LAST `Environment=PATH=`
-# wins, so this overrides anything upstream sets. The 99- prefix also wins lexicographic
-# ordering against any later drop-ins openclaw or third parties might ship.
-# shellcheck disable=SC2016
-vm_exec '
-DROPIN_DIR=~/.config/systemd/user/openclaw-gateway.service.d
-DROPIN=$DROPIN_DIR/99-openclaw-orbstack-path.conf
-mkdir -p "$DROPIN_DIR"
-printf "[Service]\nEnvironment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n" > "$DROPIN"
-systemctl --user daemon-reload
-' 2>/dev/null || true
+# --- Startup optimization + PATH drop-ins (upstream recommended for VM/ARM: docs/vps.md) ---
+# See scripts/lib/common.sh:write_systemd_dropins for the bridge-pattern /
+# PATH-pin rationale (upstream-takeover removal, #75233 PATH leak).
+write_systemd_dropins
 
 echo "$MSG_CMD_UPDATE_STARTING"
 # `|| true`: `gateway start` only dispatches the systemd start and normally exits 0
@@ -598,20 +574,9 @@ vm_exec "openclaw gateway start >/dev/null 2>&1" || true
 # print "Update complete!" over a dead gateway (observed 2026-07-11 on the beta.2 ->
 # beta.5 hop: the `@openclaw/codex` plugin package dir went missing during the core
 # install -> "startup migrations did not complete cleanly" -> exit 1 -> crash loop).
-# Poll for real readiness; if it never comes up, self-heal once with
-# `openclaw update repair` — the only path that re-materializes a missing plugin
-# package dir (`doctor --fix` does not) — then restart and re-check.
-# The poll/sleep loop runs inside vm_exec (Ubuntu side), so GNU seq/sleep are fine.
-gateway_healthy() {
-    # shellcheck disable=SC2016
-    vm_exec '
-        for _i in $(seq 1 6); do
-            openclaw gateway status 2>/dev/null | grep -q "Runtime: running" && exit 0
-            if [ "$_i" -lt 6 ]; then sleep 5; fi
-        done
-        exit 1
-    '
-}
+# Poll for real readiness (gateway_healthy, scripts/lib/common.sh); if it never comes
+# up, self-heal once with `openclaw update repair` — the only path that re-materializes
+# a missing plugin package dir (`doctor --fix` does not) — then restart and re-check.
 if ! gateway_healthy; then
     echo "$MSG_CMD_UPDATE_GATEWAY_UNHEALTHY"
     vm_exec "openclaw update repair >/dev/null 2>&1" || true

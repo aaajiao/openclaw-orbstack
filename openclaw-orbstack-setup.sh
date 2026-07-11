@@ -43,44 +43,16 @@
 
 set -e
 
-# --- Language Selection ---
-# Resolve project root reliably
+# --- Resolve project root reliably ---
 _SELF="${BASH_SOURCE[0]:-$0}"
 SCRIPT_DIR="$(cd "$(dirname "$_SELF")" && pwd)"
 
-select_language() {
-    # If explicitly set via env var, skip interactive prompt
-    if [ -n "$OPENCLAW_LANG" ]; then
-        echo "$OPENCLAW_LANG"
-        return
-    fi
+# shellcheck source=scripts/lib/common.sh
+source "$SCRIPT_DIR/scripts/lib/common.sh"
 
-    echo "" >&2
-    echo "Choose language / 选择语言:" >&2
-    echo "" >&2
-    echo "  1) English" >&2
-    echo "  2) 中文" >&2
-    echo "" >&2
-    while true; do
-        read -rp "Enter 1 or 2 / 输入 1 或 2: " choice
-        case "$choice" in
-            1) echo "en"; return ;;
-            2) echo "zh-CN"; return ;;
-            *) echo "  Invalid choice / 无效选择, please enter 1 or 2 / 请输入 1 或 2" >&2 ;;
-        esac
-    done
-}
-
+# --- Language Selection ---
 OPENCLAW_LANG_CODE=$(select_language)
-LANG_FILE="$SCRIPT_DIR/lang/${OPENCLAW_LANG_CODE}.sh"
-
-if [ -f "$LANG_FILE" ]; then
-    # shellcheck source=lang/en.sh
-    source "$LANG_FILE"
-else
-    echo "Warning: Language file $LANG_FILE not found, falling back to English"
-    source "$SCRIPT_DIR/lang/en.sh"
-fi
+load_lang_file "$SCRIPT_DIR" "$OPENCLAW_LANG_CODE"
 
 # --- Colors ---
 RED='\033[0;31m'
@@ -95,64 +67,17 @@ VM_DISTRO="${OPENCLAW_VM_DISTRO:-ubuntu}"
 GATEWAY_PORT="${OPENCLAW_PORT:-18789}"
 TOTAL_STEPS=8
 
+# scripts/lib/common.sh's vm_exec/vm_log_tail/gateway_healthy/
+# write_systemd_dropins/sandbox_build all read $OPENCLAW_VM_NAME (the name
+# scripts/commands/_common.sh uses); align it with this installer's $VM_NAME.
+OPENCLAW_VM_NAME="$VM_NAME"
+
 # --- Output Functions ---
 step()    { echo -e "\n${CYAN}[$1/$TOTAL_STEPS] $2${NC}"; }
 ok()      { echo -e "${GREEN}  ✓ $1${NC}"; }
 warn()    { echo -e "${YELLOW}  ⚠ $1${NC}"; }
 err()     { echo -e "${RED}  ✗ $1${NC}"; }
 info()    { echo -e "  $1"; }
-
-# --- VM Command Execution ---
-# OrbStack #2519: `orb <cmd>` enters the alternate screen buffer when its Mac-side
-# stdout is a TTY and emits rmcup on exit — discarding output and homing the cursor
-# to the TOP of the terminal (terminal-agnostic; no orb flag disables it). Detach
-# orb's Mac-side stdout from the TTY (the `orb ... | cat` workaround) so it stays in
-# pipe mode: no PTY, no alt-screen, no cursor jump. stderr stays on the TTY so real
-# errors still surface. The `[ -t 1 ]` guard keeps $(vm_exec ...) capture working —
-# in a command substitution fd 1 is a pipe (not a TTY), so the else branch runs and
-# stdout reaches the capture. Long steps route real output to a per-step VM log
-# (surfaced by vm_log_tail on failure), so dropping a bare statement's stdout is safe.
-vm_exec() {
-    if [ -t 1 ]; then
-        orb -m "$VM_NAME" bash -lc "$1" >/dev/null
-    else
-        orb -m "$VM_NAME" bash -lc "$1"
-    fi
-}
-
-# --- Progress model: synchronous, newline-only (garble-proof by construction) ---
-# The old start_progress/stop_progress printed "\r <braille>" from a BACKGROUND
-# subshell, which raced with any foreground output on the same TTY = "花屏" (screen
-# garble). Removed: no async writer, no \r → garble is impossible. Long steps now
-# redirect fully to a per-step VM log, print elapsed on success, and surface the
-# real error tail on failure. (Same model as scripts/commands/_common.sh; kept
-# inline here because this installer is standalone and doesn't source it.)
-# start_progress/stop_progress are no-op stubs so any stray call site is harmless.
-start_progress() { :; }
-stop_progress() { :; }
-
-# Lines of a failing step's VM-side log to surface inline (the real error).
-OPENCLAW_LOG_TAIL_LINES="${OPENCLAW_LOG_TAIL_LINES:-12}"
-
-# fmt_elapsed <seconds> -> "Xm Ys" or "Ys"  (BSD/macOS integer math only)
-fmt_elapsed() {
-    if [ "$1" -ge 60 ]; then
-        printf '%dm %ds' "$(($1 / 60))" "$(($1 % 60))"
-    else
-        printf '%ds' "$1"
-    fi
-}
-
-# vm_log_tail <log-basename>
-#   On a step failure, surface the real cause from the VM log at
-#   ~/.openclaw/<basename> (read via orb). \$HOME is escaped so the VM expands it
-#   (avoids a literal ~ in quotes). Never aborts (set -e safe).
-vm_log_tail() {
-    printf '    %s\n' "$MSG_LOG_TAIL_HEADER"
-    orb -m "$VM_NAME" bash -lc "tail -n $OPENCLAW_LOG_TAIL_LINES \"\$HOME/.openclaw/$1\" 2>/dev/null | tr -d '\r'" 2>/dev/null | sed 's/^/      /' || true
-    # shellcheck disable=SC2059,SC2088
-    printf "$MSG_LOG_FULL_HINT\n" "~/.openclaw/$1"
-}
 
 # ============================================================================
 # Step 1/8
@@ -345,9 +270,11 @@ step 6 "$MSG_STEP_6"
 
 info "$MSG_INFO_SANDBOX_BASE"
 _t0=$(date +%s)
-if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-setup.sh' > ~/.openclaw/.setup-sandbox-base.log 2>&1"; then
+_rc=0
+sandbox_build base .setup-sandbox-base.log || _rc=$?
+if [ "$_rc" -eq 0 ]; then
     ok "$MSG_OK_SANDBOX_BASE ($(fmt_elapsed "$(($(date +%s) - _t0))"))"
-elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox:bookworm-slim -f scripts/docker/sandbox/Dockerfile .' >> ~/.openclaw/.setup-sandbox-base.log 2>&1"; then
+elif [ "$_rc" -eq 2 ]; then
     ok "$MSG_OK_SANDBOX_BASE_DF ($(fmt_elapsed "$(($(date +%s) - _t0))"))"
 else
     warn "$MSG_WARN_SANDBOX_BASE_FAIL"
@@ -356,7 +283,9 @@ fi
 
 info "$MSG_INFO_SANDBOX_COMMON"
 _t0=$(date +%s)
-if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-common-setup.sh' > ~/.openclaw/.setup-sandbox-common.log 2>&1"; then
+_rc=0
+sandbox_build common .setup-sandbox-common.log || _rc=$?
+if [ "$_rc" -eq 0 ]; then
     ok "$MSG_OK_SANDBOX_COMMON ($(fmt_elapsed "$(($(date +%s) - _t0))"))"
 else
     warn "$MSG_WARN_SANDBOX_COMMON_FAIL"
@@ -365,23 +294,16 @@ fi
 
 info "$MSG_INFO_SANDBOX_BROWSER"
 _t0=$(date +%s)
-if vm_exec "cd ~/openclaw && sg docker -c './scripts/sandbox-browser-setup.sh' > ~/.openclaw/.setup-sandbox-browser.log 2>&1"; then
+_rc=0
+sandbox_build browser .setup-sandbox-browser.log || _rc=$?
+if [ "$_rc" -eq 0 ]; then
     ok "$MSG_OK_SANDBOX_BROWSER ($(fmt_elapsed "$(($(date +%s) - _t0))"))"
-elif vm_exec "cd ~/openclaw && sg docker -c 'DOCKER_BUILDKIT=1 docker build -t openclaw-sandbox-browser:bookworm-slim -f scripts/docker/sandbox/Dockerfile.browser .' >> ~/.openclaw/.setup-sandbox-browser.log 2>&1"; then
+elif [ "$_rc" -eq 2 ]; then
     ok "$MSG_OK_SANDBOX_BROWSER_DF ($(fmt_elapsed "$(($(date +%s) - _t0))"))"
 else
     warn "$MSG_WARN_SANDBOX_BROWSER_FAIL"
     vm_log_tail ".setup-sandbox-browser.log"
 fi
-
-# Save per-image sandbox build hashes for staleness detection during updates.
-# cat lists both new (≥ v2026.5.3) and legacy (≤ v2026.5.2) Dockerfile paths;
-# cat silently skips missing files via 2>/dev/null, so the hash reflects whichever
-# path the upstream checkout actually has — robust across the v5.3 path move.
-vm_exec "cd ~/openclaw && \
-  cat scripts/docker/sandbox/Dockerfile Dockerfile.sandbox scripts/sandbox-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-base && \
-  cat scripts/docker/sandbox/Dockerfile.common Dockerfile.sandbox-common scripts/sandbox-common-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-common && \
-  cat scripts/docker/sandbox/Dockerfile.browser Dockerfile.sandbox-browser scripts/sandbox-browser-setup.sh 2>/dev/null | sha256sum | cut -c1-64 > ~/.openclaw/.sandbox-hash-browser"
 
 # ============================================================================
 # Step 7/8
@@ -596,32 +518,14 @@ info "$MSG_INFO_CREATING_SERVICE"
 # Enable lingering so user services start at boot without login
 vm_exec "sudo loginctl enable-linger \$(whoami)"
 
-# --- Startup optimization drop-in (upstream recommended for VM/ARM: docs/vps.md) ---
-# Bridge pattern: create drop-in only if the main service doesn't already have these vars.
-# When upstream adds them natively, the update script auto-removes this drop-in.
-vm_exec "mkdir -p ~/.config/systemd/user/openclaw-gateway.service.d /var/tmp/openclaw-compile-cache"
-vm_exec "printf '[Service]\nEnvironment=NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache\nEnvironment=OPENCLAW_NO_RESPAWN=1\n' > ~/.config/systemd/user/openclaw-gateway.service.d/openclaw-orbstack.conf"
-
-# --- Gateway PATH drop-in (Linux only; upstream #75233 PATH cleanup is macOS LaunchAgent only) ---
-# Pin a canonical PATH so version-manager / package-manager dirs from the operator's shell
-# (.bun/bin, .npm-global/bin, .nix-profile/bin, .local/share/pnpm) cannot leak into the
-# gateway service PATH. Drop-in is evaluated AFTER the main unit; LAST Environment=PATH wins.
-# 99- prefix wins lexicographic ordering against any other drop-ins.
-vm_exec "printf '[Service]\nEnvironment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n' > ~/.config/systemd/user/openclaw-gateway.service.d/99-openclaw-orbstack-path.conf"
-
-vm_exec "systemctl --user daemon-reload"
+# --- Startup optimization + PATH drop-ins (upstream recommended for VM/ARM: docs/vps.md) ---
+write_systemd_dropins
 
 # Enable and start the official user-level gateway service
 vm_exec "systemctl --user enable openclaw-gateway.service"
 vm_exec "openclaw gateway start"
 
-# Wait for Gateway to be ready (up to 15s)
-for _ in $(seq 1 15); do
-    if vm_exec "openclaw gateway status 2>/dev/null | grep -q 'RPC probe.*ok'"; then break; fi
-    sleep 1
-done
-
-if vm_exec "openclaw gateway status 2>/dev/null | grep -q 'RPC probe.*ok'"; then
+if gateway_healthy; then
     ok "$MSG_OK_GATEWAY_STARTED"
 else
     warn "$MSG_WARN_GATEWAY_ISSUE"
@@ -739,37 +643,9 @@ ok "$MSG_OK_SANDBOX_CONFIG"
 
 # Check PATH and add to shell rc
 _PATH_CHANGED=false
-if ! echo "$PATH" | grep -q "$HOME/bin"; then
-    # Detect active shell and its rc file
-    _SHELL_NAME=$(basename "${SHELL:-/bin/bash}")
-    case "$_SHELL_NAME" in
-        zsh)  SHELL_RC="$HOME/.zshrc" ;;
-        fish) SHELL_RC="$HOME/.config/fish/config.fish" ;;
-        *)    SHELL_RC="$HOME/.bashrc" ;;
-    esac
-
-    if [ "$_SHELL_NAME" = "fish" ]; then
-        mkdir -p "$(dirname "$SHELL_RC")"
-        if ! grep -q 'set -gx PATH \$HOME/bin' "$SHELL_RC" 2>/dev/null; then
-            {
-                echo ''
-                echo '# OpenClaw CLI'
-                echo 'set -gx PATH $HOME/bin $PATH'
-            } >> "$SHELL_RC"
-            info "$(printf "$MSG_INFO_PATH_ADDED" "$SHELL_RC")"
-            _PATH_CHANGED=true
-        fi
-    else
-        if ! grep -q 'export PATH="\$HOME/bin:\$PATH"' "$SHELL_RC" 2>/dev/null; then
-            {
-                echo ''
-                echo '# OpenClaw CLI'
-                echo 'export PATH="$HOME/bin:$PATH"'
-            } >> "$SHELL_RC"
-            info "$(printf "$MSG_INFO_PATH_ADDED" "$SHELL_RC")"
-            _PATH_CHANGED=true
-        fi
-    fi
+if append_path_to_shell_rc; then
+    info "$(printf "$MSG_INFO_PATH_ADDED" "$OPENCLAW_SHELL_RC")"
+    _PATH_CHANGED=true
 fi
 
 # ============================================================================
@@ -797,7 +673,6 @@ echo -e "  ${GREEN}openclaw-restart${NC}      $MSG_FINAL_CMD_RESTART"
 echo -e "  ${GREEN}openclaw-update${NC}       $MSG_FINAL_CMD_UPDATE"
 echo -e "  ${GREEN}openclaw-selfupdate${NC}   $MSG_FINAL_CMD_SELFUPDATE"
 echo -e "  ${GREEN}openclaw-sandbox-rebuild${NC} $MSG_FINAL_CMD_REBUILD"
-echo -e "  ${GREEN}openclaw-doctor${NC}       $MSG_FINAL_CMD_DOCTOR"
 echo -e "  ${GREEN}openclaw-shell${NC}        $MSG_FINAL_CMD_SHELL"
 echo -e "  ${GREEN}openclaw-codex-login${NC} $MSG_FINAL_CMD_CODEX_LOGIN"
 echo -e "  ${GREEN}openclaw-uninstall${NC}    $MSG_FINAL_CMD_UNINSTALL"

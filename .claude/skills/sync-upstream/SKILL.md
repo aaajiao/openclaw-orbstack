@@ -164,6 +164,28 @@ Use Grep and Read to find the specific locations. For example:
   the pre-archive + `yes n |` defense still answers safely (see the "Doctor /
   non-interactive flow scan" section above). If a new prompt type (select,
   free-text) would break the pipe, propose a wrapper fix as a separate impact-table row.
+- **If the sync target crosses the v2026.7.1 stable line** → run the mandatory
+  "v2026.7.1 stable cutover (one-time)" checklist below and fold its rows into
+  the impact table.
+
+### v2026.7.1 stable cutover (one-time, mandatory when applicable)
+
+Check this **every sync**, even if it usually doesn't apply: if the sync target
+(Step 1's target stable tag) is the **first stable release `>= v2026.7.1`**, the
+impact table **MUST** include these rows — this is a one-time structural cutover,
+not an optional cleanup, so don't let it silently fall through a normal version-bump
+sync:
+
+| # | Cutover item | File(s) | What to update |
+|---|---------------|---------|-----------------|
+| a | Remove the auto-pull block | `scripts/refresh-mac-commands.sh` | Delete the `git pull` block in the generated `openclaw-update` wrapper (marked with a `DEFERRED CUTOVER` comment — grep for it). After removal, `openclaw-selfupdate` becomes the **sole** wrapper-delivery path; branch checkouts no longer auto-update themselves. |
+| b | Update README auto-pull note | `README.md` | Rewrite the auto-pull/cutover note (near the update-commands section) to say the cutover has happened — no more silent `git pull` on branch checkouts. |
+| c | Update CLAUDE.md deferred-cutover paragraphs | `CLAUDE.md` | Update the "Deferred cutover" paragraph under Two-Command Update Model to state it's done, not pending — remove the "deferred to v2026.7.1 stable" language. |
+| d | Consider retiring the deprecated aliases | `scripts/refresh-mac-commands.sh`, `docs/commands.md`, `README.md`, `docs/README.zh-CN.md`, `docs/architecture.md` | `openclaw-stop`, `openclaw-start`, `openclaw-doctor`, `openclaw-whatsapp`, `openclaw-telegram` were kept as deprecated compatibility aliases pending this cutover. Ask the user whether to remove them now or keep them another cycle — don't remove unilaterally. |
+
+Only skip this checklist if the sync target is still below v2026.7.1, or if a
+prior sync already executed it (check `CLAUDE.md`'s Two-Command Update Model
+section — if it no longer says "deferred", the cutover already happened).
 
 Present a numbered table so the user can cherry-pick:
 

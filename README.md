@@ -128,7 +128,7 @@ openclaw-selfupdate
 openclaw-update
 ```
 
-> **Note:** `openclaw-selfupdate` is available now as an **opt-in** command. `openclaw-update` also still auto-pulls the wrapper repo when your checkout is on a branch, so branch users stay current automatically. Pinning a tag with `openclaw-selfupdate` puts the repo on a detached HEAD, which `openclaw-update` respects — it won't undo your pin. The full cutover to `openclaw-selfupdate` as the *sole* wrapper-delivery path is deferred to the v2026.7.1 stable line.
+> **Note:** `openclaw-selfupdate` is available now as an **opt-in** command. `refresh-mac-commands.sh` also still auto-`git pull`s the wrapper repo's `main` branch when your checkout is on a branch, so branch users stay current automatically. Pinning a tag with `openclaw-selfupdate` puts the repo on a detached HEAD, which the auto-pull respects — it won't undo your pin. The full cutover to `openclaw-selfupdate` as the *sole* wrapper-delivery path (removing the auto-pull block entirely) is deferred to the first v2026.7.1 stable release.
 
 ### Versioning & release model
 
@@ -168,20 +168,20 @@ openclaw doctor
 
 ## Mac Commands
 
-All commands are generated into `~/bin` by the installer. Re-run `openclaw-selfupdate` (or `bash scripts/refresh-mac-commands.sh`) to regenerate them.
+All 16 commands are generated into `~/bin` from a single command table in `scripts/refresh-mac-commands.sh`. Re-run `openclaw-selfupdate` (or `bash scripts/refresh-mac-commands.sh`) to regenerate them. Five are deprecated compatibility aliases — they still work today but print a one-line `[deprecated]` notice on stderr pointing at their native replacement; removal is deferred to a future stable release.
 
 | Command | Function |
 |---------|----------|
-| `openclaw` | Official CLI passthrough (all upstream commands) |
+| `openclaw` | Official CLI passthrough (all upstream commands) — prefer this over the deprecated aliases below |
 | `openclaw-status` | Gateway service status |
 | `openclaw-logs` | Follow live Gateway logs |
 | `openclaw-restart` | Restart the Gateway service |
-| `openclaw-start` / `openclaw-stop` | Start / stop the Gateway service |
+| `openclaw-start` / `openclaw-stop` | *Deprecated alias, still works* → `openclaw gateway start` / `openclaw gateway stop` |
 | `openclaw-shell` | Open a shell inside the VM |
-| `openclaw-doctor` | Run OpenClaw diagnostics |
+| `openclaw-doctor` | *Deprecated alias, still works* → `openclaw doctor` |
 | `openclaw-config` | Manage config (`edit` / `show` / `backup`) |
-| `openclaw-telegram` | Telegram management (`add` / `approve`) |
-| `openclaw-whatsapp` | WhatsApp login |
+| `openclaw-telegram` | *Deprecated alias, still works* → `openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>` |
+| `openclaw-whatsapp` | *Deprecated alias, still works* → `openclaw channels login --channel whatsapp` |
 | `openclaw-codex-login` | Bind a ChatGPT subscription via Codex device-code login (optional) |
 | `openclaw-update` | **Update OpenClaw in the VM** (`--version=<tag>`, `--sandbox`, `--force`) |
 | `openclaw-selfupdate` | **Update this wrapper** (`--pre`, `--version=<tag>`) |
