@@ -165,16 +165,13 @@ MSG_CMD_UPDATE_SANDBOX_BASE_FAIL="    ✗ base 镜像构建失败"
 MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL="    ✗ common 镜像构建失败"
 MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL="    ✗ 浏览器镜像构建失败"
 
-# openclaw-selfupdate 现已是转发到 `openclaw-update --wrapper-only` 的弃用别名
-# （wrapper 自更新逻辑本体在 scripts/commands/update.sh 的 stage 1）。
-# 以下 key 仍被该 stage 使用。
-MSG_CMD_SELFUPDATE_FETCHING="🔄 正在拉取包装 release 标签..."
-MSG_CMD_SELFUPDATE_UNKNOWN_OPT="✗ 未知选项: %s（注意：应写 --version=<tag>，而非 --version <tag>）"
-MSG_CMD_SELFUPDATE_ALREADY="✅ 包装脚本已是最新（%s）。"
-MSG_CMD_SELFUPDATE_CHECKOUT="  正在检出包装 %s ..."
-MSG_CMD_SELFUPDATE_CHECKOUT_FAIL="✗ 检出包装标签 %s 失败。请先提交或暂存本地改动后重试。"
-MSG_CMD_SELFUPDATE_DONE="✅ 包装已更新: %s -> %s"
-MSG_CMD_SELFUPDATE_DEPRECATED="⚠️  openclaw-selfupdate 已弃用 —— openclaw-update 现在也会更新 wrapper 本身（--pre / --stable / --version=<tag>）。"
+# wrapper 自更新（scripts/commands/update.sh 的 stage 1）
+MSG_UPDATE_WRAPPER_FETCHING="🔄 正在拉取包装 release 标签..."
+MSG_CMD_UPDATE_UNKNOWN_OPT="✗ 未知选项: %s（注意：应写 --version=<tag>，而非 --version <tag>）"
+MSG_UPDATE_WRAPPER_ALREADY="✅ 包装脚本已是最新（%s）。"
+MSG_UPDATE_WRAPPER_CHECKOUT="  正在检出包装 %s ..."
+MSG_UPDATE_WRAPPER_CHECKOUT_FAIL="✗ 检出包装标签 %s 失败。请先提交或暂存本地改动后重试。"
+MSG_UPDATE_WRAPPER_DONE="✅ 包装已更新: %s -> %s"
 
 # openclaw-sandbox-rebuild
 MSG_CMD_REBUILD_START="🔨 正在重建沙箱 Docker 镜像..."
@@ -252,7 +249,7 @@ MSG_REFRESH_CMD_UPDATE="  openclaw-update         一条命令更新 wrapper + O
 MSG_REFRESH_CMD_REBUILD="  openclaw-sandbox-rebuild 重建沙箱镜像"
 MSG_REFRESH_CMD_CODEX_LOGIN="  openclaw-codex-login    绑定 ChatGPT 订阅（Codex CLI）"
 MSG_REFRESH_CMD_UNINSTALL="  openclaw-uninstall      完全卸载"
-MSG_REFRESH_DEPRECATED_NOTE="  (已弃用的别名 openclaw-stop/start/doctor/whatsapp/telegram/selfupdate 仍会安装，会转发到原生 openclaw 命令)"
+MSG_REFRESH_DEPRECATED_NOTE="  (已弃用的别名 openclaw-stop/start/doctor/whatsapp/telegram 仍会安装，会转发到原生 openclaw 命令)"
 
 # openclaw-uninstall
 MSG_CMD_UNINSTALL_USAGE="用法: openclaw-uninstall [--yes] [--vm]"

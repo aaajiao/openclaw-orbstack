@@ -93,8 +93,6 @@ openclaw-update --force             # 强制重建 / 允许降级
 - **保持 git checkout 同步**。`~/openclaw` 检出始终对齐目标 tag，因为沙箱 Docker 镜像就是从这个仓库构建的。
 
 > **说明**：当你的检出在分支上时，`refresh-mac-commands.sh` 仍会自动 `git pull` wrapper 仓库的 `main` 分支，让分支用户在两次运行之间自动保持最新。钉某个 tag 会让仓库进入 detached HEAD，这个自动 pull 会尊重这一点、不会把你的锁定改掉。彻底移除这段 auto-pull 逻辑（因为 `openclaw-update` 现在已经内含 wrapper 更新）这个完整切换推迟到 v2026.7.1 line 的**第一个 stable release**。
->
-> `openclaw-selfupdate` 仍可用，但是**已弃用别名**——它只转发执行 `openclaw-update` 中"更新 wrapper"那一段（同样支持 `--pre`/`--stable`/`--version=`），并打印一行提示。之后请优先直接用 `openclaw-update`。
 
 ### 版本 & 发布模型
 
@@ -137,7 +135,7 @@ openclaw doctor
 
 ## Mac 端命令
 
-共 16 个命令，由 `scripts/refresh-mac-commands.sh` 中的统一命令表生成；其中 6 个已弃用为兼容别名——仍可正常使用，但会在 stderr 打印一行 `[deprecated]` 提示并指向原生替代命令，移除推迟到未来某个 stable release。
+共 15 个命令，由 `scripts/refresh-mac-commands.sh` 中的统一命令表生成；其中 5 个已弃用为兼容别名——仍可正常使用，但会在 stderr 打印一行 `[deprecated]` 提示并指向原生替代命令，移除推迟到未来某个 stable release。
 
 | 命令 | 功能 |
 |------|------|
@@ -152,7 +150,6 @@ openclaw doctor
 | `openclaw-shell` | 进入 VM |
 | `openclaw-doctor` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw doctor` |
 | `openclaw-update` | **更新一切：wrapper + OpenClaw**（通道：`--pre`/`--stable`；另有 `--version=<tag>`、`--sandbox`、`--force`） |
-| `openclaw-selfupdate` | 已弃用（兼容别名，仍可用）→ `openclaw-update`（仅 wrapper 阶段；`--pre`/`--stable`/`--version=<tag>`） |
 | `openclaw-sandbox-rebuild` | 重建沙箱镜像 |
 | `openclaw-codex-login` | 绑定 ChatGPT 订阅（Codex CLI device-code 登录，可选） |
 | `openclaw-uninstall` | 完全卸载 |

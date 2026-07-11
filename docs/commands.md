@@ -6,16 +6,16 @@
 
 在 Mac 上有两类命令可用：
 
-1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 16 个（其中 6 个为已弃用兼容别名）命令
+1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 15 个（其中 5 个为已弃用兼容别名）命令
 2. **官方 CLI 命令** (`openclaw <command>`) - 透传到 VM 的 150+ 官方命令
 
-> **`openclaw-update` 是唯一的更新命令**（详见 [更新命令详情](#更新命令详情)）：先更新**这个 wrapper（openclaw-orbstack）本身**（`~/bin/openclaw-*` 命令和安装/更新脚本，只跑在 Mac 上），再把 wrapper 对齐的**上游 OpenClaw** 装进 VM（AI 大脑本体）。`--pre`/`--stable` 切换/记住通道，`--version=<tag>` 可钉版本。`openclaw-selfupdate` 仍可用，但已降级为**已弃用别名**，只转发执行 wrapper-only 那一段。
+> **`openclaw-update` 是唯一的更新命令**（详见 [更新命令详情](#更新命令详情)）：先更新**这个 wrapper（openclaw-orbstack）本身**（`~/bin/openclaw-*` 命令和安装/更新脚本，只跑在 Mac 上），再把 wrapper 对齐的**上游 OpenClaw** 装进 VM（AI 大脑本体）。`--pre`/`--stable` 切换/记住通道，`--version=<tag>` 可钉版本；隐藏参数 `--wrapper-only` 只跑 wrapper 那一段、不碰 VM。
 
 ---
 
-## OrbStack 管理命令 (16 个，其中 6 个为已弃用兼容别名)
+## OrbStack 管理命令 (15 个，其中 5 个为已弃用兼容别名)
 
-这些命令在 `~/bin/` 目录下，用于管理 OrbStack VM 和服务，由 `scripts/refresh-mac-commands.sh` 中的命令表统一生成。其中 6 个（`openclaw-stop`、`openclaw-start`、`openclaw-doctor`、`openclaw-whatsapp`、`openclaw-telegram`、`openclaw-selfupdate`）已弃用为兼容别名：仍可正常使用，但运行时会在 stderr 打印一行 `[deprecated]` 提示，指向对应的原生命令；移除计划推迟到未来某个 stable release。
+这些命令在 `~/bin/` 目录下，用于管理 OrbStack VM 和服务，由 `scripts/refresh-mac-commands.sh` 中的命令表统一生成。其中 5 个（`openclaw-stop`、`openclaw-start`、`openclaw-doctor`、`openclaw-whatsapp`、`openclaw-telegram`）已弃用为兼容别名：仍可正常使用，但运行时会在 stderr 打印一行 `[deprecated]` 提示，指向对应的原生命令；移除计划推迟到未来某个 stable release。
 
 ### 核心命令
 
@@ -88,8 +88,7 @@ openclaw-codex-login                   # 启动 device-code OAuth 登录
 | `openclaw-start` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw gateway start` |
 | `openclaw-shell` | 进入 VM 终端 |
 | `openclaw-doctor` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw doctor` |
-| `openclaw-update` | **更新一切：wrapper + OpenClaw**（通道：`--pre`/`--stable`；另有 `--version=<tag>`、`--sandbox`、`--force`） |
-| `openclaw-selfupdate` | 已弃用（兼容别名，仍可用）→ `openclaw-update`（仅 wrapper 阶段；`--pre`/`--stable`/`--version=<tag>`） |
+| `openclaw-update` | **更新一切：wrapper + OpenClaw**（通道：`--pre`/`--stable`；另有 `--version=<tag>`、`--sandbox`、`--force`；隐藏参数 `--wrapper-only` 只跑 wrapper 阶段） |
 | `openclaw-sandbox-rebuild` | 重建沙箱 Docker 镜像 |
 | `openclaw-uninstall` | 完全卸载 (`--vm` 同时删除虚拟机) |
 
@@ -130,7 +129,7 @@ openclaw-update --force             # 强制重建 / 允许降级
 
 **两个内部阶段**：
 
-1. **阶段一（wrapper）**：与旧 `openclaw-selfupdate` 相同的逻辑——按上表参数把 `~/openclaw-orbstack` 仓库检出/切换到目标 wrapper tag（或跟随分支 `git pull`），并重新生成所有 `~/bin/openclaw-*` 命令。完全跑在 Mac 主机上，不碰 VM。可用隐藏参数 `--wrapper-only` 只跑这一段（`openclaw-selfupdate` 别名内部就是转发到这里）。
+1. **阶段一（wrapper）**：按上表参数把 `~/openclaw-orbstack` 仓库检出/切换到目标 wrapper tag（或跟随分支 `git pull`），并重新生成所有 `~/bin/openclaw-*` 命令。完全跑在 Mac 主机上，不碰 VM。可用隐藏参数 `--wrapper-only` 只跑这一段。
 2. **阶段二（OpenClaw）**：读取阶段一落地后的 wrapper `VERSION`（除非 `--version=<tag>` 显式指定 OpenClaw tag），把这个版本装进 VM——停止 Gateway、切换 `~/openclaw` checkout、`npm install -g openclaw@<version>`、必要时重建沙箱镜像、`openclaw doctor --fix`、启动服务并轮询健康态。
 
 装完后会**轮询 Gateway 是否真的进入 `running` 健康态**（不只看 start 是否派发成功）；若启动失败，会自动 `openclaw update repair` 自愈一次（重新拉齐缺失的 bundled plugin 目录），仍失败则如实报错并给出日志提示，不静默假成功。

@@ -137,7 +137,6 @@ EOF
 # Fields: name|deprecated(yes/no)|replacement_text
 DISPATCH_CMDS=(
     "update|no|"
-    "selfupdate|yes|openclaw-update (--pre / --stable / --version=<tag>)"
     "config|no|"
     "telegram|yes|openclaw channels add --channel telegram --token <token> / openclaw pairing approve telegram <code>"
     "sandbox-rebuild|no|"
@@ -158,15 +157,15 @@ for _entry in "${DISPATCH_CMDS[@]}"; do
         if [ "$_name" = "update" ]; then
             cat <<'BLOCK'
 # Self-update: pull latest openclaw-orbstack repo before executing — but ONLY
-# when HEAD is on a BRANCH. A detached HEAD means the user pinned a release tag
-# via openclaw-selfupdate; leave it pinned (no pull, no warning) so branch users
-# and selfupdate-pinned users coexist.
+# when HEAD is on a BRANCH. A detached HEAD means the user moved onto a release
+# tag via openclaw-update's channel/pin flags (--pre/--stable/--version=); leave
+# it pinned (no pull, no warning) so branch users and tag-pinned users coexist.
 #
 # DEFERRED CUTOVER: the full switch — removing this auto-pull entirely and making
-# openclaw-selfupdate the default wrapper-delivery path — is deferred to the
-# v2026.7.1 stable /sync-upstream, when a STABLE tag will finally carry the
-# openclaw-selfupdate command. Cutting over now would strand users: the current
-# latest stable tag (v2026.6.11) predates openclaw-selfupdate.
+# openclaw-update's built-in wrapper stage the sole delivery path — is deferred
+# to the v2026.7.1 stable /sync-upstream, when a STABLE tag will finally carry
+# the single-command model. Cutting over now would strand users: the current
+# latest stable tag (v2026.6.11) predates it.
 if git -C "$REPO" symbolic-ref -q HEAD >/dev/null 2>&1; then
     (cd "$REPO" && git pull -q 2>/dev/null) || echo "⚠ Failed to update openclaw-orbstack repo, using cached version"
 fi
@@ -178,6 +177,12 @@ BLOCK
         printf 'exec bash "$REPO/scripts/commands/%s.sh" "$@"\n' "$_name"
     } > "$_out"
 done
+
+# Retired commands: remove stale files a previous wrapper version generated.
+# openclaw-selfupdate existed only briefly on the v2026.7.1-beta.5 line before
+# its logic merged into openclaw-update; without this, users who ran that cut
+# keep a dead file whose dispatch target no longer exists.
+rm -f ~/bin/openclaw-selfupdate
 
 chmod +x ~/bin/openclaw-*
 chmod +x ~/bin/openclaw

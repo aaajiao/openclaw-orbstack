@@ -165,16 +165,13 @@ MSG_CMD_UPDATE_SANDBOX_BASE_FAIL="    ✗ base image build failed"
 MSG_CMD_UPDATE_SANDBOX_COMMON_FAIL="    ✗ common image build failed"
 MSG_CMD_UPDATE_SANDBOX_BROWSER_FAIL="    ✗ browser image build failed"
 
-# openclaw-selfupdate is now a deprecated forwarder to `openclaw-update --wrapper-only`
-# (its wrapper-self-update logic lives in scripts/commands/update.sh's stage 1).
-# These keys are still used by that stage.
-MSG_CMD_SELFUPDATE_FETCHING="🔄 Fetching wrapper release tags..."
-MSG_CMD_SELFUPDATE_UNKNOWN_OPT="✗ Unknown option: %s (note: use --version=<tag>, not --version <tag>)"
-MSG_CMD_SELFUPDATE_ALREADY="✅ Wrapper already up to date (%s)."
-MSG_CMD_SELFUPDATE_CHECKOUT="  Checking out wrapper %s ..."
-MSG_CMD_SELFUPDATE_CHECKOUT_FAIL="✗ Failed to check out wrapper tag %s. Commit or stash local changes and retry."
-MSG_CMD_SELFUPDATE_DONE="✅ Wrapper updated: %s -> %s"
-MSG_CMD_SELFUPDATE_DEPRECATED="⚠️  openclaw-selfupdate is deprecated — openclaw-update now updates the wrapper too (--pre / --stable / --version=<tag>)."
+# wrapper self-update (scripts/commands/update.sh stage 1)
+MSG_UPDATE_WRAPPER_FETCHING="🔄 Fetching wrapper release tags..."
+MSG_CMD_UPDATE_UNKNOWN_OPT="✗ Unknown option: %s (note: use --version=<tag>, not --version <tag>)"
+MSG_UPDATE_WRAPPER_ALREADY="✅ Wrapper already up to date (%s)."
+MSG_UPDATE_WRAPPER_CHECKOUT="  Checking out wrapper %s ..."
+MSG_UPDATE_WRAPPER_CHECKOUT_FAIL="✗ Failed to check out wrapper tag %s. Commit or stash local changes and retry."
+MSG_UPDATE_WRAPPER_DONE="✅ Wrapper updated: %s -> %s"
 
 # openclaw-sandbox-rebuild
 MSG_CMD_REBUILD_START="🔨 Rebuilding sandbox Docker images..."
@@ -251,7 +248,7 @@ MSG_REFRESH_CMD_UPDATE="  openclaw-update         Update wrapper + OpenClaw in o
 MSG_REFRESH_CMD_REBUILD="  openclaw-sandbox-rebuild Rebuild sandbox images"
 MSG_REFRESH_CMD_CODEX_LOGIN="  openclaw-codex-login    Bind ChatGPT subscription (Codex CLI)"
 MSG_REFRESH_CMD_UNINSTALL="  openclaw-uninstall      Clean uninstall"
-MSG_REFRESH_DEPRECATED_NOTE="  (deprecated aliases openclaw-stop/start/doctor/whatsapp/telegram/selfupdate remain installed and forward to the native openclaw commands)"
+MSG_REFRESH_DEPRECATED_NOTE="  (deprecated aliases openclaw-stop/start/doctor/whatsapp/telegram remain installed and forward to the native openclaw commands)"
 
 # openclaw-uninstall
 MSG_CMD_UNINSTALL_USAGE="Usage: openclaw-uninstall [--yes] [--vm]"

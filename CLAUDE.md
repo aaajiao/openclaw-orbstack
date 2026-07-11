@@ -117,7 +117,7 @@ A `.build-version` marker (`~/.openclaw/.build-version`) tracks successful insta
 
 ### Single-Command Update Model
 
-`openclaw-update` is the **one** update command — see memory `[[wrapper-versioning-and-distribution]]`. It first updates **the wrapper itself** (this repo — same logic that used to live in a separate `openclaw-selfupdate`), regenerates `~/bin/openclaw-*`, then installs the resulting wrapper-aligned **OpenClaw** into the VM. Two internal stages, one user-facing command; a hidden `--wrapper-only` flag runs stage 1 alone (used by the deprecated `openclaw-selfupdate` alias to forward its calls).
+`openclaw-update` is the **one** update command — see memory `[[wrapper-versioning-and-distribution]]`. It first updates **the wrapper itself** (this repo), regenerates `~/bin/openclaw-*`, then installs the resulting wrapper-aligned **OpenClaw** into the VM. Two internal stages, one user-facing command; a hidden `--wrapper-only` flag runs stage 1 alone (wrapper-only, no VM changes).
 
 - **Channel inference (default, no flags)**: follows whatever channel the repo checkout is already on. Branch checkout → `git pull` (interim behavior, unchanged — see deferred cutover below). Checkout pinned on a stable tag → follows the latest stable tag. Checkout on a beta tag → follows the newest tag including pre-releases.
 - **`--pre`** switches to the beta channel and it's sticky (stays there across future plain runs until `--stable`).
@@ -127,7 +127,7 @@ A `.build-version` marker (`~/.openclaw/.build-version`) tracks successful insta
 
 **Deferred cutover (unchanged)**: `refresh-mac-commands.sh` still auto-`git pull`s wrapper `main` on a branch checkout (skipped on a detached HEAD, so a pin/channel switch is respected). Removing that auto-pull entirely is deferred to the **v2026.7.1 stable** `/sync-upstream` (the latest stable tag must first carry this single-command model, else a default run would strand users on a tag that predates it).
 
-`~/bin/openclaw-*` wrappers are generated from a single command table in `scripts/refresh-mac-commands.sh` (16 commands total). Six are deprecated compatibility aliases (`openclaw-stop`, `openclaw-start`, `openclaw-doctor`, `openclaw-whatsapp`, `openclaw-telegram`, `openclaw-selfupdate`) that still work but print a one-line `[deprecated]` stderr notice pointing at the native replacement (`openclaw gateway stop|start`, `openclaw doctor`, `openclaw channels login --channel whatsapp`, `openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>`, and `openclaw-update --wrapper-only` for `openclaw-selfupdate`); their removal is deferred to a future stable release alongside the deferred cutover above.
+`~/bin/openclaw-*` wrappers are generated from a single command table in `scripts/refresh-mac-commands.sh` (15 commands total). Five are deprecated compatibility aliases (`openclaw-stop`, `openclaw-start`, `openclaw-doctor`, `openclaw-whatsapp`, `openclaw-telegram`) that still work but print a one-line `[deprecated]` stderr notice pointing at the native replacement (`openclaw gateway stop|start`, `openclaw doctor`, `openclaw channels login --channel whatsapp`, `openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>`); their removal is deferred to a future stable release alongside the deferred cutover above.
 
 ## Verification Checklist
 

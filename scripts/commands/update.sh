@@ -6,8 +6,8 @@
 # channel. The channel is inferred from the repo checkout state, or switched
 # explicitly via --pre / --stable / --version=<tag>. See the CHANNEL MODEL
 # comment below for the full state machine. Because this stage never touches
-# the VM, `openclaw-update --wrapper-only` (used by the deprecated
-# `openclaw-selfupdate` alias) works even without one.
+# the VM, the hidden `openclaw-update --wrapper-only` utility flag works even
+# without one.
 #
 # STAGE 2 (VM-side, unchanged from the previous single-purpose openclaw-update):
 # update OpenClaw inside the VM to the version this wrapper's VERSION file is
@@ -34,9 +34,9 @@ for arg in "$@"; do
         --pre) PRE=true ;;
         --stable) STABLE=true ;;
         # Hidden flags (not documented in --help):
-        #   --wrapper-only : run stage 1 only, then exit — the compatibility
-        #                    path for the deprecated `openclaw-selfupdate` alias.
-        #                    Never touches the VM.
+        #   --wrapper-only : run stage 1 only, then exit — update the wrapper
+        #                    without touching the VM (also handy for testing
+        #                    the channel logic on a machine with no VM).
         #   --after-self   : set by stage 1's own re-exec after it moves the
         #                    wrapper, so the freshly checked-out script skips
         #                    stage 1 and runs stage 2 directly.
@@ -62,7 +62,7 @@ for arg in "$@"; do
             # which does not match the `--version=*` glob). Fail loudly instead
             # of silently falling through to the default version-pin path.
             # shellcheck disable=SC2059
-            printf "$MSG_CMD_SELFUPDATE_UNKNOWN_OPT\n" "$arg"
+            printf "$MSG_CMD_UPDATE_UNKNOWN_OPT\n" "$arg"
             echo "$MSG_CMD_UPDATE_USAGE"
             exit 1
             ;;
@@ -76,7 +76,7 @@ fi
 
 # ============================================================================
 # STAGE 1: wrapper self-update (100% Mac-side git, no vm_exec — works without
-# a VM). Ported from the former standalone `openclaw-selfupdate` command.
+# a VM).
 #
 # CHANNEL MODEL (inferred from the repo checkout, plus one pin marker file
 # ~/bin/.openclaw-pin):
@@ -103,11 +103,10 @@ if [ "$AFTER_SELF" = false ]; then
     if [ "$GIT_OK" = true ]; then
         OLD_VERSION=$(git -C "$OPENCLAW_REPO_DIR" describe --tags --always 2>/dev/null || echo "unknown")
 
-        # Mirror the old selfupdate.sh's fetch hygiene (--force --prune tolerate
-        # rewritten refs — upstream openclaw has many force-pushed/renamed
-        # branches; this repo's own tags are far fewer but the same flags are
-        # harmless and keep behavior identical to before the merge).
-        echo "$MSG_CMD_SELFUPDATE_FETCHING"
+        # Fetch hygiene: --force --prune tolerate rewritten refs (this repo's
+        # own tags are few, but the flags are harmless and let a re-pointed
+        # release tag — e.g. a same-day beta re-cut — come through cleanly).
+        echo "$MSG_UPDATE_WRAPPER_FETCHING"
         git -C "$OPENCLAW_REPO_DIR" fetch --tags --quiet --force --prune 2>/dev/null || true
 
         WRAPPER_TARGET_TAG=""
@@ -187,7 +186,7 @@ if [ "$AFTER_SELF" = false ]; then
             DO_MOVE=true
             if [ "$SKIP_ANCESTOR_CHECK" = false ] && git -C "$OPENCLAW_REPO_DIR" merge-base --is-ancestor "$WRAPPER_TARGET_TAG" HEAD 2>/dev/null; then
                 # shellcheck disable=SC2059
-                printf "$MSG_CMD_SELFUPDATE_ALREADY\n" "$WRAPPER_TARGET_TAG"
+                printf "$MSG_UPDATE_WRAPPER_ALREADY\n" "$WRAPPER_TARGET_TAG"
                 DO_MOVE=false
             fi
             if [ "$DO_MOVE" = true ]; then
@@ -195,10 +194,10 @@ if [ "$AFTER_SELF" = false ]; then
                 # skips its silent self-update pull when HEAD is detached, so the
                 # wrapper regeneration below will NOT undo this checkout).
                 # shellcheck disable=SC2059
-                printf "$MSG_CMD_SELFUPDATE_CHECKOUT\n" "$WRAPPER_TARGET_TAG"
+                printf "$MSG_UPDATE_WRAPPER_CHECKOUT\n" "$WRAPPER_TARGET_TAG"
                 if ! git -C "$OPENCLAW_REPO_DIR" -c advice.detachedHead=false checkout -q "$WRAPPER_TARGET_TAG" 2>/dev/null; then
                     # shellcheck disable=SC2059
-                    printf "$MSG_CMD_SELFUPDATE_CHECKOUT_FAIL\n" "$WRAPPER_TARGET_TAG"
+                    printf "$MSG_UPDATE_WRAPPER_CHECKOUT_FAIL\n" "$WRAPPER_TARGET_TAG"
                     exit 1
                 fi
                 if [ -n "$TARGET_VERSION" ]; then
@@ -215,10 +214,10 @@ if [ "$AFTER_SELF" = false ]; then
     if [ "$WRAPPER_MOVED" = true ]; then
         NEW_VERSION=$(git -C "$OPENCLAW_REPO_DIR" describe --tags --always 2>/dev/null || echo "unknown")
         # shellcheck disable=SC2059
-        printf "$MSG_CMD_SELFUPDATE_DONE\n" "$OLD_VERSION" "$NEW_VERSION"
+        printf "$MSG_UPDATE_WRAPPER_DONE\n" "$OLD_VERSION" "$NEW_VERSION"
         # Regenerate ~/bin/openclaw-* from the freshly checked-out tag. Pass
-        # through language + VM name like the old selfupdate.sh did so
-        # refresh-mac-commands.sh stays non-interactive.
+        # through language + VM name so refresh-mac-commands.sh stays
+        # non-interactive.
         OPENCLAW_LANG="$_OPENCLAW_LANG" OPENCLAW_VM_NAME="$OPENCLAW_VM_NAME" \
             bash "$OPENCLAW_REPO_DIR/scripts/refresh-mac-commands.sh" 2>/dev/null || true
         if [ "$WRAPPER_ONLY" = true ]; then
@@ -325,8 +324,8 @@ else
         # its final release). Translate the semver `-` prerelease separator to `~`,
         # which GNU/Apple sort -V both order BEFORE the release — restoring correct
         # precedence. Without this, the designed beta→stable transition to the SAME
-        # base version (selfupdate --pre then a stable selfupdate) is misread as a
-        # downgrade and refused.
+        # base version (openclaw-update --pre, then --stable once it lands) is
+        # misread as a downgrade and refused.
         BUILT_CMP=$(printf '%s' "$BUILT" | sed 's/-/~/g')
         TARGET_CMP=$(printf '%s' "$LATEST_TAG" | sed 's/-/~/g')
         NEWER=$(printf '%s\n%s\n' "$TARGET_CMP" "$BUILT_CMP" | sort -V | tail -1)

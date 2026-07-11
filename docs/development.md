@@ -98,23 +98,25 @@ fi
 
 更新完成后会运行 `openclaw doctor --fix`，确保 systemd service 入口路径与当前安装方式一致，并安装 bundled plugin 依赖。此后 `update.sh` 会轮询 Gateway 是否真正进入 `running` 健康态；启动失败时自动 `openclaw update repair` 自愈一次（补齐缺失的 bundled plugin 目录），仍失败则如实报错。
 
-## 两条更新命令
+## 一条更新命令，两个内部阶段
 
-本 wrapper 提供两条作用在不同层的更新命令，各有独立脚本：
+`openclaw-update`（`scripts/commands/update.sh`）是**唯一**的更新命令，内部分两个阶段：
 
-| 命令 | 脚本 | 作用对象 | 触碰 VM？ |
-|------|------|----------|-----------|
-| `openclaw-update` | `scripts/commands/update.sh` | VM 内的上游 OpenClaw（npm 包 + `~/openclaw` checkout） | 是 |
-| `openclaw-selfupdate` | `scripts/commands/selfupdate.sh` | 这个 wrapper 项目（Mac 上的 repo clone + `~/bin/openclaw-*`） | 否 |
+| 阶段 | 作用对象 | 触碰 VM？ |
+|------|----------|-----------|
+| 阶段一（wrapper） | 这个 wrapper 项目（Mac 上的 repo clone + `~/bin/openclaw-*`），按 `--pre`/`--stable`/`--version=<tag>` 切通道/钉版本 | 否 |
+| 阶段二（OpenClaw） | VM 内的上游 OpenClaw（npm 包 + `~/openclaw` checkout） | 是 |
 
-`openclaw-selfupdate` 按 release tag 把 repo checkout 成 **detached HEAD**（默认取最新 stable tag，`--pre` 取含 pre-release 的最新 tag，`--version=<tag>` 精确锁定/回滚）。默认与 `--pre` 路径**从不降级**（目标 tag 已是 HEAD 祖先则 no-op）；只有 `--version=` 豁免此规则。
+隐藏参数 `--wrapper-only` 只跑阶段一、跳过阶段二，用于只更新 wrapper 不碰 VM 的场景。
+
+阶段一按 release tag 把 repo checkout 成 **detached HEAD**（默认取最新 stable tag，`--pre` 取含 pre-release 的最新 tag，`--version=<tag>` 精确锁定/回滚）。默认与 `--pre` 路径**从不降级**（目标 tag 已是 HEAD 祖先则 no-op）；只有 `--version=` 豁免此规则。
 
 **detached-HEAD 守卫**（两处配合，别拆开改）：
 
-- `refresh-mac-commands.sh` 在 detached HEAD 时**跳过**它自身的静默 `git pull`，因此 `openclaw-selfupdate` 重新生成命令不会撤销刚锁定的 tag。
-- `~/bin/openclaw-update` 只在 HEAD 处于**分支**时才 `git pull` 拉取 wrapper 代码；detached HEAD（= 被 selfupdate 锁定）时保持锁定、不 pull、不告警。
+- `refresh-mac-commands.sh` 在 detached HEAD 时**跳过**它自身的静默 `git pull`，因此重新生成命令不会撤销刚锁定的 tag。
+- `~/bin/openclaw-update` 只在 HEAD 处于**分支**时才 `git pull` 拉取 wrapper 代码；detached HEAD（= 被 `openclaw-update` 的 `--version=`/`--pre`/`--stable` 钉住）时保持锁定、不 pull、不告警。
 
-把 wrapper 交付完全切到 `openclaw-selfupdate`（移除 `openclaw-update` 里那段 auto-pull）的动作推迟到 v2026.7.1 stable 线——现在的最新 stable tag（v2026.6.11）尚未携带 `openclaw-selfupdate`，提前切会 strand 用户。
+把 wrapper 交付完全切到 `openclaw-update` 内建的 wrapper 阶段（移除 `openclaw-update` 里那段 auto-pull）的动作推迟到 v2026.7.1 stable 线——现在的最新 stable tag（v2026.6.11）尚未携带这套单命令模型，提前切会 strand 用户。
 
 ## 开发命令
 

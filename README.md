@@ -104,8 +104,6 @@ openclaw-update --force             # Force a rebuild / allow a downgrade
 - **Keeps the git checkout in sync.** The `~/openclaw` checkout is always moved to the target tag, because the sandbox Docker images are built from that repo.
 
 > **Note:** `refresh-mac-commands.sh` still auto-`git pull`s the wrapper repo's `main` branch when your checkout is on a branch, so branch users stay current automatically between runs. Pinning a tag puts the repo on a detached HEAD, which the auto-pull respects — it won't undo your pin. The full cutover (removing the auto-pull block entirely, since `openclaw-update` now handles the wrapper) is deferred to the first v2026.7.1 stable release.
->
-> `openclaw-selfupdate` still works as a **deprecated alias** — it forwards to just the wrapper-update stage of `openclaw-update` (same `--pre`/`--stable`/`--version=` flags), printing a one-line notice. Prefer plain `openclaw-update` going forward.
 
 ### Versioning & release model
 
@@ -145,7 +143,7 @@ openclaw doctor
 
 ## Mac Commands
 
-All 16 commands are generated into `~/bin` from a single command table in `scripts/refresh-mac-commands.sh`. Re-run `openclaw-update` (or `bash scripts/refresh-mac-commands.sh`) to regenerate them. Six are deprecated compatibility aliases — they still work today but print a one-line `[deprecated]` notice on stderr pointing at their native replacement; removal is deferred to a future stable release.
+All 15 commands are generated into `~/bin` from a single command table in `scripts/refresh-mac-commands.sh`. Re-run `openclaw-update` (or `bash scripts/refresh-mac-commands.sh`) to regenerate them. Five are deprecated compatibility aliases — they still work today but print a one-line `[deprecated]` notice on stderr pointing at their native replacement; removal is deferred to a future stable release.
 
 | Command | Function |
 |---------|----------|
@@ -161,7 +159,6 @@ All 16 commands are generated into `~/bin` from a single command table in `scrip
 | `openclaw-whatsapp` | *Deprecated alias, still works* → `openclaw channels login --channel whatsapp` |
 | `openclaw-codex-login` | Bind a ChatGPT subscription via Codex device-code login (optional) |
 | `openclaw-update` | **Update everything: wrapper + OpenClaw** (channels: `--pre`/`--stable`; also `--version=<tag>`, `--sandbox`, `--force`) |
-| `openclaw-selfupdate` | *Deprecated alias, still works* → `openclaw-update` (wrapper-only stage; `--pre`/`--stable`/`--version=<tag>`) |
 | `openclaw-sandbox-rebuild` | Rebuild the sandbox Docker images |
 | `openclaw-uninstall` | Clean uninstall |
 
