@@ -1,5 +1,6 @@
 #!/bin/bash
-# openclaw-update: Update OpenClaw to the latest version
+# openclaw-update: Update OpenClaw to the version this wrapper's VERSION file is
+# aligned with (override via --version=<tag>)
 # Called via thin wrapper: ~/bin/openclaw-update -> this script
 
 # SC1091: Dynamic source of _common.sh
@@ -74,12 +75,57 @@ if [ -n "$TARGET_VERSION" ]; then
     # shellcheck disable=SC2059
     printf "$MSG_UPDATE_VERSION_USING\n" "$LATEST_TAG"
 else
-    LATEST_TAG=$(vm_exec "cd ~/openclaw && git tag -l 'v*' | grep -v -e '-beta' -e '-rc' -e '-alpha' | sort -V | tail -1")
+    # Default target = THIS wrapper's own VERSION file (read on the Mac side).
+    # Project policy: the wrapper's VERSION mirrors the upstream OpenClaw version it
+    # is aligned with. Reading it here (instead of the old "latest stable upstream
+    # tag", which filtered out betas and ignored the wrapper entirely) is what makes
+    # the two commands compose: `openclaw-selfupdate` picks the CHANNEL (which wrapper
+    # tag you're on — stable, or a beta via --pre), and `openclaw-update` then installs
+    # the OpenClaw version that wrapper is aligned with. Without this, selfupdate --pre
+    # moved the wrapper onto a beta tag but the matching OpenClaw beta never reached the
+    # VM. The --version=* branch above stays the explicit escape hatch (any tag, incl.
+    # rollback).
+    # Guard the read so a MISSING VERSION file yields the friendly error too: a bare
+    # `< file` redirection failure aborts the command substitution under set -e
+    # (active via _common.sh) before the [ -z ] check below is ever reached.
+    LATEST_TAG=$( [ -f "$OPENCLAW_REPO_DIR/VERSION" ] && tr -d '[:space:]' < "$OPENCLAW_REPO_DIR/VERSION" || true )
     if [ -z "$LATEST_TAG" ]; then
         echo "$MSG_ERR_NO_VERSION"
         exit 1
     fi
-    echo "  -> $LATEST_TAG"
+    # Validate the wrapper VERSION resolves to a real upstream OpenClaw tag/commit
+    # (same check the --version path uses). Guards the case where the wrapper is
+    # ahead of any published OpenClaw release.
+    if ! vm_exec "cd ~/openclaw && git rev-parse --verify '$LATEST_TAG^{commit}' >/dev/null 2>&1"; then
+        # shellcheck disable=SC2059
+        printf "$MSG_ERR_WRAPPER_VERSION_NO_MATCH\n" "$LATEST_TAG"
+        exit 1
+    fi
+    # Downgrade guard (default path ONLY — the --version=* pin above is exempt so it
+    # can still roll back intentionally). If the wrapper-aligned target is OLDER than
+    # the last successfully built OpenClaw and --force was not given, refuse: a routine
+    # `openclaw-update` should never silently downgrade the VM's OpenClaw.
+    BUILT=$(vm_exec "cat ~/.openclaw/.build-version 2>/dev/null" || echo "")
+    if [ -n "$BUILT" ] && [ "$BUILT" != "$LATEST_TAG" ] && [ "$FORCE" = false ]; then
+        # sort -V is available on macOS (Apple sort 2.3); this runs Mac-side.
+        # sort -V is NOT semver-prerelease-aware: it ranks `X.Y.Z-beta.N` ABOVE
+        # `X.Y.Z`, the opposite of semver (a prerelease has LOWER precedence than
+        # its final release). Translate the semver `-` prerelease separator to `~`,
+        # which GNU/Apple sort -V both order BEFORE the release — restoring correct
+        # precedence. Without this, the designed beta→stable transition to the SAME
+        # base version (selfupdate --pre then a stable selfupdate) is misread as a
+        # downgrade and refused.
+        BUILT_CMP=$(printf '%s' "$BUILT" | sed 's/-/~/g')
+        TARGET_CMP=$(printf '%s' "$LATEST_TAG" | sed 's/-/~/g')
+        NEWER=$(printf '%s\n%s\n' "$TARGET_CMP" "$BUILT_CMP" | sort -V | tail -1)
+        if [ "$NEWER" = "$BUILT_CMP" ] && [ "$TARGET_CMP" != "$BUILT_CMP" ]; then
+            # shellcheck disable=SC2059
+            printf "$MSG_UPDATE_WRAPPER_DOWNGRADE\n" "$BUILT" "$LATEST_TAG"
+            exit 1
+        fi
+    fi
+    # shellcheck disable=SC2059
+    printf "$MSG_UPDATE_WRAPPER_ALIGNED\n" "$LATEST_TAG"
 fi
 
 # --- Ensure Node.js >= 24 (upstream recommends 24.x LTS) ---

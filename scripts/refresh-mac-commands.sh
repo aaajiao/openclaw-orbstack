@@ -175,9 +175,31 @@ if [ -z "$REPO" ] || [ ! -d "$REPO" ]; then
     echo "Error: openclaw-orbstack repo not found. Run: cd openclaw-orbstack && git pull && bash scripts/refresh-mac-commands.sh"
     exit 1
 fi
-# Self-update: pull latest openclaw-orbstack repo before executing
-cd "$REPO" && git pull -q 2>/dev/null || echo "⚠ Failed to update openclaw-orbstack repo, using cached version"
+# Self-update: pull latest openclaw-orbstack repo before executing — but ONLY
+# when HEAD is on a BRANCH. A detached HEAD means the user pinned a release tag
+# via openclaw-selfupdate; leave it pinned (no pull, no warning) so branch users
+# and selfupdate-pinned users coexist.
+#
+# DEFERRED CUTOVER: the full switch — removing this auto-pull entirely and making
+# openclaw-selfupdate the default wrapper-delivery path — is deferred to the
+# v2026.7.1 stable /sync-upstream, when a STABLE tag will finally carry the
+# openclaw-selfupdate command. Cutting over now would strand users: the current
+# latest stable tag (v2026.6.11) predates openclaw-selfupdate.
+if git -C "$REPO" symbolic-ref -q HEAD >/dev/null 2>&1; then
+    (cd "$REPO" && git pull -q 2>/dev/null) || echo "⚠ Failed to update openclaw-orbstack repo, using cached version"
+fi
 exec bash "$REPO/scripts/commands/update.sh" "$@"
+CMDEOF
+
+cat > ~/bin/openclaw-selfupdate << 'CMDEOF'
+#!/bin/bash
+set -e
+REPO=$(cat ~/bin/.openclaw-repo 2>/dev/null)
+if [ -z "$REPO" ] || [ ! -d "$REPO" ]; then
+    echo "Error: openclaw-orbstack repo not found. Run: cd openclaw-orbstack && git pull && bash scripts/refresh-mac-commands.sh"
+    exit 1
+fi
+exec bash "$REPO/scripts/commands/selfupdate.sh" "$@"
 CMDEOF
 
 cat > ~/bin/openclaw-config << 'CMDEOF'
@@ -238,6 +260,7 @@ echo "$MSG_REFRESH_CMD_STARTSTOP"
 echo "$MSG_REFRESH_CMD_SHELL"
 echo "$MSG_REFRESH_CMD_CONFIG"
 echo "$MSG_REFRESH_CMD_UPDATE"
+echo "$MSG_REFRESH_CMD_SELFUPDATE"
 echo "$MSG_REFRESH_CMD_REBUILD"
 echo "$MSG_REFRESH_CMD_DOCTOR"
 echo "$MSG_REFRESH_CMD_TELEGRAM"

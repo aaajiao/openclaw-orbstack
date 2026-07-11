@@ -200,7 +200,8 @@ Gateway 还支持以下扩展能力：
   ├── openclaw-start         # systemctl start
   ├── openclaw-shell         # 进入 VM
   ├── openclaw-doctor        # 运行诊断
-  ├── openclaw-update        # 更新版本 (--sandbox 重建镜像，--force 强制重建，--version=<tag> 装指定版本)
+  ├── openclaw-update        # 更新 VM 内上游 OpenClaw (--sandbox 重建镜像，--force 强制重建，--version=<tag> 装指定版本)
+  ├── openclaw-selfupdate    # 更新 wrapper 本身 (--pre 收 pre-release，--version=<tag> 锁定/回滚)
   ├── openclaw-sandbox-rebuild # 重建沙箱镜像
   ├── openclaw-telegram      # Telegram 频道配置
   ├── openclaw-whatsapp      # WhatsApp 登录

@@ -114,6 +114,17 @@ The git checkout (`~/openclaw`) is always kept at the target tag regardless of i
 
 A `.build-version` marker (`~/.openclaw/.build-version`) tracks successful installs. `openclaw-update` checks this marker to avoid skipping a version whose previous install attempt failed.
 
+### Two-Command Update Model (added on the v2026.7.1-beta.5 line)
+
+Two independent commands update two layers — see memory `[[wrapper-versioning-and-distribution]]`:
+
+- **`openclaw-update`** updates **OpenClaw in the VM**. Default target = **this wrapper's own `VERSION`** (which mirrors a real upstream OpenClaw version), NOT "latest upstream stable"; `--version=<tag>` overrides (explicit pin/rollback). It refuses to downgrade OpenClaw without `--force` (`--version=` path is exempt). Version compare translates the semver `-` prerelease separator to `~` before `sort -V` (which is not prerelease-aware), so a stable release outranks its own prerelease.
+- **`openclaw-selfupdate`** (`scripts/commands/selfupdate.sh`) updates **the wrapper itself** (this repo), release-pinned: default = latest stable tag, `--pre` = latest tag incl. validated betas, `--version=` = pin/rollback. Mac-only (detached checkout of the tag + regenerate `~/bin/openclaw-*`), never downgrades on default/`--pre` (git-ancestor check). The tag it lands on selects the CHANNEL the next `openclaw-update` follows.
+
+Compose: `openclaw-selfupdate --pre && openclaw-update` → moves both onto the beta line; without `--pre` → stable.
+
+**Deferred cutover**: `refresh-mac-commands.sh` still auto-`git pull`s wrapper `main` on a branch checkout (skipped on a detached HEAD, so a selfupdate pin is respected). Removing that auto-pull and making `openclaw-selfupdate` the sole delivery path is deferred to the **v2026.7.1 stable** `/sync-upstream` (the latest stable tag must first carry `openclaw-selfupdate`, else default selfupdate would strand users on a tag that predates it).
+
 ## Verification Checklist
 
 Before declaring a task done, verify all applicable items:
@@ -195,6 +206,15 @@ GitHub Actions runs shellcheck on shell scripts (`.github/workflows/shellcheck.y
 
 Never push, tag, create a release, or upgrade the VM autonomously — wait for explicit
 user direction on what to do and in which order.
+
+**Release channels** (versioning policy): the wrapper version always mirrors a real
+upstream OpenClaw version — never invented. Upstream **stable** → GitHub **Latest**
+release; a **validated** upstream **beta** → GitHub **pre-release** (`openclaw-selfupdate
+--pre`). Until the deferred cutover (above), updates flow via `git pull` of `main`, so
+keep `main`'s `VERSION` at the last **stable** and cut a beta pre-release as a tag **one
+commit ahead of `main`** (that extra commit only stamps `VERSION`/`CLAUDE.md` to the
+beta). This keeps auto-pull stable users honestly labeled while the pre-release snapshot
+carries the beta stamp. Details: memory `[[wrapper-versioning-and-distribution]]`.
 
 ## Config Editing Rules
 

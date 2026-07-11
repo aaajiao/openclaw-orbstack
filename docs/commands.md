@@ -4,12 +4,16 @@
 
 在 Mac 上有两类命令可用：
 
-1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 14 个命令
+1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 16 个命令
 2. **官方 CLI 命令** (`openclaw <command>`) - 透传到 VM 的 150+ 官方命令
+
+> **两条更新命令，互相配合**（详见 [更新命令详情](#更新命令详情)）：
+> - **`openclaw-selfupdate`** — 更新 **这个 wrapper（openclaw-orbstack）本身**，即 `~/bin/openclaw-*` 命令和安装/更新脚本，只跑在 Mac 上。它选**通道**（stable / `--pre` beta / 钉住的 tag），不直接碰 VM，但决定下一条命令装哪个版本。
+> - **`openclaw-update`** — 把**当前 wrapper 对齐的上游 OpenClaw** 装进 VM（AI 大脑本体）。
 
 ---
 
-## OrbStack 管理命令 (15 个)
+## OrbStack 管理命令 (16 个)
 
 这些命令在 `~/bin/` 目录下，用于管理 OrbStack VM 和服务：
 
@@ -82,7 +86,8 @@ openclaw-codex-login                   # 启动 device-code OAuth 登录
 | `openclaw-start` | 启动服务 |
 | `openclaw-shell` | 进入 VM 终端 |
 | `openclaw-doctor` | 运行诊断 (openclaw doctor) |
-| `openclaw-update` | 更新版本 (`--sandbox` 重建镜像，`--force` 强制重建，`--version=<tag>` 装指定版本) |
+| `openclaw-update` | 更新 **VM 内上游 OpenClaw** (`--sandbox` 重建镜像，`--force` 强制重建，`--version=<tag>` 装指定版本) |
+| `openclaw-selfupdate` | 更新 **wrapper 本身** (`--pre` 收 pre-release，`--version=<tag>` 锁定/回滚) |
 | `openclaw-sandbox-rebuild` | 重建沙箱 Docker 镜像 |
 | `openclaw-uninstall` | 完全卸载 (`--vm` 同时删除虚拟机) |
 
@@ -103,41 +108,89 @@ openclaw-uninstall --yes --vm   # 跳过确认并删除 VM
 
 ### 更新命令详情
 
-`openclaw-update` 会先检查是否有新版本。如果已是最新，直接跳过构建流程：
+有**两条**更新命令，它们**互相配合（compose）**：`openclaw-selfupdate` 选**通道**（你在哪个 wrapper release），`openclaw-update` 再把该 wrapper 对齐的 OpenClaw 版本装进 VM。
+
+| 命令 | 更新什么 | 跑在哪 | 直接触碰 VM？ | 角色 |
+|------|----------|--------|-----------|------|
+| `openclaw-selfupdate` | 这个 **wrapper（openclaw-orbstack）本身**（`~/bin/openclaw-*` + 安装/更新脚本） | Mac 主机 | 否 | 选**通道**（stable / `--pre` beta / 钉住的 tag） |
+| `openclaw-update` | VM 内的**上游 OpenClaw**（AI 大脑本体，npm 包 + 源码 checkout） | VM | 是 | 安装**当前 wrapper 对齐的** OpenClaw 版本 |
+
+`openclaw-selfupdate` 不直接碰 VM，但它落到的那个 wrapper tag **决定下一次 `openclaw-update` 装哪个 OpenClaw 版本**。典型连用：
 
 ```bash
-openclaw-update                            # 有新版本才更新，已是最新则跳过
-openclaw-update --force                    # 强制重新构建（即使已是最新版本）
-openclaw-update --sandbox                  # 同时重建沙箱 Docker 镜像
-openclaw-update --version=v2026.5.14-beta.1  # 装指定版本（支持 beta / rc / alpha tag）
+# 切到 beta 线（VM 里的 OpenClaw 走到对应 beta）：
+openclaw-selfupdate --pre && openclaw-update
+
+# 留在 / 回到 stable：
+openclaw-selfupdate && openclaw-update
 ```
 
-### 指定版本（`--version=<tag>`）
+#### `openclaw-update`（把 OpenClaw 装进 VM）
 
-默认 `openclaw-update` 只看最新稳定版（过滤掉 `-beta` / `-rc` / `-alpha`）。如果想测试某个上游 beta，或者降级回某个稳定 tag，用 `--version=<tag>`：
+`openclaw-update` 默认安装**当前 wrapper 对齐的** OpenClaw 版本（即 wrapper 的 `VERSION`，镜像一个真实上游版本），而**不是**盲目取“上游最新 stable”。如果目标版本已装好，直接跳过构建流程：
+
+```bash
+openclaw-update                            # 装当前 wrapper 对齐的版本，已装则跳过
+openclaw-update --force                    # 强制重新构建（即使已是目标版本）
+openclaw-update --sandbox                  # 同时重建沙箱 Docker 镜像
+openclaw-update --version=v2026.5.14-beta.1  # 装/回滚到指定版本（支持 beta / rc / alpha tag）
+```
+
+- **跟随 wrapper 版本**：默认目标 = wrapper 的 `VERSION`。所以 `openclaw-selfupdate --pre` 切到 beta wrapper 后，直接 `openclaw-update` 装的就是对应的 OpenClaw beta。
+- **不静默降级**：若 wrapper 对齐的目标比 VM 里已构建的**更旧**，除非加 `--force`，否则拒绝执行。要有意回滚用 `--version=<tag>`（该路径豁免降级保护）。
+
+装完后 `openclaw-update` 会**轮询 Gateway 是否真的进入 `running` 健康态**（不只看 start 是否派发成功）；若启动失败，会自动 `openclaw update repair` 自愈一次（重新拉齐缺失的 bundled plugin 目录），仍失败则如实报错并给出日志提示，不静默假成功。
+
+> **当前 wrapper 的自更新行为（过渡期）**：`openclaw-update` 在执行前，只有当 repo 处于**分支** HEAD 时才会静默 `git pull` 拉取本 wrapper 的最新代码；若 HEAD 处于 **detached**（说明用户用 `openclaw-selfupdate` 锁定了某个 release tag），则**保持锁定、不 pull、不告警**，让分支用户和 tag-pinned 用户共存。把 wrapper 交付完全切到 `openclaw-selfupdate`（移除这段 auto-pull）的动作推迟到 v2026.7.1 stable 线——那时才会有携带 `openclaw-selfupdate` 的 stable tag。
+
+##### 指定版本（`--version=<tag>`）
+
+默认 `openclaw-update` 装的是当前 wrapper 对齐的版本。如果想临时测试某个上游 beta，或者降级回某个稳定 tag，用 `--version=<tag>` 显式覆盖：
 
 ```bash
 # 试 beta（含上游 fix candidate）
 openclaw-update --version=v2026.5.14-beta.1
 
-# 降回上一个稳定版（出问题时回滚）
+# 降回上一个稳定版（出问题时回滚，绕过降级保护）
 openclaw-update --version=v2026.5.7
 ```
 
 - tag 必须是 upstream `openclaw/openclaw` 仓库已存在的 git tag
-- 装指定版本会绕过 build marker 跳过检查，无条件按这个 tag 重装
-- 装完之后下次直接 `openclaw-update`（不带 `--version`）会回到稳定版选择
+- 装指定版本会绕过 build marker 跳过检查、也豁免降级保护，无条件按这个 tag 重装
+- 装完之后下次不带 `--version` 直接 `openclaw-update`，会回到“跟随 wrapper 版本”的默认行为
 
-有新版本时的更新流程：
-1. 获取最新 release tag
+#### `openclaw-selfupdate`（选通道 / 更新 wrapper 本身）
+
+`openclaw-selfupdate` 只更新**这个 openclaw-orbstack 项目**（Mac 上的 `~/bin/openclaw-*` 命令 + 安装/更新脚本），完全跑在 Mac 主机上，**不直接连 VM**。它按 release tag 锁定 checkout（detached HEAD），并重新生成所有 `~/bin/openclaw-*` 命令。它本身不改 VM，但**选定了 `openclaw-update` 随后跟随的通道**。
+
+```bash
+openclaw-selfupdate                     # 切到最新 stable release tag（默认）
+openclaw-selfupdate --pre               # 切到最新 tag，含 pre-release（beta/rc/alpha）
+openclaw-selfupdate --version=v2026.6.6  # 锁定到指定 wrapper tag（可用于回滚，示例为较早的 tag）
+openclaw-selfupdate --help              # 查看用法
+```
+
+| Flag | 行为 |
+|------|------|
+| （无参数） | 取最新**稳定** release tag（过滤掉 `-beta` / `-rc` / `-alpha`）。**从不降级**——若当前 checkout 已领先于最新 stable tag，直接 no-op。 |
+| `--pre` | 取整体最新 tag，**包含 pre-release**，用于提前验证已测试的上游 beta。同样从不降级。 |
+| `--version=<tag>` | 精确锁定到某个 wrapper tag，**豁免不降级规则**（这是显式回滚路径）。tag 不存在则报错。 |
+
+**版本/发布模型**：wrapper 版本永远镜像一个**真实存在的上游 OpenClaw 版本**（不自造版本号）——上游 **stable → 本项目 Latest release**，经我们验证的上游 **beta → pre-release**。当前 `main` = `v2026.6.11`（Latest），`v2026.7.1-beta.5` 作为 pre-release 存在。想抢先体验就 `openclaw-selfupdate --pre` 再 `openclaw-update`。
+
+**行为要点**：
+- `openclaw-selfupdate` 把 repo checkout 到 tag（**detached HEAD 是刻意的**）。`refresh-mac-commands.sh` 在 detached HEAD 时会跳过它自身的静默 `git pull`，因此重新生成命令**不会**撤销这个锁定；`openclaw-update` 也会因 detached HEAD 而保持锁定（见上方过渡期说明）。
+- 想回到跟随分支的滚动更新，`cd` 进 repo 目录 `git checkout main` 即可，之后 `openclaw-update` 会恢复静默 pull。
+
+`openclaw-update` 有新版本时的更新流程：
+1. 读取目标 tag（默认 = wrapper 的 `VERSION`；`--version=` 则用指定 tag）
 2. 检查 Node.js 版本 (需 >= 24)
 3. 停止 Gateway 服务
-4. 切换到新版本
-5. 安装 — 主路径: `npm install -g openclaw@<version>` (预编译包)
-6. 若主路径失败 — 兜底: `pnpm install && pnpm build && pnpm ui:build && sudo npm install -g .` (源码构建)
-7. 检测沙箱镜像变化 (per-image hash 对比)
-8. 修复 service 配置 (`openclaw doctor --fix`)
-9. 启动服务
+4. 切换 `~/openclaw` checkout 到目标 tag
+5. 安装预编译 npm 包：`npm install -g openclaw@<version>`（**npm-only**，2026-06-10 起已移除源码构建兜底；包不完整/失败即如实报错并给日志提示，不再掉进源码编译）
+6. 检测沙箱镜像变化 (per-image hash 对比)
+7. 修复 service 配置 (`openclaw doctor --fix`)
+8. 启动服务并轮询健康态
 
 或单独重建沙箱镜像：
 ```bash
