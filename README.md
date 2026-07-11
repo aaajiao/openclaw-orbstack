@@ -246,6 +246,8 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for more.
 
 ## Documentation
 
+The deep-dive guides under `docs/` are currently written in Chinese. This README covers the English essentials — install, the update model, and commands. For the full English reference, see the upstream OpenClaw documentation at https://docs.openclaw.ai. `docs/README.zh-CN.md` is the Chinese README for this project.
+
 | Document | Content |
 |----------|---------|
 | [docs/README.zh-CN.md](docs/README.zh-CN.md) | 中文文档 |

@@ -1,5 +1,7 @@
 # 开发指南
 
+> 🌐 This guide is currently Chinese-only. English essentials are covered in the [README](../README.md); the upstream OpenClaw docs at https://docs.openclaw.ai are fully in English.
+
 ## 代码风格
 
 ### Bash 脚本

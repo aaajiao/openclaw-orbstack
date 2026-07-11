@@ -1,5 +1,7 @@
 # 故障排查指南
 
+> 🌐 This guide is currently Chinese-only. English essentials are covered in the [README](../README.md); the upstream OpenClaw docs at https://docs.openclaw.ai are fully in English.
+
 本文档只覆盖 **OrbStack 架构特有的问题**。通用配置、频道、模型等问题请查看 [官方故障排查文档](https://docs.openclaw.ai/gateway/troubleshooting)。
 
 ## OrbStack 特有问题

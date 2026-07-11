@@ -565,7 +565,9 @@
           //   "bridge" - 桥接网络 (推荐：浏览器可上网，Docker 仍隔离 Mac 文件系统)
           //   "host"   - 主机网络
           network: "bridge",
-          // 运行用户 (macOS 默认用户是 501:501，需要匹配 workspace 权限)
+          // 运行用户，需匹配 workspace 卷属主（VM 用户的 uid:gid）。
+          // OrbStack 会用 Mac 用户的 UID 创建 VM 用户——默认单用户 macOS 是 501，
+          // 所以示例写 501:501；安装器 (setup.sh) 现在会自动从 VM 探测真实值。
           user: "501:501",
           // 放弃的 Linux capabilities
           capDrop: ["ALL"],

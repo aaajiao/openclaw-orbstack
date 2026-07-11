@@ -460,6 +460,8 @@ with open(env_path, "w") as f:
     f.write("# OpenClaw Environment Variables (auto-generated)\n")
     f.write("# Do not commit this file to version control\n\n")
     for k, v in existing.items():
+        # Escape backslashes then double quotes so values containing " or \ do not break the KEY="value" line
+        v = v.replace("\\", "\\\\").replace("\"", "\\\"")
         f.write('{}="{}"\n'.format(k, v))
 
 os.chmod(env_path, 0o600)
@@ -538,6 +540,14 @@ ok "$MSG_OK_COMMANDS_CREATED"
 # --- Write default sandbox configuration ---
 info "$MSG_INFO_SANDBOX_CONFIG"
 
+# Sandbox container user must match the workspace volume owner. OrbStack creates
+# the VM user with the Mac user's UID — 501 on a default single-user macOS setup,
+# which is why a hardcoded "501:501" used to work. Derive the real uid:gid from
+# the VM (it is up at this point) so non-501 Macs get a correct mapping; fall
+# back to 501:501 if the probe fails. Spliced into the otherwise-literal heredoc
+# below via quote-splitting ('"$VM_UID_GID"') — the Mac expands only that token.
+VM_UID_GID=$(vm_exec 'echo "$(id -u):$(id -g)"' 2>/dev/null || echo "501:501")
+
 vm_exec 'cat > /tmp/sandbox-config.json << '\''SANDBOX_EOF'\''
 {
   "agents": {
@@ -554,7 +564,7 @@ vm_exec 'cat > /tmp/sandbox-config.json << '\''SANDBOX_EOF'\''
           "readOnlyRoot": true,
           "tmpfs": ["/tmp:exec,mode=1777", "/var/tmp", "/run"],
           "network": "bridge",
-          "user": "501:501",
+          "user": "'"$VM_UID_GID"'",
           "capDrop": ["ALL"],
           "env": {
             "LANG": "C.UTF-8"

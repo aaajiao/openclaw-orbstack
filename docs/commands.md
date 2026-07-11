@@ -1,5 +1,7 @@
 # CLI 命令参考
 
+> 🌐 This guide is currently Chinese-only. English essentials are covered in the [README](../README.md); the upstream OpenClaw docs at https://docs.openclaw.ai are fully in English.
+
 ## 概览
 
 在 Mac 上有两类命令可用：

@@ -1,5 +1,7 @@
 # 系统架构
 
+> 🌐 This guide is currently Chinese-only. English essentials are covered in the [README](../README.md); the upstream OpenClaw docs at https://docs.openclaw.ai are fully in English.
+
 ## AI 在哪里运行？
 
 **重要**: AI 大脑（LLM）运行在**云端**，不在本地！
