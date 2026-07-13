@@ -6,16 +6,16 @@
 
 在 Mac 上有两类命令可用：
 
-1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 15 个（其中 5 个为已弃用兼容别名）命令
+1. **OrbStack 管理命令** (`openclaw-*`) - 我们为 OrbStack 架构添加的 10 个命令
 2. **官方 CLI 命令** (`openclaw <command>`) - 透传到 VM 的 150+ 官方命令
 
 > **`openclaw-update` 是唯一的更新命令**（详见 [更新命令详情](#更新命令详情)）：先更新**这个 wrapper（openclaw-orbstack）本身**（`~/bin/openclaw-*` 命令和安装/更新脚本，只跑在 Mac 上），再把 wrapper 对齐的**上游 OpenClaw** 装进 VM（AI 大脑本体）。`--pre`/`--stable` 切换/记住通道，`--version=<tag>` 可钉版本；隐藏参数 `--wrapper-only` 只跑 wrapper 那一段、不碰 VM。
 
 ---
 
-## OrbStack 管理命令 (15 个，其中 5 个为已弃用兼容别名)
+## OrbStack 管理命令 (10 个)
 
-这些命令在 `~/bin/` 目录下，用于管理 OrbStack VM 和服务，由 `scripts/refresh-mac-commands.sh` 中的命令表统一生成。其中 5 个（`openclaw-stop`、`openclaw-start`、`openclaw-doctor`、`openclaw-whatsapp`、`openclaw-telegram`）已弃用为兼容别名：仍可正常使用，但运行时会在 stderr 打印一行 `[deprecated]` 提示，指向对应的原生命令；移除计划推迟到未来某个 stable release。
+这些命令在 `~/bin/` 目录下，用于管理 OrbStack VM 和服务，由 `scripts/refresh-mac-commands.sh` 中的命令表统一生成。曾经的 5 个兼容别名（`openclaw-stop`、`openclaw-start`、`openclaw-doctor`、`openclaw-whatsapp`、`openclaw-telegram`）已于 v2026.7.1-beta 线彻底移除，请使用对应的原生命令。
 
 ### 核心命令
 
@@ -43,17 +43,16 @@ openclaw-config backup   # 备份到本地
 
 | 命令 | 功能 |
 |------|------|
-| `openclaw-telegram` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>` |
-| `openclaw-whatsapp` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw channels login --channel whatsapp` |
+| `openclaw channels add --channel telegram` | Telegram Bot 配对（原 `openclaw-telegram` 别名） |
+| `openclaw channels login --channel whatsapp` | WhatsApp 登录（原 `openclaw-whatsapp` 别名） |
 
 ```bash
-# Telegram Bot 管理（已弃用别名，仍可用，会打印 [deprecated] 提示）
-openclaw-telegram                      # 查看帮助
-openclaw-telegram add <bot_token>      # 添加 Bot (从 @BotFather 获取)
-openclaw-telegram approve <code>       # 批准配对 (回执验证码)
+# Telegram Bot 管理
+openclaw channels add --channel telegram --token <bot_token>   # 添加 Bot (从 @BotFather 获取)
+openclaw pairing approve telegram <code>                       # 批准配对 (回执验证码)
 
-# WhatsApp 登录（已弃用别名，仍可用，会打印 [deprecated] 提示）
-openclaw-whatsapp                      # 扫码登录
+# WhatsApp 登录
+openclaw channels login --channel whatsapp                     # 扫码登录
 ```
 
 ### AI 认证
@@ -84,10 +83,7 @@ openclaw-codex-login                   # 启动 device-code OAuth 登录
 | `openclaw-status` | 查看 Gateway 服务状态 (openclaw gateway status) |
 | `openclaw-logs` | 实时日志 (openclaw logs --follow) |
 | `openclaw-restart` | 重启服务 |
-| `openclaw-stop` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw gateway stop` |
-| `openclaw-start` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw gateway start` |
 | `openclaw-shell` | 进入 VM 终端 |
-| `openclaw-doctor` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw doctor` |
 | `openclaw-update` | **更新一切：wrapper + OpenClaw**（通道：`--pre`/`--stable`；另有 `--version=<tag>`、`--sandbox`、`--force`；隐藏参数 `--wrapper-only` 只跑 wrapper 阶段） |
 | `openclaw-sandbox-rebuild` | 重建沙箱 Docker 镜像 |
 | `openclaw-uninstall` | 完全卸载 (`--vm` 同时删除虚拟机) |
@@ -202,7 +198,7 @@ openclaw gateway health                    # 健康检查
 openclaw gateway probe                     # 完整可达性探测
 openclaw gateway discover                  # Bonjour 发现
 
-# 生命周期管理 (OrbStack 环境下一般用 openclaw-start/stop/restart 快捷命令)
+# 生命周期管理 (OrbStack 环境下用 openclaw-restart 快捷命令，或原生 `openclaw gateway start|stop`)
 openclaw gateway run                       # 前台运行 Gateway
 openclaw gateway run --port 18789          # 指定端口
 openclaw gateway run --auth token          # Token 认证模式
@@ -1022,9 +1018,9 @@ orb -m openclaw-vm bash -c 'systemctl --user status openclaw-gateway'
 
 ```bash
 # 杀死所有进程并重启
-openclaw-stop
+openclaw gateway stop
 orb -m openclaw-vm bash -c 'sudo pkill -9 -f "openclaw"; sudo pkill -9 node; sleep 2'
-openclaw-start
+openclaw gateway start
 ```
 
 详细故障排查指南见 [troubleshooting.md](troubleshooting.md)

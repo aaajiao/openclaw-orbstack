@@ -80,9 +80,9 @@ openclaw-restart
 orb -m openclaw-vm bash -c 'ss -tlnp | grep 18789'
 
 # 强制停止并重启
-openclaw-stop
+openclaw gateway stop
 orb -m openclaw-vm bash -c 'sudo pkill -9 -f "openclaw"; sudo pkill -9 node; sleep 2'
-openclaw-start
+openclaw gateway start
 ```
 
 如果使用 Web UI 时看到这个错误，通常可以忽略 — 这只是说明 systemd 管理的 Gateway 已经在运行。
@@ -148,9 +148,9 @@ openclaw-shell                     # 进入 VM 排查
 openclaw-restart
 
 # 强制重启（杀死所有进程）
-openclaw-stop
+openclaw gateway stop
 orb -m openclaw-vm bash -c 'sudo pkill -9 -f "openclaw"; sudo pkill -9 node; sleep 2'
-openclaw-start
+openclaw gateway start
 ```
 
 ---

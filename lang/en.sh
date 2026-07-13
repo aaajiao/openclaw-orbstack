@@ -193,20 +193,6 @@ MSG_CMD_REBUILD_COMMON_SKIP="  ⏭ Skipping common image (base build failed)"
 MSG_CMD_REBUILD_USAGE="Usage: openclaw-sandbox-rebuild [--help]"
 MSG_CMD_REBUILD_DESC="Rebuild the sandbox Docker images (base, common, browser) inside the VM."
 
-# openclaw-telegram
-MSG_CMD_TG_ADD_USAGE="Usage: openclaw-telegram add [bot_token]"
-MSG_CMD_TG_ADD_HINT="Get token from @BotFather; omit the argument to enter it as hidden input"
-MSG_CMD_TG_TOKEN_PROMPT="Bot token (input hidden): "
-MSG_CMD_TG_APPROVE_USAGE="Usage: openclaw-telegram approve [code]"
-MSG_CMD_TG_APPROVE_HINT="Enter the pairing code sent by the Bot"
-MSG_CMD_TG_CODE_PROMPT="Pairing code: "
-MSG_CMD_TG_TITLE="Telegram Bot Management"
-MSG_CMD_TG_USAGE="Usage:"
-MSG_CMD_TG_ADD_DESC="  openclaw-telegram add [bot_token]      Add Bot (omit to enter hidden; token from @BotFather)"
-MSG_CMD_TG_APPROVE_DESC="  openclaw-telegram approve [code]       Approve pairing (omit to be prompted)"
-MSG_CMD_TG_ALT="Or use directly:"
-MSG_CMD_TG_ALT_CMD="  openclaw channels login --channel telegram"
-
 # --- Completion Output ---
 MSG_FINAL_COMPLETE="Deployment Complete!"
 MSG_FINAL_ARCH="Architecture:"
@@ -248,7 +234,6 @@ MSG_REFRESH_CMD_UPDATE="  openclaw-update         Update wrapper + OpenClaw in o
 MSG_REFRESH_CMD_REBUILD="  openclaw-sandbox-rebuild Rebuild sandbox images"
 MSG_REFRESH_CMD_CODEX_LOGIN="  openclaw-codex-login    Bind ChatGPT subscription (Codex CLI)"
 MSG_REFRESH_CMD_UNINSTALL="  openclaw-uninstall      Clean uninstall"
-MSG_REFRESH_DEPRECATED_NOTE="  (deprecated aliases openclaw-stop/start/doctor/whatsapp/telegram remain installed and forward to the native openclaw commands)"
 
 # openclaw-uninstall
 MSG_CMD_UNINSTALL_USAGE="Usage: openclaw-uninstall [--yes] [--vm]"

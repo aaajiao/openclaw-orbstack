@@ -53,43 +53,24 @@ echo "$SCRIPT_DIR" > ~/bin/.openclaw-repo
 # Helper: inline VM resolution snippet (3 lines, embedded in every generated file)
 _VM_RESOLVE='_VM="openclaw-vm"; [ -f "$HOME/bin/.openclaw-vm" ] && source "$HOME/bin/.openclaw-vm" && _VM="${OPENCLAW_VM:-$_VM}"'
 
-# gen_deprecation_notice <cmd_name> <replacement_text>
-#   Prints (to be captured into a generated file) one stderr line warning that
-#   this ~/bin/openclaw-<cmd_name> is a deprecated alias. English only — same
-#   standalone-generated-file exception as the rest of these command bodies.
-gen_deprecation_notice() {
-    printf 'echo "[deprecated] openclaw-%s: use '\''%s'\'' (this alias still works)" >&2\n' "$1" "$2"
-}
-
 # --- Table: simple VM-command wrappers ---
-# Fields: name|vm_command|deprecated(yes/no)|replacement_text|forward_args(yes/no)
-# forward_args=yes means the wrapper forwards "$@" via printf %q (only doctor today).
+# Fields: name|vm_command
+# (The five deprecated aliases — stop/start/doctor/whatsapp/telegram — were
+# retired 2026-07-13; use the native openclaw commands via the passthrough.)
 SIMPLE_CMDS=(
-    "status|openclaw gateway status|no||no"
-    "logs|openclaw logs --follow|no||no"
-    "restart|openclaw gateway restart|no||no"
-    "stop|openclaw gateway stop|yes|openclaw gateway stop|no"
-    "start|openclaw gateway start|yes|openclaw gateway start|no"
-    "whatsapp|openclaw channels login --channel whatsapp|yes|openclaw channels login --channel whatsapp|no"
-    "doctor|openclaw doctor|yes|openclaw doctor [args]|yes"
+    "status|openclaw gateway status"
+    "logs|openclaw logs --follow"
+    "restart|openclaw gateway restart"
 )
 
 for _entry in "${SIMPLE_CMDS[@]}"; do
-    IFS='|' read -r _name _vmcmd _deprecated _replacement _forward <<< "$_entry"
+    IFS='|' read -r _name _vmcmd <<< "$_entry"
     _out="$HOME/bin/openclaw-$_name"
     {
         echo '#!/bin/bash'
         echo 'set -e'
         echo "$_VM_RESOLVE"
-        if [ "$_deprecated" = "yes" ]; then
-            gen_deprecation_notice "$_name" "$_replacement"
-        fi
-        if [ "$_forward" = "yes" ]; then
-            echo 'ARGS=$(printf '\''%q '\'' "$@")'
-            printf 'orb -m "$_VM" bash -lc "%s $ARGS"\n' "$_vmcmd"
-        else
-            printf 'orb -m "$_VM" bash -lc "%s"\n' "$_vmcmd"
-        fi
+        printf 'orb -m "$_VM" bash -lc "%s"\n' "$_vmcmd"
     } > "$_out"
 done
 
@@ -134,17 +115,14 @@ EOF
 # These delegate to repo scripts so they auto-update on next openclaw-update
 
 # --- Table: dispatch wrappers -> $REPO/scripts/commands/<name>.sh ---
-# Fields: name|deprecated(yes/no)|replacement_text
 DISPATCH_CMDS=(
-    "update|no|"
-    "config|no|"
-    "telegram|yes|openclaw channels add --channel telegram --token <token> / openclaw pairing approve telegram <code>"
-    "sandbox-rebuild|no|"
-    "uninstall|no|"
+    "update"
+    "config"
+    "sandbox-rebuild"
+    "uninstall"
 )
 
-for _entry in "${DISPATCH_CMDS[@]}"; do
-    IFS='|' read -r _name _deprecated _replacement <<< "$_entry"
+for _name in "${DISPATCH_CMDS[@]}"; do
     _out="$HOME/bin/openclaw-$_name"
     {
         echo '#!/bin/bash'
@@ -171,18 +149,19 @@ if git -C "$REPO" symbolic-ref -q HEAD >/dev/null 2>&1; then
 fi
 BLOCK
         fi
-        if [ "$_deprecated" = "yes" ]; then
-            gen_deprecation_notice "$_name" "$_replacement"
-        fi
         printf 'exec bash "$REPO/scripts/commands/%s.sh" "$@"\n' "$_name"
     } > "$_out"
 done
 
 # Retired commands: remove stale files a previous wrapper version generated.
 # openclaw-selfupdate existed only briefly on the v2026.7.1-beta.5 line before
-# its logic merged into openclaw-update; without this, users who ran that cut
-# keep a dead file whose dispatch target no longer exists.
-rm -f ~/bin/openclaw-selfupdate
+# its logic merged into openclaw-update. The five deprecated compatibility
+# aliases (stop/start/doctor/whatsapp/telegram) were retired outright on
+# 2026-07-13 in favor of the native openclaw commands; clean those out of
+# ~/bin too so no dead alias lingers.
+rm -f ~/bin/openclaw-selfupdate \
+      ~/bin/openclaw-stop ~/bin/openclaw-start ~/bin/openclaw-doctor \
+      ~/bin/openclaw-whatsapp ~/bin/openclaw-telegram
 
 chmod +x ~/bin/openclaw-*
 chmod +x ~/bin/openclaw
@@ -200,7 +179,6 @@ echo "$MSG_REFRESH_CMD_UPDATE"
 echo "$MSG_REFRESH_CMD_REBUILD"
 echo "$MSG_REFRESH_CMD_CODEX_LOGIN"
 echo "$MSG_REFRESH_CMD_UNINSTALL"
-echo "$MSG_REFRESH_DEPRECATED_NOTE"
 echo ""
 # Auto-add ~/bin to PATH in shell rc (same logic as setup script)
 if append_path_to_shell_rc; then

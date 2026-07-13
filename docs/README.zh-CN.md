@@ -117,11 +117,11 @@ openclaw-status
 openclaw-logs
 
 # Telegram Bot 配对
-openclaw-telegram add <bot_token>      # 添加 Bot
-openclaw-telegram approve <code>       # 回执验证码
+openclaw channels add --channel telegram --token <bot_token>   # 添加 Bot
+openclaw pairing approve telegram <code>                       # 回执验证码
 
 # WhatsApp 登录
-openclaw-whatsapp
+openclaw channels login --channel whatsapp
 
 # 编辑配置
 openclaw-config edit
@@ -135,20 +135,16 @@ openclaw doctor
 
 ## Mac 端命令
 
-共 15 个命令，由 `scripts/refresh-mac-commands.sh` 中的统一命令表生成；其中 5 个已弃用为兼容别名——仍可正常使用，但会在 stderr 打印一行 `[deprecated]` 提示并指向原生替代命令，移除推迟到未来某个 stable release。
+共 10 个命令，由 `scripts/refresh-mac-commands.sh` 中的统一命令表生成。曾经的 5 个兼容别名（`openclaw-stop`、`openclaw-start`、`openclaw-doctor`、`openclaw-whatsapp`、`openclaw-telegram`）已彻底移除，请改用原生命令；重新生成命令时会顺带清理 `~/bin` 里的旧别名文件。
 
 | 命令 | 功能 |
 |------|------|
-| `openclaw` | CLI 透传 (所有官方命令) — 推荐优先用它，而非下面的已弃用别名 |
-| `openclaw-telegram` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>` |
-| `openclaw-whatsapp` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw channels login --channel whatsapp` |
+| `openclaw` | CLI 透传 (所有官方命令) |
 | `openclaw-config` | 配置管理 |
 | `openclaw-status` | 服务状态 |
 | `openclaw-logs` | 实时日志 |
 | `openclaw-restart` | 重启服务 |
-| `openclaw-stop/start` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw gateway stop` / `openclaw gateway start` |
 | `openclaw-shell` | 进入 VM |
-| `openclaw-doctor` | 已弃用（兼容别名，仍可用）→ 原生替代：`openclaw doctor` |
 | `openclaw-update` | **更新一切：wrapper + OpenClaw**（通道：`--pre`/`--stable`；另有 `--version=<tag>`、`--sandbox`、`--force`） |
 | `openclaw-sandbox-rebuild` | 重建沙箱镜像 |
 | `openclaw-codex-login` | 绑定 ChatGPT 订阅（Codex CLI device-code 登录，可选） |

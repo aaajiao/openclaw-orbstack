@@ -125,11 +125,11 @@ openclaw-status                        # Check service status
 openclaw-logs                          # Follow live logs
 
 # Telegram bot pairing
-openclaw-telegram add <bot_token>      # Add a bot
-openclaw-telegram approve <code>       # Approve with the pairing code
+openclaw channels add --channel telegram --token <bot_token>   # Add a bot
+openclaw pairing approve telegram <code>                       # Approve with the pairing code
 
 # WhatsApp login
-openclaw-whatsapp
+openclaw channels login --channel whatsapp
 
 # Edit config
 openclaw-config edit
@@ -143,20 +143,16 @@ openclaw doctor
 
 ## Mac Commands
 
-All 15 commands are generated into `~/bin` from a single command table in `scripts/refresh-mac-commands.sh`. Re-run `openclaw-update` (or `bash scripts/refresh-mac-commands.sh`) to regenerate them. Five are deprecated compatibility aliases — they still work today but print a one-line `[deprecated]` notice on stderr pointing at their native replacement; removal is deferred to a future stable release.
+All 10 commands are generated into `~/bin` from a single command table in `scripts/refresh-mac-commands.sh`. Re-run `openclaw-update` (or `bash scripts/refresh-mac-commands.sh`) to regenerate them. The former compatibility aliases (`openclaw-stop`, `openclaw-start`, `openclaw-doctor`, `openclaw-whatsapp`, `openclaw-telegram`) have been removed — use the native `openclaw` commands instead; regenerating the commands also cleans up any stale alias files left in `~/bin`.
 
 | Command | Function |
 |---------|----------|
-| `openclaw` | Official CLI passthrough (all upstream commands) — prefer this over the deprecated aliases below |
+| `openclaw` | Official CLI passthrough (all upstream commands) |
 | `openclaw-status` | Gateway service status |
 | `openclaw-logs` | Follow live Gateway logs |
 | `openclaw-restart` | Restart the Gateway service |
-| `openclaw-start` / `openclaw-stop` | *Deprecated alias, still works* → `openclaw gateway start` / `openclaw gateway stop` |
 | `openclaw-shell` | Open a shell inside the VM |
-| `openclaw-doctor` | *Deprecated alias, still works* → `openclaw doctor` |
 | `openclaw-config` | Manage config (`edit` / `show` / `backup`) |
-| `openclaw-telegram` | *Deprecated alias, still works* → `openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>` |
-| `openclaw-whatsapp` | *Deprecated alias, still works* → `openclaw channels login --channel whatsapp` |
 | `openclaw-codex-login` | Bind a ChatGPT subscription via Codex device-code login (optional) |
 | `openclaw-update` | **Update everything: wrapper + OpenClaw** (channels: `--pre`/`--stable`; also `--version=<tag>`, `--sandbox`, `--force`) |
 | `openclaw-sandbox-rebuild` | Rebuild the sandbox Docker images |

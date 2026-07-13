@@ -193,21 +193,6 @@ MSG_CMD_REBUILD_COMMON_SKIP="  ⏭ 跳过 common 镜像（base 构建失败）"
 MSG_CMD_REBUILD_USAGE="用法: openclaw-sandbox-rebuild [--help]"
 MSG_CMD_REBUILD_DESC="在 VM 内重建沙箱 Docker 镜像（base、common、browser）。"
 
-# openclaw-telegram
-MSG_CMD_TG_ADD_USAGE="用法: openclaw-telegram add [bot_token]"
-MSG_CMD_TG_ADD_HINT="从 @BotFather 获取 token；不填参数则以隐藏输入方式输入"
-MSG_CMD_TG_TOKEN_PROMPT="Bot token（输入不回显）: "
-MSG_CMD_TG_APPROVE_USAGE="用法: openclaw-telegram approve [code]"
-MSG_CMD_TG_APPROVE_HINT="输入 Bot 发给你的配对码"
-MSG_CMD_TG_CODE_PROMPT="配对验证码: "
-MSG_CMD_TG_TITLE="Telegram Bot 管理"
-MSG_CMD_TG_USAGE="用法:"
-MSG_CMD_TG_ADD_DESC="  openclaw-telegram add [bot_token]      添加 Bot (不填参数则隐藏输入；token 从 @BotFather 获取)"
-MSG_CMD_TG_APPROVE_DESC="  openclaw-telegram approve [code]       批准配对 (不填参数则提示输入)"
-MSG_CMD_TG_ALT="或直接使用:"
-MSG_CMD_TG_ALT_CMD="  openclaw channels login --channel telegram"
-
-
 # --- Completion Output ---
 MSG_FINAL_COMPLETE="部署完成！"
 MSG_FINAL_ARCH="架构:"
@@ -249,7 +234,6 @@ MSG_REFRESH_CMD_UPDATE="  openclaw-update         一条命令更新 wrapper + O
 MSG_REFRESH_CMD_REBUILD="  openclaw-sandbox-rebuild 重建沙箱镜像"
 MSG_REFRESH_CMD_CODEX_LOGIN="  openclaw-codex-login    绑定 ChatGPT 订阅（Codex CLI）"
 MSG_REFRESH_CMD_UNINSTALL="  openclaw-uninstall      完全卸载"
-MSG_REFRESH_DEPRECATED_NOTE="  (已弃用的别名 openclaw-stop/start/doctor/whatsapp/telegram 仍会安装，会转发到原生 openclaw 命令)"
 
 # openclaw-uninstall
 MSG_CMD_UNINSTALL_USAGE="用法: openclaw-uninstall [--yes] [--vm]"
