@@ -37,7 +37,7 @@ MSG_WARN_DOCKER_SERVICE="Docker service setup had issues, attempting to continue
 
 # --- Step 4: Node.js ---
 MSG_OK_NODE_INSTALLED="Node.js installed"
-MSG_INFO_NODE_UPGRADE="Node.js %s is outdated, upgrading to 24.x..."
+MSG_INFO_NODE_UPGRADE="Node.js %s is below the required 24.15+, upgrading..."
 MSG_OK_NODE_UPGRADED="Node.js upgraded"
 MSG_INFO_INSTALLING_NODE="Installing Node.js 24.x..."
 MSG_OK_PNPM_INSTALLED="pnpm installed"
@@ -172,6 +172,7 @@ MSG_UPDATE_WRAPPER_ALREADY="✅ Wrapper already up to date (%s)."
 MSG_UPDATE_WRAPPER_CHECKOUT="  Checking out wrapper %s ..."
 MSG_UPDATE_WRAPPER_CHECKOUT_FAIL="✗ Failed to check out wrapper tag %s. Commit or stash local changes and retry."
 MSG_UPDATE_WRAPPER_DONE="✅ Wrapper updated: %s -> %s"
+MSG_UPDATE_WRAPPER_PULL_FAIL="⚠ Failed to pull the wrapper repo, continuing with the current version"
 
 # openclaw-sandbox-rebuild
 MSG_CMD_REBUILD_START="🔨 Rebuilding sandbox Docker images..."
@@ -288,7 +289,7 @@ MSG_UPDATE_ENV_CREATED="✓ Created ~/.openclaw/.env with Bonjour settings"
 
 # --- openclaw-update Node.js upgrade ---
 MSG_UPDATE_NODE_CHECK="  Checking Node.js version..."
-MSG_UPDATE_NODE_UPGRADING="  ⬆ Node.js %s is below 24.x, upgrading..."
+MSG_UPDATE_NODE_UPGRADING="  ⬆ Node.js %s is below 24.15.0 (required by OpenClaw >= 2026.7.1), upgrading..."
 MSG_UPDATE_NODE_UPGRADED="  ✓ Node.js upgraded to %s"
 MSG_UPDATE_NODE_OK="  ✓ Node.js %s meets requirements"
 MSG_UPDATE_NODE_FAIL="  ⚠ Node.js upgrade failed, continuing with current version"

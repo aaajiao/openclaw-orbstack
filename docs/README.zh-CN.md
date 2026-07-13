@@ -82,7 +82,7 @@ openclaw-update --force             # 强制重建 / 允许降级
 
 | 参数 | wrapper 通道 | 说明 |
 |------|-------------|------|
-| *(默认)* | 跟随**当前**通道 | 分支检出 → `git pull`（过渡期做法，见下方说明）；检出在 stable tag 上 → 跟随最新 stable tag；检出在 beta tag 上 → 跟随含 pre-release 的最新 tag |
+| *(默认)* | 跟随**当前**通道 | 分支检出 → 更新命令自己 `git pull` 分支；检出在 stable tag 上 → 跟随最新 stable tag；检出在 beta tag 上 → 跟随含 pre-release 的最新 tag |
 | `--pre` | **beta** 通道，会记住 | 切到含经验证 pre-release 的最新 tag，之后一直停留在这条线，直到 `--stable` |
 | `--stable` | **stable** 通道，会记住 | 切回最新 stable tag；由此触发的 VM 侧 OpenClaw 降级通常仍需要 `--force`（或等下一个 stable） |
 | `--version=<tag>` | **钉版本（pinned）** | 若存在对应的 wrapper tag `<tag>`，会把 wrapper 与 OpenClaw **一起**钉住——之后再跑一次不带参数的 `openclaw-update` 会保持这个钉住状态并提示；`--pre`/`--stable` 会恢复跟随通道。若没有匹配的 wrapper tag，则只钉 OpenClaw 版本（与旧行为一致） |
@@ -92,7 +92,7 @@ openclaw-update --force             # 强制重建 / 允许降级
 - **自愈**。自动检测并修复旧版安装——比如把老的系统级服务迁到当前用户级服务，或重建丢失的插件目录。
 - **保持 git checkout 同步**。`~/openclaw` 检出始终对齐目标 tag，因为沙箱 Docker 镜像就是从这个仓库构建的。
 
-> **说明**：当你的检出在分支上时，`refresh-mac-commands.sh` 仍会自动 `git pull` wrapper 仓库的 `main` 分支，让分支用户在两次运行之间自动保持最新。钉某个 tag 会让仓库进入 detached HEAD，这个自动 pull 会尊重这一点、不会把你的锁定改掉。彻底移除这段 auto-pull 逻辑（因为 `openclaw-update` 现在已经内含 wrapper 更新）这个完整切换推迟到 v2026.7.1 line 的**第一个 stable release**。
+> **说明**：自 v2026.7.1 起，`refresh-mac-commands.sh` 不再自动 `git pull` wrapper 仓库——分支检出时由 `openclaw-update` 自己拉取 `main`，其内建的 wrapper 阶段成为唯一交付路径。钉某个 tag 会让仓库进入 detached HEAD，更新会尊重这一点、不会把你的锁定改掉。
 
 ### 版本 & 发布模型
 
@@ -103,7 +103,7 @@ wrapper 版本始终**镜像一个真实的上游 OpenClaw 版本**——我们�
 | stable 版本 | 发布为 **Latest** | `openclaw-update --stable` |
 | 经验证 / 测试过的 **beta** | 发布为 **pre-release** | `openclaw-update --pre` |
 
-当前状态（示意，实时对照见 [GitHub Releases](https://github.com/aaajiao/openclaw-orbstack/releases)）：wrapper stable 为 **v2026.6.11**（Latest）；**v2026.7.1-beta.6** 作为 pre-release 提供。
+当前状态（示意，实时对照见 [GitHub Releases](https://github.com/aaajiao/openclaw-orbstack/releases)）：wrapper stable 为 **v2026.7.1**（Latest）。
 
 ## 快速开始
 

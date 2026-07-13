@@ -142,13 +142,15 @@ ok "$MSG_OK_DOCKER_STARTED"
 # ============================================================================
 step 4 "$MSG_STEP_4"
 
-REQUIRED_NODE_MAJOR=24
+# OpenClaw >= 2026.7.1 hard-rejects Node runtimes whose bundled SQLite is
+# vulnerable to WAL corruption (upstream #106065): the floor on the 24 LTS
+# line is 24.15.0, not just "major 24".
+REQUIRED_NODE_FLOOR="24.15.0"
 
 if vm_exec "command -v node &> /dev/null"; then
     NODE_VERSION=$(vm_exec 'node --version' 2>/dev/null)
-    NODE_MAJOR="${NODE_VERSION#v}"
-    NODE_MAJOR="${NODE_MAJOR%%.*}"
-    if [ "$NODE_MAJOR" -ge "$REQUIRED_NODE_MAJOR" ]; then
+    NODE_BARE="${NODE_VERSION#v}"
+    if [ -n "$NODE_BARE" ] && [ "$(printf '%s\n%s\n' "$REQUIRED_NODE_FLOOR" "$NODE_BARE" | sort -V | head -1)" = "$REQUIRED_NODE_FLOOR" ]; then
         ok "$MSG_OK_NODE_INSTALLED: $NODE_VERSION"
     else
         info "$(printf "$MSG_INFO_NODE_UPGRADE" "$NODE_VERSION")"

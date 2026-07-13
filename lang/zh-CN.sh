@@ -37,7 +37,7 @@ MSG_WARN_DOCKER_SERVICE="Docker 服务配置出现问题，尝试继续..."
 
 # --- Step 4: Node.js ---
 MSG_OK_NODE_INSTALLED="Node.js 已安装"
-MSG_INFO_NODE_UPGRADE="Node.js %s 版本过低，升级到 24.x..."
+MSG_INFO_NODE_UPGRADE="Node.js %s 低于要求的 24.15+，正在升级..."
 MSG_OK_NODE_UPGRADED="Node.js 已升级"
 MSG_INFO_INSTALLING_NODE="安装 Node.js 24.x..."
 MSG_OK_PNPM_INSTALLED="pnpm 已安装"
@@ -172,6 +172,7 @@ MSG_UPDATE_WRAPPER_ALREADY="✅ 包装脚本已是最新（%s）。"
 MSG_UPDATE_WRAPPER_CHECKOUT="  正在检出包装 %s ..."
 MSG_UPDATE_WRAPPER_CHECKOUT_FAIL="✗ 检出包装标签 %s 失败。请先提交或暂存本地改动后重试。"
 MSG_UPDATE_WRAPPER_DONE="✅ 包装已更新: %s -> %s"
+MSG_UPDATE_WRAPPER_PULL_FAIL="⚠ 拉取 wrapper 仓库失败，继续使用当前版本"
 
 # openclaw-sandbox-rebuild
 MSG_CMD_REBUILD_START="🔨 正在重建沙箱 Docker 镜像..."
@@ -288,7 +289,7 @@ MSG_UPDATE_ENV_CREATED="✓ 已创建 ~/.openclaw/.env（Bonjour 配置）"
 
 # --- openclaw-update Node.js 升级 ---
 MSG_UPDATE_NODE_CHECK="  检查 Node.js 版本..."
-MSG_UPDATE_NODE_UPGRADING="  ⬆ Node.js %s 低于 24.x，正在升级..."
+MSG_UPDATE_NODE_UPGRADING="  ⬆ Node.js %s 低于 24.15.0（OpenClaw ≥ 2026.7.1 硬性要求），正在升级..."
 MSG_UPDATE_NODE_UPGRADED="  ✓ Node.js 已升级到 %s"
 MSG_UPDATE_NODE_OK="  ✓ Node.js %s 满足要求"
 MSG_UPDATE_NODE_FAIL="  ⚠ Node.js 升级失败，继续使用当前版本"

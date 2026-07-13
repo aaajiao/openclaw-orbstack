@@ -93,7 +93,7 @@ openclaw-update --force             # Force a rebuild / allow a downgrade
 
 | Flag | Wrapper channel | Notes |
 |------|------------------|-------|
-| *(default)* | Follows your **current** channel | Branch checkout → `git pull` (interim, see note below); tag on stable → latest stable tag; tag on beta → newest tag incl. pre-releases |
+| *(default)* | Follows your **current** channel | Branch checkout → the update command `git pull`s the branch itself; tag on stable → latest stable tag; tag on beta → newest tag incl. pre-releases |
 | `--pre` | **Beta** channel, sticky | Moves to the newest tag including validated pre-releases; stays there until `--stable` |
 | `--stable` | **Stable** channel, sticky | Moves back to the latest stable tag; the VM-side OpenClaw downgrade this often implies still needs `--force` (or wait for the next stable) |
 | `--version=<tag>` | **Pinned** | If a wrapper tag `<tag>` exists, pins wrapper **and** OpenClaw together — a later plain `openclaw-update` keeps the pin and says so; `--pre`/`--stable` resumes following a channel. If no matching wrapper tag exists, it pins only the OpenClaw version (unchanged legacy behavior) |
@@ -103,7 +103,7 @@ openclaw-update --force             # Force a rebuild / allow a downgrade
 - **Self-healing.** It auto-detects and repairs stale installs — for example, migrating an old system-level service to the current user-level service, or recreating a missing plugin directory.
 - **Keeps the git checkout in sync.** The `~/openclaw` checkout is always moved to the target tag, because the sandbox Docker images are built from that repo.
 
-> **Note:** `refresh-mac-commands.sh` still auto-`git pull`s the wrapper repo's `main` branch when your checkout is on a branch, so branch users stay current automatically between runs. Pinning a tag puts the repo on a detached HEAD, which the auto-pull respects — it won't undo your pin. The full cutover (removing the auto-pull block entirely, since `openclaw-update` now handles the wrapper) is deferred to the first v2026.7.1 stable release.
+> **Note:** As of v2026.7.1, `refresh-mac-commands.sh` no longer auto-pulls the wrapper repo — `openclaw-update` itself pulls `main` when your checkout is on a branch, making its built-in wrapper stage the sole delivery path. Pinning a tag puts the repo on a detached HEAD, which the update respects — it won't undo your pin.
 
 ### Versioning & release model
 
@@ -114,7 +114,7 @@ The wrapper version always **mirrors a real upstream OpenClaw version** — we n
 | Stable release | Published as **Latest** | `openclaw-update --stable` |
 | Validated / tested **beta** | Published as a **pre-release** | `openclaw-update --pre` |
 
-Current state (illustrative — see the [GitHub Releases](https://github.com/aaajiao/openclaw-orbstack/releases) page for the live pair): wrapper stable is **v2026.6.11** (Latest); **v2026.7.1-beta.6** is available as a pre-release.
+Current state (illustrative — see the [GitHub Releases](https://github.com/aaajiao/openclaw-orbstack/releases) page for the live pair): wrapper stable is **v2026.7.1** (Latest).
 
 ## Quick Start
 

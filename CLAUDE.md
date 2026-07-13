@@ -1,7 +1,7 @@
 # CLAUDE.md - Project Guide for Claude Code
 
 **Project:** OpenClaw OrbStack — one-click OpenClaw AI chatbot deployment on macOS via OrbStack VM.
-**Version:** v2026.6.11 | **License:** MIT
+**Version:** v2026.7.1 | **License:** MIT
 
 ## Architecture
 
@@ -82,7 +82,7 @@ Architecture decisions, config structure, feature status, and operational knowle
 | Config (in VM) | `~/.openclaw/openclaw.json` |
 | Secrets (in VM) | `~/.openclaw/.env` |
 | Codex CLI auth (in VM) | `~/.codex/auth.json` — required for ChatGPT subscription path (PR #82117 fallback) |
-| Node.js | 24.x LTS |
+| Node.js | 24.x LTS, **≥ 24.15.0** (hard floor since OpenClaw 2026.7.1 — SQLite WAL runtime guard, upstream #106065) |
 | Service | `systemctl --user` (`openclaw-gateway.service`) |
 | Gateway cmd | `node dist/index.js gateway --port 18789` |
 
@@ -119,13 +119,13 @@ A `.build-version` marker (`~/.openclaw/.build-version`) tracks successful insta
 
 `openclaw-update` is the **one** update command — see memory `[[wrapper-versioning-and-distribution]]`. It first updates **the wrapper itself** (this repo), regenerates `~/bin/openclaw-*`, then installs the resulting wrapper-aligned **OpenClaw** into the VM. Two internal stages, one user-facing command; a hidden `--wrapper-only` flag runs stage 1 alone (wrapper-only, no VM changes).
 
-- **Channel inference (default, no flags)**: follows whatever channel the repo checkout is already on. Branch checkout → `git pull` (interim behavior, unchanged — see deferred cutover below). Checkout pinned on a stable tag → follows the latest stable tag. Checkout on a beta tag → follows the newest tag including pre-releases.
+- **Channel inference (default, no flags)**: follows whatever channel the repo checkout is already on. Branch checkout → stage 1 `git pull`s the branch itself (re-execs when HEAD moved). Checkout pinned on a stable tag → follows the latest stable tag. Checkout on a beta tag → follows the newest tag including pre-releases.
 - **`--pre`** switches to the beta channel and it's sticky (stays there across future plain runs until `--stable`).
 - **`--stable`** switches back to the stable channel, sticky. Note the VM-side OpenClaw downgrade this often implies still needs `--force` (or wait for the next stable release).
 - **`--version=<tag>`** pins. If a wrapper tag `<tag>` exists, it pins **wrapper and OpenClaw together** — a marker at `~/bin/.openclaw-pin` records this, so a later plain `openclaw-update` keeps the pin and says so instead of silently resuming a channel; `--pre`/`--stable` clears the marker and resumes following that channel. If no matching wrapper tag exists, it falls back to pinning only the OpenClaw version, same as legacy behavior.
 - Stage 2 (OpenClaw) still refuses to downgrade without `--force` (`--version=` path exempt). Version compare translates the semver `-` prerelease separator to `~` before `sort -V` (not prerelease-aware on its own), so a stable release outranks its own prerelease.
 
-**Deferred cutover (unchanged)**: `refresh-mac-commands.sh` still auto-`git pull`s wrapper `main` on a branch checkout (skipped on a detached HEAD, so a pin/channel switch is respected). Removing that auto-pull entirely is deferred to the **v2026.7.1 stable** `/sync-upstream` (the latest stable tag must first carry this single-command model, else a default run would strand users on a tag that predates it).
+**Cutover (completed 2026-07-14, v2026.7.1 stable sync)**: the generated `~/bin` shim no longer auto-`git pull`s — that block was removed from `refresh-mac-commands.sh`. `openclaw-update` stage 1 is the sole wrapper-delivery path: on a branch checkout it pulls the branch itself (and re-execs via `--after-self` when HEAD moved); on a detached HEAD it follows tags per the channel model above.
 
 `~/bin/openclaw-*` wrappers are generated from a single command table in `scripts/refresh-mac-commands.sh` (10 commands total). The five former deprecated compatibility aliases (`openclaw-stop`, `openclaw-start`, `openclaw-doctor`, `openclaw-whatsapp`, `openclaw-telegram`) were removed outright on 2026-07-13 (user decision) — use the native commands instead (`openclaw gateway stop|start`, `openclaw doctor`, `openclaw channels login --channel whatsapp`, `openclaw channels add --channel telegram --token <token>` / `openclaw pairing approve telegram <code>`). Regenerating the commands also deletes stale alias files from `~/bin`.
 
@@ -218,10 +218,11 @@ user direction on what to do and in which order.
 **Release channels** (versioning policy): the wrapper version always mirrors a real
 upstream OpenClaw version — never invented. Upstream **stable** → GitHub **Latest**
 release; a **validated** upstream **beta** → GitHub **pre-release** (`openclaw-update
---pre`). Until the deferred cutover (above), updates flow via `git pull` of `main`, so
-keep `main`'s `VERSION` at the last **stable** and cut a beta pre-release as a tag **one
-commit ahead of `main`** (that extra commit only stamps `VERSION`/`CLAUDE.md` to the
-beta). This keeps auto-pull stable users honestly labeled while the pre-release snapshot
+--pre`). Branch checkouts still update via `git pull` of `main` (now done by
+`openclaw-update` stage 1 since the v2026.7.1 cutover), so keep `main`'s `VERSION` at
+the last **stable** and cut a beta pre-release as a tag **one commit ahead of `main`**
+(that extra commit only stamps `VERSION`/`CLAUDE.md` to the beta). This keeps
+branch-following stable users honestly labeled while the pre-release snapshot
 carries the beta stamp. Details: memory `[[wrapper-versioning-and-distribution]]`.
 
 ## Config Editing Rules

@@ -132,23 +132,9 @@ for _name in "${DISPATCH_CMDS[@]}"; do
         echo '    echo "Error: openclaw-orbstack repo not found. Run: cd openclaw-orbstack && git pull && bash scripts/refresh-mac-commands.sh"'
         echo '    exit 1'
         echo 'fi'
-        if [ "$_name" = "update" ]; then
-            cat <<'BLOCK'
-# Self-update: pull latest openclaw-orbstack repo before executing — but ONLY
-# when HEAD is on a BRANCH. A detached HEAD means the user moved onto a release
-# tag via openclaw-update's channel/pin flags (--pre/--stable/--version=); leave
-# it pinned (no pull, no warning) so branch users and tag-pinned users coexist.
-#
-# DEFERRED CUTOVER: the full switch — removing this auto-pull entirely and making
-# openclaw-update's built-in wrapper stage the sole delivery path — is deferred
-# to the v2026.7.1 stable /sync-upstream, when a STABLE tag will finally carry
-# the single-command model. Cutting over now would strand users: the current
-# latest stable tag (v2026.6.11) predates it.
-if git -C "$REPO" symbolic-ref -q HEAD >/dev/null 2>&1; then
-    (cd "$REPO" && git pull -q 2>/dev/null) || echo "⚠ Failed to update openclaw-orbstack repo, using cached version"
-fi
-BLOCK
-        fi
+        # (v2026.7.1 cutover: the update shim's silent auto-pull block was
+        # removed — openclaw-update's own stage 1 pulls the branch / follows
+        # tags, making it the sole wrapper-delivery path.)
         printf 'exec bash "$REPO/scripts/commands/%s.sh" "$@"\n' "$_name"
     } > "$_out"
 done

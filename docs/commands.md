@@ -118,7 +118,7 @@ openclaw-update --force             # 强制重建 / 允许降级
 
 | 参数 | wrapper 通道 | 说明 |
 |------|-------------|------|
-| *(默认)* | 跟随**当前**通道 | 分支检出 → `git pull`（过渡期做法，见下方说明）；检出在 stable tag 上 → 跟随最新 stable tag；检出在 beta tag 上 → 跟随含 pre-release 的最新 tag |
+| *(默认)* | 跟随**当前**通道 | 分支检出 → 阶段一自己 `git pull` 分支；检出在 stable tag 上 → 跟随最新 stable tag；检出在 beta tag 上 → 跟随含 pre-release 的最新 tag |
 | `--pre` | **beta** 通道，会记住 | 切到含经验证 pre-release 的最新 tag，之后一直停留在这条线，直到 `--stable` |
 | `--stable` | **stable** 通道，会记住 | 切回最新 stable tag；由此触发的 VM 侧 OpenClaw 降级通常仍需要 `--force`（或等下一个 stable） |
 | `--version=<tag>` | **钉版本（pinned）** | 若存在对应的 wrapper tag `<tag>`，会把 wrapper 与 OpenClaw **一起**钉住——之后再跑一次不带参数的 `openclaw-update` 会保持这个钉住状态并提示；`--pre`/`--stable` 会恢复跟随通道。若没有匹配的 wrapper tag，则只钉 OpenClaw 版本（与旧行为一致） |
@@ -132,13 +132,13 @@ openclaw-update --force             # 强制重建 / 允许降级
 
 **钉版本标记**：`--version=<tag>` 命中已存在的 wrapper tag 时，会在 `~/bin/.openclaw-pin` 写入这个钉住状态；之后不带参数的 `openclaw-update` 会读到这个标记、保持钉住并提示，而不是悄悄回到跟随通道。`--pre` / `--stable` 会清掉这个标记，恢复跟随对应通道。
 
-> **当前 wrapper 的自更新行为（过渡期）**：默认通道推断时，只有当 repo 处于**分支** HEAD 时才会静默 `git pull` 拉取本 wrapper 的最新代码；若 HEAD 处于 **detached**（说明用户之前用 `--pre`/`--stable`/`--version=` 锁定了某个 release tag），则**保持锁定、不 pull、不告警**，让分支用户和 tag-pinned 用户共存。彻底移除这段 auto-pull（因为 `openclaw-update` 现在已经内含 wrapper 更新阶段）的动作推迟到 v2026.7.1 stable 线——那时才会有携带这套单命令模型的 stable tag。
+> **wrapper 的自更新行为**：默认通道推断时，只有当 repo 处于**分支** HEAD 时，`openclaw-update` 阶段一才会 `git pull` 拉取本 wrapper 的最新代码（v2026.7.1 起由阶段一自己完成，`refresh-mac-commands.sh` 生成的 shim 里那段静默 auto-pull 已移除，阶段一是唯一交付路径）；若 HEAD 处于 **detached**（说明用户之前用 `--pre`/`--stable`/`--version=` 锁定了某个 release tag），则**保持锁定、不 pull、不告警**，让分支用户和 tag-pinned 用户共存。
 
-**版本/发布模型**：wrapper 版本永远镜像一个**真实存在的上游 OpenClaw 版本**（不自造版本号）——上游 **stable → 本项目 Latest release**，经我们验证的上游 **beta → pre-release**。当前 `main` = `v2026.6.11`（Latest），`v2026.7.1-beta.6` 作为 pre-release 存在。想抢先体验就 `openclaw-update --pre`。
+**版本/发布模型**：wrapper 版本永远镜像一个**真实存在的上游 OpenClaw 版本**（不自造版本号）——上游 **stable → 本项目 Latest release**，经我们验证的上游 **beta → pre-release**。当前 `main` = `v2026.7.1`（Latest）。想抢先体验后续 beta 就 `openclaw-update --pre`。
 
 **行为要点**：
-- 切通道 / 钉版本会把 repo checkout 到 tag（**detached HEAD 是刻意的**）。`refresh-mac-commands.sh` 在 detached HEAD 时会跳过它自身的静默 `git pull`，因此重新生成命令**不会**撤销这个锁定。
-- 想回到跟随分支的滚动更新，`cd` 进 repo 目录 `git checkout main` 即可，之后默认通道会恢复静默 pull。
+- 切通道 / 钉版本会把 repo checkout 到 tag（**detached HEAD 是刻意的**）。`refresh-mac-commands.sh` 已不再自带任何 `git pull`（v2026.7.1 cutover），因此重新生成命令**不会**撤销这个锁定。
+- 想回到跟随分支的滚动更新，`cd` 进 repo 目录 `git checkout main` 即可，之后默认通道会由阶段一自动 pull。
 - 不静默降级 OpenClaw：若目标版本比 VM 里已构建的**更旧**，除非加 `--force`，否则拒绝执行（`--version=` 钉版本路径豁免）。
 
 或单独重建沙箱镜像：

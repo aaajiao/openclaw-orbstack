@@ -81,8 +81,10 @@ fi
 # CHANNEL MODEL (inferred from the repo checkout, plus one pin marker file
 # ~/bin/.openclaw-pin):
 #   - Pin marker present            => wrapper is pinned; do NOT move it.
-#   - BRANCH checkout, no flag      => do nothing (the ~/bin shim's auto-pull
-#                                      already updated the branch).
+#   - BRANCH checkout, no flag      => `git pull` the branch here (since the
+#                                      v2026.7.1 cutover this stage is the sole
+#                                      wrapper-delivery path — the generated
+#                                      ~/bin shim no longer auto-pulls).
 #   - DETACHED on a prerelease tag  => channel pre: target = newest tag overall.
 #   - DETACHED otherwise            => channel stable: target = newest
 #                                      non-prerelease tag.
@@ -155,7 +157,20 @@ if [ "$AFTER_SELF" = false ]; then
             # shellcheck disable=SC2059
             printf "$MSG_UPDATE_WRAPPER_PINNED\n" "$PINNED_TAG"
         elif git -C "$OPENCLAW_REPO_DIR" symbolic-ref -q HEAD >/dev/null 2>&1; then
-            : # branch checkout — the ~/bin shim's auto-pull already updated it
+            # Branch checkout: pull the branch here — the ~/bin shim's silent
+            # auto-pull was removed at the v2026.7.1 stable cutover, making
+            # stage 1 the sole wrapper-delivery path. If the pull moved HEAD,
+            # WRAPPER_MOVED triggers the same regenerate + re-exec path a tag
+            # checkout uses, so stage 2 runs the freshly pulled script.
+            OLD_HEAD=$(git -C "$OPENCLAW_REPO_DIR" rev-parse HEAD 2>/dev/null || echo "")
+            if git -C "$OPENCLAW_REPO_DIR" pull -q 2>/dev/null; then
+                NEW_HEAD=$(git -C "$OPENCLAW_REPO_DIR" rev-parse HEAD 2>/dev/null || echo "")
+                if [ -n "$OLD_HEAD" ] && [ "$OLD_HEAD" != "$NEW_HEAD" ]; then
+                    WRAPPER_MOVED=true
+                fi
+            else
+                echo "$MSG_UPDATE_WRAPPER_PULL_FAIL"
+            fi
         else
             # Detached HEAD, no channel flag: infer the channel from the
             # currently checked-out tag.
@@ -191,7 +206,7 @@ if [ "$AFTER_SELF" = false ]; then
             fi
             if [ "$DO_MOVE" = true ]; then
                 # -q suppresses the "detached HEAD" advisory (refresh-mac-commands.sh
-                # skips its silent self-update pull when HEAD is detached, so the
+                # carries no git pull at all since the v2026.7.1 cutover, so the
                 # wrapper regeneration below will NOT undo this checkout).
                 # shellcheck disable=SC2059
                 printf "$MSG_UPDATE_WRAPPER_CHECKOUT\n" "$WRAPPER_TARGET_TAG"
@@ -339,12 +354,16 @@ else
     printf "$MSG_UPDATE_WRAPPER_ALIGNED\n" "$LATEST_TAG"
 fi
 
-# --- Ensure Node.js >= 24 (upstream recommends 24.x LTS) ---
+# --- Ensure Node.js >= 24.15.0 (24.x LTS line) ---
+# OpenClaw >= 2026.7.1 hard-rejects Node runtimes whose bundled SQLite is
+# vulnerable to WAL corruption (upstream #106065; engines >=24.15.0 <25 on
+# the 24 line) — the CLI, doctor included, refuses to start. A major-only
+# check is not enough: a held 24.14.x passes "major >= 24" yet is rejected.
+REQUIRED_NODE_FLOOR="24.15.0"
 echo "$MSG_UPDATE_NODE_CHECK"
 NODE_VERSION=$(vm_exec 'node --version 2>/dev/null' || echo "")
-NODE_MAJOR="${NODE_VERSION#v}"
-NODE_MAJOR="${NODE_MAJOR%%.*}"
-if [ -n "$NODE_MAJOR" ] && [ "$NODE_MAJOR" -ge 24 ] 2>/dev/null; then
+NODE_BARE="${NODE_VERSION#v}"
+if [ -n "$NODE_BARE" ] && [ "$(printf '%s\n%s\n' "$REQUIRED_NODE_FLOOR" "$NODE_BARE" | sort -V | head -1)" = "$REQUIRED_NODE_FLOOR" ]; then
     # shellcheck disable=SC2059
     printf "$MSG_UPDATE_NODE_OK\n" "$NODE_VERSION"
 else

@@ -111,12 +111,12 @@ fi
 
 阶段一按 release tag 把 repo checkout 成 **detached HEAD**（默认取最新 stable tag，`--pre` 取含 pre-release 的最新 tag，`--version=<tag>` 精确锁定/回滚）。默认与 `--pre` 路径**从不降级**（目标 tag 已是 HEAD 祖先则 no-op）；只有 `--version=` 豁免此规则。
 
-**detached-HEAD 守卫**（两处配合，别拆开改）：
+**detached-HEAD 守卫**：
 
-- `refresh-mac-commands.sh` 在 detached HEAD 时**跳过**它自身的静默 `git pull`，因此重新生成命令不会撤销刚锁定的 tag。
-- `~/bin/openclaw-update` 只在 HEAD 处于**分支**时才 `git pull` 拉取 wrapper 代码；detached HEAD（= 被 `openclaw-update` 的 `--version=`/`--pre`/`--stable` 钉住）时保持锁定、不 pull、不告警。
+- `refresh-mac-commands.sh` 自 v2026.7.1 cutover 起不再包含任何 `git pull`，重新生成命令不会撤销刚锁定的 tag。
+- `openclaw-update` 阶段一只在 HEAD 处于**分支**时才 `git pull` 拉取 wrapper 代码；detached HEAD（= 被 `--version=`/`--pre`/`--stable` 钉住）时保持锁定、不 pull、不告警。
 
-把 wrapper 交付完全切到 `openclaw-update` 内建的 wrapper 阶段（移除 `openclaw-update` 里那段 auto-pull）的动作推迟到 v2026.7.1 stable 线——现在的最新 stable tag（v2026.6.11）尚未携带这套单命令模型，提前切会 strand 用户。
+wrapper 交付已于 v2026.7.1 stable 同步时完全切到 `openclaw-update` 内建的 wrapper 阶段——生成的 `~/bin` shim 里那段静默 auto-pull 已移除。
 
 ## 开发命令
 
