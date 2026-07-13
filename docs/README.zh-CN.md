@@ -103,7 +103,7 @@ wrapper 版本始终**镜像一个真实的上游 OpenClaw 版本**——我们�
 | stable 版本 | 发布为 **Latest** | `openclaw-update --stable` |
 | 经验证 / 测试过的 **beta** | 发布为 **pre-release** | `openclaw-update --pre` |
 
-当前状态（示意，实时对照见 [GitHub Releases](https://github.com/aaajiao/openclaw-orbstack/releases)）：wrapper stable 为 **v2026.6.11**（Latest）；**v2026.7.1-beta.5** 作为 pre-release 提供。
+当前状态（示意，实时对照见 [GitHub Releases](https://github.com/aaajiao/openclaw-orbstack/releases)）：wrapper stable 为 **v2026.6.11**（Latest）；**v2026.7.1-beta.6** 作为 pre-release 提供。
 
 ## 快速开始
 

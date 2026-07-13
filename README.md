@@ -114,7 +114,7 @@ The wrapper version always **mirrors a real upstream OpenClaw version** — we n
 | Stable release | Published as **Latest** | `openclaw-update --stable` |
 | Validated / tested **beta** | Published as a **pre-release** | `openclaw-update --pre` |
 
-Current state (illustrative — see the [GitHub Releases](https://github.com/aaajiao/openclaw-orbstack/releases) page for the live pair): wrapper stable is **v2026.6.11** (Latest); **v2026.7.1-beta.5** is available as a pre-release.
+Current state (illustrative — see the [GitHub Releases](https://github.com/aaajiao/openclaw-orbstack/releases) page for the live pair): wrapper stable is **v2026.6.11** (Latest); **v2026.7.1-beta.6** is available as a pre-release.
 
 ## Quick Start
 

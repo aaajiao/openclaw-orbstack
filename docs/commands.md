@@ -138,7 +138,7 @@ openclaw-update --force             # 强制重建 / 允许降级
 
 > **当前 wrapper 的自更新行为（过渡期）**：默认通道推断时，只有当 repo 处于**分支** HEAD 时才会静默 `git pull` 拉取本 wrapper 的最新代码；若 HEAD 处于 **detached**（说明用户之前用 `--pre`/`--stable`/`--version=` 锁定了某个 release tag），则**保持锁定、不 pull、不告警**，让分支用户和 tag-pinned 用户共存。彻底移除这段 auto-pull（因为 `openclaw-update` 现在已经内含 wrapper 更新阶段）的动作推迟到 v2026.7.1 stable 线——那时才会有携带这套单命令模型的 stable tag。
 
-**版本/发布模型**：wrapper 版本永远镜像一个**真实存在的上游 OpenClaw 版本**（不自造版本号）——上游 **stable → 本项目 Latest release**，经我们验证的上游 **beta → pre-release**。当前 `main` = `v2026.6.11`（Latest），`v2026.7.1-beta.5` 作为 pre-release 存在。想抢先体验就 `openclaw-update --pre`。
+**版本/发布模型**：wrapper 版本永远镜像一个**真实存在的上游 OpenClaw 版本**（不自造版本号）——上游 **stable → 本项目 Latest release**，经我们验证的上游 **beta → pre-release**。当前 `main` = `v2026.6.11`（Latest），`v2026.7.1-beta.6` 作为 pre-release 存在。想抢先体验就 `openclaw-update --pre`。
 
 **行为要点**：
 - 切通道 / 钉版本会把 repo checkout 到 tag（**detached HEAD 是刻意的**）。`refresh-mac-commands.sh` 在 detached HEAD 时会跳过它自身的静默 `git pull`，因此重新生成命令**不会**撤销这个锁定。
