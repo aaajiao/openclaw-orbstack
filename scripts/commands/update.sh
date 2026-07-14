@@ -775,6 +775,37 @@ vm_exec "sudo chown -R \$(id -u):\$(id -g) ~/.openclaw/ ~/.npm/ 2>/dev/null; sud
 #    confirm from cancelling the whole doctor pass.
 vm_exec "echo '=== doctor --fix (config migration) ===' >> ~/.openclaw/.update-doctor.log && yes n | openclaw doctor --fix >> ~/.openclaw/.update-doctor.log 2>&1" || true
 
+# --- Official plugin sync (lockstep plugins follow the core version) ----------
+# Official npm-installed plugins (@openclaw/codex, perplexity, ...) are lockstep-
+# versioned with the core, but nothing realigned them during a core install: the
+# channel/version sync only runs on `openclaw plugins update --all` (upstream wires
+# syncOfficialPluginInstalls to --all only, PR #94225; a bare per-id update honors
+# the stored pin and self-reports "up to date" — observed 2026-07-14 with exa/tavily
+# stuck on beta.6 after the stable hop). Run the sync here: after doctor + chown
+# (writes land in user-owned ~/.openclaw/npm/) and before the gateway start below,
+# so the fresh plugin versions load with the one normal start. Installed-but-
+# disabled official plugins are synced too — upstream behavior, keeps them aligned
+# for whenever they get enabled.
+# npm >= 12 guard: `npm view --json` returns arrays even for single hits under
+# npm 12, which breaks the update preflight (upstream #106189) — worse, a failed
+# update can DISABLE healthy plugins. Skip the sync entirely and tell the operator.
+# `yes n` mirrors the doctor calls above: defense-in-depth against any interactive
+# prompt appearing in this captured non-TTY run ("no" is always the safe answer).
+NPM_MAJOR=$(vm_exec "npm -v 2>/dev/null" | cut -d. -f1 || true)
+if [ -n "$NPM_MAJOR" ] && [ "$NPM_MAJOR" -ge 12 ] 2>/dev/null; then
+    # shellcheck disable=SC2059
+    printf "$MSG_CMD_UPDATE_PLUGINS_NPM12_SKIP\n" "$NPM_MAJOR"
+else
+    echo "$MSG_CMD_UPDATE_PLUGINS_SYNC"
+    if vm_exec "yes n | openclaw plugins update --all > ~/.openclaw/.update-plugins.log 2>&1"; then
+        # Surface only the per-plugin outcome lines; the CLI banner is noise here.
+        vm_exec 'grep -E "Updated |up to date|Failed" ~/.openclaw/.update-plugins.log' 2>/dev/null | sed 's/^/   /' || true
+    else
+        echo "$MSG_CMD_UPDATE_PLUGINS_SYNC_FAILED"
+        vm_log_tail ".update-plugins.log"
+    fi
+fi
+
 # --- Startup optimization + PATH drop-ins (upstream recommended for VM/ARM: docs/vps.md) ---
 # See scripts/lib/common.sh:write_systemd_dropins for the bridge-pattern /
 # PATH-pin rationale (upstream-takeover removal, #75233 PATH leak).

@@ -111,6 +111,8 @@ No automated test suite. Validation is syntax checks + shellcheck + manual testi
 
 **Updater** (`openclaw-update`) — **npm-only** (source-build fallback removed 2026-06-10): if the npm install fails or the package is incomplete, it prints the log hint and aborts (`MSG_PKG_INSTALL_ABORT`, retry with `openclaw-update --force`) instead of dropping to a multi-minute, screen-garbling source build. Package completeness is checked against **`sudo npm root -g`** (root's prefix, `/usr/lib/node_modules`) to match where `sudo npm install -g` actually installs — a bare `npm root -g` resolves the *user's* workspace prefix (`~/.openclaw/workspace/.local/lib/node_modules`), where the package isn't, which previously forced a false-"incomplete" source build on every run.
 
+Since 2026-07-14 the updater also **syncs official plugins** after the doctor passes and before the gateway start: `openclaw plugins update --all` is the only path that realigns lockstep plugin versions/channels (upstream PR #94225 wires `syncOfficialPluginInstalls` to `--all` only; a bare per-id update honors the stored pin and self-reports "up to date"). The sync is skipped with a warning when the VM's npm is ≥ 12 (upstream #106189: plugin updates break under npm 12 and a failed update can disable healthy plugins); failures are non-fatal (gateway starts with previous plugin versions + manual hint).
+
 The git checkout (`~/openclaw`) is always kept at the target tag regardless of install method, because sandbox Docker images are built from the repo's Dockerfiles.
 
 A `.build-version` marker (`~/.openclaw/.build-version`) tracks successful installs. `openclaw-update` checks this marker to avoid skipping a version whose previous install attempt failed.
