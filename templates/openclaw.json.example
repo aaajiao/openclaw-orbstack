@@ -1530,6 +1530,32 @@
   },
 
   // --------------------------------------------------------------------------
+  // 受管 worktrees 清理限额 (v2026.7.2+, #106224, 可选)
+  // --------------------------------------------------------------------------
+  // 限制 OpenClaw 受管 worktrees 的数量 / 总磁盘占用。超限时按最久未活跃优先
+  // 快照并清理 session / Workboard 拥有的 worktree(手动 worktree、有锁 / 有
+  // run lease、近期活跃 session 拥有的永不清;快照 30 天内可恢复)。
+  // 由每小时 gateway 清理、`openclaw worktrees gc` 和 Control UI "Clean up now" 执行。
+  // worktrees: {
+  //   cleanup: {
+  //     maxCount: 25,          // 所有仓库合计最大受管 worktree 数;0 或不设 = 不限
+  //     maxTotalSizeGb: 50,    // 受管 worktrees 总大小上限 (GB, 可用小数如 0.5);0 或不设 = 不限
+  //   },
+  // },
+
+  // --------------------------------------------------------------------------
+  // 云端 worker 环境 (v2026.7.2+, #106332 系列, 可选, opt-in)
+  // --------------------------------------------------------------------------
+  // 在远程云 worker 上运行 Control UI 会话(session placement / dispatch)。
+  // 不配置 cloudWorkers 或 profiles 为空 = 完全关闭(不接受新 worker 创建)。
+  // 结构较大(profiles / provider: "crabbox" | "static-ssh" / SSH hostKey 钉扎 /
+  // lifetime 策略等),此处不展开;完整字段见上游文档:
+  // https://docs.openclaw.ai/gateway/configuration (Cloud worker environments)
+  // cloudWorkers: {
+  //   profiles: { /* ... */ },
+  // },
+
+  // --------------------------------------------------------------------------
   // 十一、命令配置
   // --------------------------------------------------------------------------
   commands: {
