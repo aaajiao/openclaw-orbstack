@@ -796,14 +796,52 @@ if [ -n "$NPM_MAJOR" ] && [ "$NPM_MAJOR" -ge 12 ] 2>/dev/null; then
     # shellcheck disable=SC2059
     printf "$MSG_CMD_UPDATE_PLUGINS_NPM12_SKIP\n" "$NPM_MAJOR"
 else
-    echo "$MSG_CMD_UPDATE_PLUGINS_SYNC"
-    if vm_exec "yes n | openclaw plugins update --all > ~/.openclaw/.update-plugins.log 2>&1"; then
-        # Surface only the per-plugin outcome lines; the CLI banner is noise here.
-        vm_exec 'grep -E "Updated |up to date|Failed" ~/.openclaw/.update-plugins.log' 2>/dev/null | sed 's/^/   /' || true
-    else
-        echo "$MSG_CMD_UPDATE_PLUGINS_SYNC_FAILED"
-        vm_log_tail ".update-plugins.log"
-    fi
+    case "$LATEST_TAG" in
+        *-beta*|*-rc*|*-alpha*)
+            # Prerelease target: do NOT run `plugins update --all`. Official plugin
+            # convergence resolves through channel context only (default -> stable
+            # `latest` dist-tag) and never looks at the running core version, so on
+            # a beta core `--all` DOWNGRADES lockstep plugins back to stable
+            # (observed 2026-07-15: codex 2026.7.2-beta.1 -> 2026.7.1; upstream
+            # #97680, source-confirmed). Doctor's plugin-version-drift check uses
+            # the right convergence target (the core version) and prints exact
+            # `openclaw plugins update @openclaw/<pkg>@<version>` fix commands —
+            # replay those from the doctor log written above instead of rebuilding
+            # the plugin-id -> npm-package mapping ourselves. The tight character
+            # classes keep this grep from ever extracting shell metacharacters.
+            # No drift lines = plugins already aligned (or an older doctor without
+            # the check — either way nothing safe to do; --all would still be wrong).
+            REPIN_CMDS=$(vm_exec 'grep -oE "openclaw plugins update @openclaw/[[:alnum:]._-]+@[[:alnum:].-]+" ~/.openclaw/.update-doctor.log 2>/dev/null | sort -u' || true)
+            if [ -n "$REPIN_CMDS" ]; then
+                echo "$MSG_CMD_UPDATE_PLUGINS_BETA_REPIN"
+                vm_exec ": > ~/.openclaw/.update-plugins.log" || true
+                REPIN_FAILED=false
+                while IFS= read -r REPIN_CMD; do
+                    [ -n "$REPIN_CMD" ] || continue
+                    echo "   → $REPIN_CMD"
+                    vm_exec "yes n | $REPIN_CMD >> ~/.openclaw/.update-plugins.log 2>&1" || REPIN_FAILED=true
+                done <<EOF
+$REPIN_CMDS
+EOF
+                if [ "$REPIN_FAILED" = true ]; then
+                    echo "$MSG_CMD_UPDATE_PLUGINS_BETA_FAILED"
+                    vm_log_tail ".update-plugins.log"
+                fi
+            else
+                echo "$MSG_CMD_UPDATE_PLUGINS_BETA_NONE"
+            fi
+            ;;
+        *)
+            echo "$MSG_CMD_UPDATE_PLUGINS_SYNC"
+            if vm_exec "yes n | openclaw plugins update --all > ~/.openclaw/.update-plugins.log 2>&1"; then
+                # Surface only the per-plugin outcome lines; the CLI banner is noise here.
+                vm_exec 'grep -E "Updated |up to date|Failed" ~/.openclaw/.update-plugins.log' 2>/dev/null | sed 's/^/   /' || true
+            else
+                echo "$MSG_CMD_UPDATE_PLUGINS_SYNC_FAILED"
+                vm_log_tail ".update-plugins.log"
+            fi
+            ;;
+    esac
 fi
 
 # --- Startup optimization + PATH drop-ins (upstream recommended for VM/ARM: docs/vps.md) ---
