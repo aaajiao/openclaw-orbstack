@@ -152,6 +152,8 @@ Gateway 还支持以下扩展能力：
 ~/.openclaw/                   # 配置目录
   ├── openclaw.json            # 主配置 (含沙箱设置, 用 ${VAR} 引用 .env)
   ├── .env                     # 敏感信息 (API keys, tokens, Bonjour 设置)
+  ├── gateway.systemd.env      # systemd 服务 env 快照 (install/doctor 时从 .env 生成;
+  │                            #   改 .env 已有值不生效时见 troubleshooting「换 API key」一节)
   ├── credentials/             # API keys, tokens
   ├── memory/                  # Memory 索引 (<agentId>.sqlite)
   ├── agents/                  # Agent 数据 (sessions 等)

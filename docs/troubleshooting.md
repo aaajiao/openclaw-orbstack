@@ -130,6 +130,41 @@ openclaw-restart
 
 ---
 
+## 换 API key / 改 .env 不生效
+
+#### 症状
+
+修改了 VM 里 `~/.openclaw/.env` 中**已有的值**（比如换新的 API key），重启 Gateway 后仍在用旧值（例如持续 401），而新 key 单独用 curl 验证明明是好的。
+
+> **新增**变量不受此影响（比如上文 Bonjour 一节加 `OPENCLAW_DISABLE_BONJOUR=1`），改完 restart 即生效；只有**修改已有值**会踩这个坑。
+
+#### 根因
+
+systemd 服务通过 `EnvironmentFile=` 加载 `~/.openclaw/gateway.systemd.env`。这个文件是 `openclaw gateway install` / `openclaw doctor` 运行时从 `.env` 生成的**快照**，之后不会自动跟随 `.env` 变化。快照里的旧值以进程环境变量的身份注入，而 OpenClaw 的环境变量优先级是「进程环境最高、绝不覆盖」（见[官方环境变量文档](https://docs.openclaw.ai/help/environment)），所以 `.env` 里的新值永远赢不了快照里的旧值。
+
+#### 解决方案
+
+三条命令，**顺序敏感**：
+
+```bash
+openclaw-shell
+openclaw gateway install --force                  # 重新生成服务定义 + gateway.systemd.env 快照
+openclaw gateway restart                          # Gateway 进程加载新 env
+openclaw sandbox recreate --agent main --force    # 沙箱容器的 env 是创建时烘焙的，必须重建
+```
+
+第三步仅在被换的 key 也配置在 `agents.defaults.sandbox.docker.env` 里时需要（AI 提供商的 key 基本都是）。顺序不能反：沙箱容器创建时从 Gateway 进程环境解析 `${VAR}` 引用，Gateway 没先重启就 recreate 会把旧 key 又烘进新容器。`/workspace` 是持久卷，recreate 不会丢数据。
+
+#### 验证
+
+```bash
+grep <KEY名> ~/.openclaw/gateway.systemd.env    # 快照已含新值
+docker ps --format '{{.Names}}'                 # 找到 sandbox 容器名
+docker exec <容器名> env | grep <KEY名>          # 容器已拿到新值
+```
+
+---
+
 ## 诊断命令
 
 ```bash
