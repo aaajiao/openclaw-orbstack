@@ -884,8 +884,61 @@ if ! gateway_healthy; then
                 ;;
         esac
     else
+        # Surface a doctor-stage state-DB migration failure — when present it is
+        # the root cause of the dead gateway, and everything downstream of doctor
+        # (plugin sync included) silently misfired while the state DB stayed
+        # flagged legacy (observed 2026-07-17: upstream #109867, beta.2 created
+        # an index on a column it had not added yet).
+        MIGRATION_HITS=$(vm_exec 'grep -F "Failed migrating shared state database schema" ~/.openclaw/.update-doctor.log 2>/dev/null | head -2' || true)
+        if [ -n "$MIGRATION_HITS" ]; then
+            echo "$MSG_CMD_UPDATE_MIGRATION_FAILED_HINT"
+            printf '%s\n' "$MIGRATION_HITS" | sed 's/^/   /'
+        fi
         echo "$MSG_CMD_UPDATE_GATEWAY_FAILED"
         exit 1
+    fi
+fi
+
+# --- Post-start plugin drift verification (one retry) -------------------------
+# The pre-start sync above can silently fail to STICK: if doctor dies mid-run
+# (e.g. upstream #109867's state-DB migration wedge), its log carries no drift
+# commands to replay — and a `plugins update` executed against a wedged state DB
+# installs the npm package but never records the new active version (the CLI dies
+# at its final state write AFTER printing "Updated ..."). Observed live on the
+# 2026.7.2-beta.1 -> beta.2 hop (2026-07-17). Now that the gateway is confirmed
+# healthy (state DB writable again), ask it directly: `gateway status --deep`
+# prints exact per-plugin `openclaw plugins update @openclaw/<pkg>@<version>` fix
+# commands whose explicit-version targets are channel-correct on stable AND
+# prerelease cores (unlike `--all`, upstream #97680). Replay them once, restart
+# to load the new versions, and re-verify. Same npm>=12 guard as the pre-start
+# sync (#106189: a failed update can disable healthy plugins). Non-fatal, except
+# a gateway that fails to come back from OUR restart — that keeps the "never
+# print done over a dead gateway" invariant.
+if [ -n "$NPM_MAJOR" ] && [ "$NPM_MAJOR" -ge 12 ] 2>/dev/null; then
+    : # npm >= 12: same skip as the pre-start sync (#106189); hint already printed
+else
+    DRIFT_CMDS=$(vm_exec 'openclaw gateway status --deep 2>/dev/null | grep -oE "openclaw plugins update @openclaw/[[:alnum:]._-]+@[[:alnum:].-]+" | sort -u' || true)
+    if [ -n "$DRIFT_CMDS" ]; then
+        echo "$MSG_CMD_UPDATE_PLUGINS_DRIFT_RETRY"
+        vm_exec ": > ~/.openclaw/.update-plugins.log" || true
+        while IFS= read -r DRIFT_CMD; do
+            [ -n "$DRIFT_CMD" ] || continue
+            echo "   → $DRIFT_CMD"
+            vm_exec "yes n | $DRIFT_CMD >> ~/.openclaw/.update-plugins.log 2>&1" || true
+        done <<EOF
+$DRIFT_CMDS
+EOF
+        vm_exec "openclaw gateway restart >/dev/null 2>&1" || true
+        if ! gateway_healthy; then
+            echo "$MSG_CMD_UPDATE_GATEWAY_FAILED"
+            exit 1
+        fi
+        if vm_exec 'openclaw gateway status --deep 2>/dev/null | grep -qE "openclaw plugins update @openclaw/"'; then
+            echo "$MSG_CMD_UPDATE_PLUGINS_DRIFT_REMAIN"
+            vm_log_tail ".update-plugins.log"
+        else
+            echo "$MSG_CMD_UPDATE_PLUGINS_DRIFT_FIXED"
+        fi
     fi
 fi
 
