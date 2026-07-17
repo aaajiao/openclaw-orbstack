@@ -1277,6 +1277,10 @@
     ackReaction: "👀",
     ackReactionScope: "all",  // "all" | "group-mentions" | "none"
     removeAckAfterReply: true,
+
+    // v2026.7.2-beta.2+: Slack 进度默认改用原生 assistant thread status (旋转加载文案)，
+    // ack reaction 保持静态；旧的 queued/thinking/tool/done/error reaction 生命周期需显式开启
+    // statusReactions: { enabled: true },
     
     // 入站消息处理
     inbound: {
@@ -1603,7 +1607,18 @@
       // security-gated, 默认 false；仅在信任 Control UI/CLI 客户端时打开
       // allowUploadedArchives: false,
     }
-    
+
+    // Skill Workshop — agent 自助创建/修改 skill 的工作台 (v2026.7.1+)
+    // ⚠️ v2026.7.2-beta.2 起 approvalPolicy 默认从 "pending" 翻成 "auto"：
+    //    agent 发起的 apply/reject/quarantine 默认不再需要操作员批准。
+    //    保守姿态建议显式钉回 "pending" (即 v2026.7.1 的默认行为)。
+    // workshop: {
+    //   approvalPolicy: "pending",       // "pending" 需操作员批准 | "auto" 跳过批准 (7.2-beta.2+ 默认)
+    //   autonomous: { enabled: false },  // 自主从会话历史生成 pending 提案 (默认关)
+    //   maxPending: 50,                  // 每 workspace 待定提案上限 (1-200)
+    //   maxSkillBytes: 40000,            // 提案正文字节上限 (1024-200000)
+    // },
+
     // 技能条目配置
     // entries: {
     //   "skill-name": {
