@@ -4,6 +4,18 @@
 
 [![English](https://img.shields.io/badge/Docs-English-blue?style=flat-square)](../README.md)
 
+> ## ⚠️ 已弃用 — 本项目不再维护
+>
+> **openclaw-orbstack 已停止维护。** 我们正式放弃了在 macOS 上用 Docker 方式运行 OpenClaw 的做法。
+>
+> 项目刚起步时，把 OpenClaw 装进 OrbStack VM 里的 Docker 沙箱，是 Mac 上获得一个安全、自包含安装的最干净方案。但随着 OpenClaw 自身的发展，这个权衡反转了：VM → Docker → 沙箱这一整层带来的开销、版本滞后和维护负担，逐渐盖过了它的收益。在 macOS 上，Docker 这一层从「保护」变成了「局限」——因此我们彻底放弃此项目。
+>
+> - **不再更新**：没有新版本、不再同步上游、不再修 bug。
+> - **已有安装仍可运行**，但不再维护，`openclaw-update` 也不再跟随上游。
+> - **今后请改用 OpenClaw 官方安装方式** — 见官方文档 <https://docs.openclaw.ai/install>。
+>
+> 以下内容仅作历史参考，供仍在运行旧安装的用户查阅。
+
 ## 这是什么？
 
 [OpenClaw](https://github.com/openclaw/openclaw) 是一个开源的个人 AI 助手，运行在你自己的设备上。

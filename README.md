@@ -5,6 +5,18 @@ One-click [OpenClaw](https://github.com/openclaw/openclaw) deployment on macOS v
 [![中文文档](https://img.shields.io/badge/文档-中文-blue?style=flat-square)](docs/README.zh-CN.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](#license)
 
+> ## ⚠️ Deprecated — this project is no longer maintained
+>
+> **openclaw-orbstack is retired.** We have officially stopped using the Docker-based approach to run OpenClaw on macOS.
+>
+> When this project started, wrapping OpenClaw in a Docker sandbox inside an OrbStack VM was the cleanest way to get a safe, self-contained install on a Mac. As OpenClaw itself has matured, that calculus flipped: the extra VM → Docker → sandbox stack became a source of overhead, version lag, and maintenance friction instead of a benefit. On macOS, the Docker layer has turned into a limitation rather than a safeguard — so we are abandoning this project.
+>
+> - **No further updates** — no new releases, no upstream syncs, no bug fixes.
+> - **Existing installs keep working**, but they will not be maintained and `openclaw-update` will no longer track upstream.
+> - **Going forward, use OpenClaw's own install methods** — see the official docs at <https://docs.openclaw.ai/install>.
+>
+> Everything below is kept for historical reference and for anyone still running an existing install.
+
 ## What is this?
 
 [OpenClaw](https://github.com/openclaw/openclaw) is an open-source personal AI assistant you run on your own devices.
